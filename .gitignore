@@ -2,6 +2,7 @@ __pycache__
 .idea
 .ipynb_checkpoints
 env
+myenv
 .env
 imgs
 registro.txt

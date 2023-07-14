@@ -3,8 +3,11 @@ from objects import user
 from objects import ware_book
 from objects import book
 from objects import ware_
-from decouple import config
+from decouple import Config, RepositoryEnv
 
+
+DOTENV_FILE = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'
+env_config = Config(RepositoryEnv(DOTENV_FILE))
 ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 
 class wares_gestor:
@@ -15,7 +18,7 @@ class wares_gestor:
 
 	def connectDB(self):
 		try:
-			self.mydb = mysql.connector.connect(host = config('MYSQL_HOST'), user= config('MYSQL_USER'), passwd= config('MYSQL_PASSWORD'), port=config('MYSQL_PORT'))
+			self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 			self.cursor = self.mydb.cursor()
 		except:
 			print("No se puede conectar a genesisDB")
@@ -83,7 +86,7 @@ class ware_gestor:
 		self.temp_list = []
 	
 	def connect_db(self):
-		self.mydb = mysql.connector.connect(host = config('MYSQL_HOST'), user= config('MYSQL_USER'), passwd= config('MYSQL_PASSWORD'), port=config('MYSQL_PORT'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 		self.cursor = self.mydb.cursor()
 
 	def disconnect_db(self):
@@ -215,7 +218,7 @@ class users_gestor:
 
 	def connectDB(self):
 		try:
-			self.mydb = mysql.connector.connect(host = config('MYSQL_HOST'), user= config('MYSQL_USER'), passwd= config('MYSQL_PASSWORD'), port=config('MYSQL_PORT'))
+			self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 			self.cursor = self.mydb.cursor()
 		except:
 			print("No se puede conectar a genesisDB")
