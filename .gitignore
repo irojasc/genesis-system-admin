@@ -1,0 +1,8 @@
+__pycache__
+.idea
+.ipynb_checkpoints
+env
+.env
+imgs
+registro.txt
+token_Bot.txt
