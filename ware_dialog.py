@@ -28,7 +28,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ownWares = data_wares
         self.setupUi()
         # -----------  cargar datos en tabla  -----------
-        self.ware.load_mainlist(self.ownWares) ##para cargar la tabla principal underground
+        self.ware.load_mainlist(self.ownWares) ##para cargar la tabla principal del gestor
         self.loadData("main")
 
         # -----------  QDialog para ventana in/out  -----------
@@ -43,13 +43,25 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.txtSearch.setEnabled(True)
         self.txtSearch.clear()
         self.label.setEnabled(True)  # label in/out
-        item_all = ['cod','isbn','nombre','autor','editorial']
+        item_all = ['cod','isbn','titulo','autor','editorial']
         self.cmbSearch.clear()
         self.cmbSearch.addItems(item_all)
         self.cmbSearch.setCurrentIndex(-1)
         self.loadData("main")
         self.ware_table.setCurrentCell(0, 0)
         self.actualizar_img(0)
+
+    def sortTable(self, unsortList):
+        # separar items que pertencen a libros
+        result_books = list(filter(lambda x: x.objBook.cod.split("_")[0] == "GN", unsortList))
+        
+        # separar items que no pertencen a libros
+        result_nobooks = list(filter(lambda x: x.objBook.cod.split("_")[0] != "GN", unsortList))
+
+        # ordenar items de libros por codigo de menor a mayor
+        result_books.sort(key=lambda z: int(z.objBook.cod.split("_")[1]))
+
+        return result_books +  result_nobooks
 
     ## Funcion que permite la apertura de ventana ware desde el main_
     def show_window(self):
@@ -84,11 +96,20 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.accept()
             event.accept()
 
+    def updateRealTable(self): # se actualiza la tabla actual con los datos del back
+        for i in self.real_table:
+            for j in self.ware.ware_list:
+                if i.objBook.cod == j.objBook.cod:
+                    i.almacen_data["cant_" + self.ownWares[0]] = j.almacen_data["cant_"+ self.ownWares[0]]
+        self.loadData()
+
     # -----------  carga tabla qtableWidget  -----------
     def loadData(self, condition = "search"):
         flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
         if condition == "main":
-            self.real_table = self.ware.ware_list.copy()
+            # sortTable: ordena la tabla que llega de gestor por tipo de producto y nivel de codigo
+            self.real_table = self.sortTable(self.ware.ware_list.copy())
+
         # -----------  esta parte para llenar la tabla  -----------
         row = 0
         self.ware_table.setRowCount(len(self.real_table))
@@ -124,12 +145,12 @@ class Ui_Dialog(QtWidgets.QDialog):
             ret = QMessageBox.information(self, 'Aviso', "Ingresar criterio de busqueda")
 
         elif str(self.cmbSearch.currentText()) == "" and self.txtSearch.text() == "":
+            # self.loadData("main"), para copiar todos los items del back al frond
             self.loadData("main")
             self.ware_table.setCurrentCell(0, 0)
             self.actualizar_img(0)
 
         elif self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() == "":
-
             self.loadData("main")
             self.ware_table.setCurrentCell(0, 0)
             self.actualizar_img(0)
@@ -157,9 +178,8 @@ class Ui_Dialog(QtWidgets.QDialog):
                     self.ware_table.setRowCount(0)
                     #ret = QMessageBox.information(self, 'Aviso', "No existe coincidencias")
 
-            elif self.cmbSearch.currentText() == "nombre":
-                if self.buscar("nombre", self.txtSearch.text()) > 0:
-
+            elif self.cmbSearch.currentText() == "titulo":
+                if self.buscar("titulo", self.txtSearch.text()) > 0:
                     self.loadData("search")
                     self.ware_table.setCurrentCell(0, 0)
                     self.actualizar_img(0)
@@ -234,7 +254,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             except:
                 ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
 
-    # -----------  load_table para cargar tabla de DB  -----------
+    # -----------  load_table para cargar tabla de DB, cuando se presiona icono de nube  -----------
     def load_table(self, event = None):
         self.ware.load_mainlist(self.ownWares)
         self.loadData("main")
@@ -263,14 +283,6 @@ class Ui_Dialog(QtWidgets.QDialog):
                 self.updateRealTable()
         # self.ui_dialog.show_window()
 
-
-    def updateRealTable(self): # se actualiza la tabla actual con los datos del back
-        for i in self.real_table:
-            for j in self.ware.ware_list:
-                if i.objBook.cod == j.objBook.cod:
-                    i.almacen_data["cant_" + self.ownWares[0]] = j.almacen_data["cant_"+ self.ownWares[0]]
-        self.loadData()
-
     def onCurrentIndexChanged(self):
         if self.cmbWares.currentIndex() == -1:
             self.ware_table.horizontalHeaderItem(6).setText("")
@@ -285,8 +297,71 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ware_table.setGeometry(QtCore.QRect(0, 130, 1024, self.frameGeometry().height() - (188 + 30 + 100 + 40)))
         self.init += 1
 
-    def setupUi(self):
+    # -----------  funcion buscar  -----------
+    def buscar(self, criterio, patron):
+        self.real_table.clear()
+        if criterio == "cod":
+            for i in self.ware.ware_list:
+                if i.objBook.cod == str.upper(patron):
+                    self.real_table.append(i)
+            return len(self.real_table)
+        elif criterio == "isbn":
+            for i in self.ware.ware_list:
+                if(i.objBook.isbn.find(str.upper(patron)) >= 0):
+                    self.real_table.append(i)
+            return len(self.real_table)
 
+        elif criterio == "titulo":
+            for i in self.ware.ware_list:
+                if(i.objBook.name.find(str.upper(patron)) >= 0):
+                    self.real_table.append(i)
+            return len(self.real_table)
+        elif criterio == "autor":
+            for i in self.ware.ware_list:
+                if(i.objBook.autor.find(str.upper(patron)) >= 0):
+                    self.real_table.append(i)
+            return len(self.real_table)
+        elif criterio == "editorial":
+            for i in self.ware.ware_list:
+                if (i.objBook.editorial.find(str.upper(patron)) >= 0):
+                    self.real_table.append(i)
+            return len(self.real_table)
+        return 0
+
+    # -----------  fill combobox wares from sql  -----------
+    def fillcmbWares(self):
+        tmp_List = []
+        try:
+            for i in self.ownWares[1]:
+                if i.cod != self.ownWares[0] and i.enabled == True:
+                    tmp_List.append(i.cod)
+            #self.seColumn = str(tmp_List[0])
+            return tmp_List
+        except:
+            return tmp_List
+    
+    # -----------  keyPressed for QtableWidget  -----------
+    def KeyPressed(self,event):
+        if self.ware_table.selectedIndexes() != []:
+            temp = self.ware_table.currentRow()
+            if event.key() == QtCore.Qt.Key_Up:
+                temp -= 1
+                self.actualizar_img(temp)
+            elif event.key() == QtCore.Qt.Key_Down:
+                temp += 1
+                self.actualizar_img(temp)
+        return QtWidgets.QTableWidget.keyPressEvent(self.ware_table, event)
+    
+    # -----------  eventFilter para MouseEvent  -----------
+    def eventFilter(self, source, event):
+        if self.ware_table.selectedIndexes() != []:
+            if event.type() == QtCore.QEvent.MouseButtonRelease:
+                if event.button() == QtCore.Qt.LeftButton:
+                    temp = self.ware_table.currentRow()
+                    self.actualizar_img(temp)
+        return QtCore.QObject.event(source, event)
+    
+    def setupUi(self):
         self.setObjectName("Dialog")
         self.resize(1024, 668)
         self.setFixedSize(1024, 668)
@@ -675,75 +750,13 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
 
-# -----------  funcion buscar  -----------
-    def buscar(self, criterio, patron):
-        self.real_table.clear()
-        if criterio == "cod":
-            for i in self.ware.ware_list:
-                if i.objBook.cod == str.upper(patron):
-                    self.real_table.append(i)
-            return len(self.real_table)
-        elif criterio == "isbn":
-            for i in self.ware.ware_list:
-                if(i.objBook.isbn.find(str.upper(patron)) >= 0):
-                    self.real_table.append(i)
-            return len(self.real_table)
-
-        elif criterio == "nombre":
-            for i in self.ware.ware_list:
-                if(i.objBook.name.find(str.upper(patron)) >= 0):
-                    self.real_table.append(i)
-            return len(self.real_table)
-        elif criterio == "autor":
-            for i in self.ware.ware_list:
-                if(i.objBook.autor.find(str.upper(patron)) >= 0):
-                    self.real_table.append(i)
-            return len(self.real_table)
-        elif criterio == "editorial":
-            for i in self.ware.ware_list:
-                if (i.objBook.editorial.find(str.upper(patron)) >= 0):
-                    self.real_table.append(i)
-            return len(self.real_table)
-        return 0
-
-    # -----------  fill combobox wares from sql  -----------
-    def fillcmbWares(self):
-        tmp_List = []
-        try:
-            for i in self.ownWares[1]:
-                if i.cod != self.ownWares[0] and i.enabled == True:
-                    tmp_List.append(i.cod)
-            #self.seColumn = str(tmp_List[0])
-            return tmp_List
-        except:
-            return tmp_List
-    # -----------  keyPressed for QtableWidget  -----------
-    def KeyPressed(self,event):
-        if self.ware_table.selectedIndexes() != []:
-            temp = self.ware_table.currentRow()
-            if event.key() == QtCore.Qt.Key_Up:
-                temp -= 1
-                self.actualizar_img(temp)
-            elif event.key() == QtCore.Qt.Key_Down:
-                temp += 1
-                self.actualizar_img(temp)
-        return QtWidgets.QTableWidget.keyPressEvent(self.ware_table, event)
-    # -----------  eventFilter para MouseEvent  -----------
-    def eventFilter(self, source, event):
-        if self.ware_table.selectedIndexes() != []:
-            if event.type() == QtCore.QEvent.MouseButtonRelease:
-                if event.button() == QtCore.Qt.LeftButton:
-                    temp = self.ware_table.currentRow()
-                    self.actualizar_img(temp)
-        return QtCore.QObject.event(source, event)
-
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Dialog", "Genesis - [Museo del libro]"))
         self.search_box.setTitle(_translate("Dialog", "Cuadro de busqueda"))
         self.cmbSearch.setItemText(1, _translate("Dialog", "cod"))
         self.cmbSearch.setItemText(2, _translate("Dialog", "isbn"))
-        self.cmbSearch.setItemText(3, _translate("Dialog", "nombre"))
+        self.cmbSearch.setItemText(3, _translate("Dialog", "titulo"))
         self.cmbSearch.setItemText(4, _translate("Dialog", "autor"))
         self.cmbSearch.setItemText(5, _translate("Dialog", "editorial"))
 
@@ -762,7 +775,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
         item = self.ware_table.horizontalHeaderItem(2)
-        item.setText(_translate("Dialog", "nombre"))
+        item.setText(_translate("Dialog", "titulo"))
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
         item = self.ware_table.horizontalHeaderItem(3)
