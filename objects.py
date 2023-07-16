@@ -12,7 +12,7 @@ class supplier:
 	def __init__(self, id, name, admin, phone, direction, mail):
 		self.id = id
 		self.name = name
-		self.register = register
+		self.register = ""
 		self.admin = admin
 		self.phone = phone
 		self.direction = direction
@@ -42,40 +42,32 @@ class daily_sale:
 		self.total_ = total_
 
 class ware_book:
-	#def __init__(self,wares = None, objBook = None, ware_quantity = [], ware_location = [], permissions = []):
 	def __init__(self, objBook=None, wares = None, data = None):
-		ware_1 = wares[1][0].cod
-		ware_2 = wares[1][1].cod
-		ware_3 = wares[1][2].cod
-		ware_4 = wares[1][3].cod
-
+		ware_data = {}
+		for index, i in enumerate(wares[1]):
+			base = 3 * index + 7
+			temp_data = { 
+				"cant_" + i.cod: 0 if data[base] == "" else int(data[base]),
+				"ubic_" + i.cod: str(data[base + 1]),
+				"isok_" + i.cod: bool(data[base + 2])
+			}
+			ware_data.update(temp_data)
+		
 		self.objBook = objBook
-		self.almacen_data = {"cant_" + ware_1: int(data[7]),
-							 "ubic_" + ware_1: str(data[8]),
-							 "isok_" + ware_1: bool(data[9]),
-							 "cant_" + ware_2: int(data[10]),
-							 "ubic_" + ware_2: str(data[11]),
-							 "isok_" + ware_2: bool(data[12]),
-							 "cant_" + ware_3: int(data[13]),
-							 "ubic_" + ware_3: str(data[14]),
-							 "isok_" + ware_3: bool(data[15]),
-			                 "cant_" + ware_4: int(data[16]),
-							 "ubic_" + ware_4: str(data[17]),
-							 "isok_" + ware_4: bool(data[18])}
+		self.almacen_data = ware_data
 
 class book:
-	#def __init__(self, cod, isbn, name, autor, editorial, supplierID, Pv = 0, genderID = "", Pc = 0, dsct = 0):
-	def __init__(self, data, genderID="", Pc=0, dsct=0):
+	def __init__(self, data, genderID="", Pc=0):
 		self.cod = str(data[0]) # este
 		self.isbn = str(data[1]) # este
 		self.name = str(data[2]) # este
 		self.autor = str(data[3]) # este
 		self.editorial = str(data[4]) #este
 		self.supplierID = str(data[5]) #este
-		self.genderID = genderID
-		self.Pc = Pc
+		self.genderID = genderID #HARDCODEADO
+		self.Pc = Pc #HARDCODEADO
 		self.Pv = float(data[6]) #este
-		self.dsct = dsct
+		self.active = bool(data[-1]) #indica si item esta activo
 
 class ware_:
 	def __init__(self, cod = "", dir = "", enabled = False, toolTip = False):
