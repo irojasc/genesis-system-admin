@@ -90,7 +90,6 @@ class Ui_Dialog(QtWidgets.QDialog):
     def closeEvent(self, event):
         if self.ui_dialog.isVisible():
             ret = QMessageBox.information(self, 'Aviso', "Debe cerrar la ventana entrada/salida")
-            print("Si llega a esta parte")
             event.ignore()
         else:
             self.accept()
@@ -105,6 +104,7 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     # -----------  carga tabla qtableWidget  -----------
     def loadData(self, condition = "search"):
+        backgrounditem = lambda x, z: not(z) and x.setBackground(QtGui.QColor(200, 200, 200, 255))
         flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
         if condition == "main":
             # sortTable: ordena la tabla que llega de gestor por tipo de producto y nivel de codigo
@@ -115,29 +115,36 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ware_table.setRowCount(len(self.real_table))
         for ware_li in self.real_table:
             item = QtWidgets.QTableWidgetItem(ware_li.objBook.cod)
+            backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 0, item)
             if self.ownWares[2][1] == True:
                 self.ware_table.item(row, 0).setToolTip(str(ware_li.almacen_data["ubic_"+self.ownWares[0]]))
             item = QtWidgets.QTableWidgetItem(ware_li.objBook.isbn)
+            backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 1, item)
             item = QtWidgets.QTableWidgetItem(ware_li.objBook.name)
+            backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 2, item)
             item = QtWidgets.QTableWidgetItem(ware_li.objBook.autor)
+            backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 3, item)
             item = QtWidgets.QTableWidgetItem(ware_li.objBook.editorial)
+            backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 4, item)
             text = str(ware_li.almacen_data["cant_"+self.ownWares[0]]) if ware_li.objBook.active else "-" 
             item = QtWidgets.QTableWidgetItem(text)
+            backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 5, item)
             if self.cmbWares.currentIndex() != -1:
                 text = str(ware_li.almacen_data["cant_"+self.cmbWares.currentText()]) if ware_li.objBook.active else "-" 
                 item = QtWidgets.QTableWidgetItem(text)
+                backgrounditem(item, ware_li.objBook.active)
                 item.setFlags(flag)
                 self.ware_table.setItem(row, 6, item)
             row += 1
@@ -284,7 +291,11 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     def inout_operation(self,event):
         self.change_state("in/out")
-        self.ui_dialog.mainList = self.ware.ware_list.copy()
+        
+        # separar solo items activos y enviar a in/out form
+        result_books = list(filter(lambda x: x.objBook.active, self.ware.ware_list.copy()))
+        self.ui_dialog.mainList = result_books.copy()
+
         self.ui_dialog.init_condition()
         if self.ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
             self.change_state("ventas")
@@ -743,19 +754,19 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.lbltxtPrecio.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.lbltxtPrecio.setObjectName("lbltxtPrecio")
         
-        # -----------  boton vender  -----------
-        self.btnVender = QtWidgets.QPushButton(self.boxPV)
-        self.btnVender.setGeometry(QtCore.QRect(160, 117, 141, 41))
+        # -----------  boton Editar Precio Venta  -----------
+        self.btnEditarPv = QtWidgets.QPushButton(self.boxPV)
+        self.btnEditarPv.setGeometry(QtCore.QRect(160, 117, 141, 41))
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
         font.setPointSize(12)
         font.setBold(True)
         font.setWeight(75)
-        self.btnVender.setFont(font)
-        self.btnVender.setStyleSheet("background-color: rgb(240, 240, 240);")
-        self.btnVender.setObjectName("btnVender")
-        #self.btnVender.clicked.connect(self.printCurrent)
-        self.btnVender.setEnabled(False)
+        self.btnEditarPv.setFont(font)
+        self.btnEditarPv.setStyleSheet("background-color: rgb(240, 240, 240);")
+        self.btnEditarPv.setObjectName("btnEditarPv")
+        #self.btnEditarPv.clicked.connect(self.printCurrent)
+        self.btnEditarPv.setEnabled(False)
 
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -814,7 +825,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.boxPV.setTitle(_translate("Dialog", "Cuadro de venta"))
         self.lblPV.setText(_translate("Dialog", "P.Venta:"))
         self.lbltxtPrecio.setText(_translate("Dialog", ""))
-        self.btnVender.setText(_translate("Dialog", "Vender"))
+        self.btnEditarPv.setText(_translate("Dialog", "Editar"))
 
 
 if __name__ == '__main__':
