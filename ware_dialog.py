@@ -131,11 +131,13 @@ class Ui_Dialog(QtWidgets.QDialog):
             item = QtWidgets.QTableWidgetItem(ware_li.objBook.editorial)
             item.setFlags(flag)
             self.ware_table.setItem(row, 4, item)
-            item = QtWidgets.QTableWidgetItem(str(ware_li.almacen_data["cant_"+self.ownWares[0]]))
+            text = str(ware_li.almacen_data["cant_"+self.ownWares[0]]) if ware_li.objBook.active else "-" 
+            item = QtWidgets.QTableWidgetItem(text)
             item.setFlags(flag)
             self.ware_table.setItem(row, 5, item)
             if self.cmbWares.currentIndex() != -1:
-                item = QtWidgets.QTableWidgetItem(str(ware_li.almacen_data["cant_"+self.cmbWares.currentText()]))
+                text = str(ware_li.almacen_data["cant_"+self.cmbWares.currentText()]) if ware_li.objBook.active else "-" 
+                item = QtWidgets.QTableWidgetItem(text)
                 item.setFlags(flag)
                 self.ware_table.setItem(row, 6, item)
             row += 1
@@ -221,9 +223,13 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     # -----------  double click event para cambiar ubicacion  -----------
     def tableWidget_doubleClicked(self):
+        row = self.ware_table.currentIndex().row()
         column_ = self.ware_table.currentIndex().column()
-        if self.ownWares[2][1] == True and column_ == 0:
-            row = self.ware_table.currentIndex().row()
+        
+        # no permite el cambio de ubicacion si el item esta inactivo
+        itemSelected = list(filter(lambda x: (x.objBook.cod == self.ware_table.item(row,0).text()), self.real_table))
+
+        if self.ownWares[2][1] == True and column_ == 0 and itemSelected[0].objBook.active:
             try:
                 text, validation = QtWidgets.QInputDialog.getText(self, 'Cambiar Ubicación', 'Ingrese nueva ubicación para:\n' + self.ware_table.item(row,column_).text() + "\n" + self.ware_table.item(row,column_+2).text() + "\n" +
                                                                   "FORMATO: Mueble (Letra), Fila (Numero)")
@@ -253,6 +259,10 @@ class Ui_Dialog(QtWidgets.QDialog):
 
             except:
                 ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
+        
+        elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
+            ret = QMessageBox.question(self, 'Alerta',"El producto se encuentra desactivado",QMessageBox.Ok, QMessageBox.Ok)
+
 
     # -----------  load_table para cargar tabla de DB, cuando se presiona icono de nube  -----------
     def load_table(self, event = None):
