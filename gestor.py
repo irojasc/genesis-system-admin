@@ -31,12 +31,10 @@ class wares_gestor:
 
 	def load_wares(self):
 		self.connectDB()
-		query = "use genesisDB;"
-		query1 = "select * from wares;"
+		query = "select * from genesisDB.wares where enabled = true order by id asc;"
 		try:
 			self.cursor.execute(query)
-			self.cursor.execute(query1)
-			# param5: general enabled, param6: tooltip enabled
+			# param5: ware enabled, param6: tooltip enabled
 			for (param1, param2, param3, param4, param5, param6) in self.cursor:
 				objWare = ware_(param2, param3, bool(param5), bool(param6))
 				self.wares.append(objWare)
@@ -170,13 +168,18 @@ class ware_gestor:
 		self.ware_list.clear()
 		self.connect_db()
 		try:
-			initial_text = "select genesisDB.ware_books.cod_book, genesisDB.books.isbn, genesisDB.books.name, genesisDB.books.autor, " \
-						   "genesisDB.books.editorial, genesisDB.books.supplierID, genesisDB.books.pv, "
+			initial_text = "select cod_book, isbn, name, autor, editorial, supplierID, pv, "
+			last_text = "select cod as cod_book, isbn, name, autor, editorial, supplierID, pv, "
 
 			for i in wares[1]:
-				initial_text = initial_text	 + "genesisDB.ware_books.cant_" + str(i.cod) + ", genesisDB.ware_books.ubic_" + str(i.cod) + ", genesisDB.ware_books.isok_" + str(i.cod) + ","
-			initial_text = initial_text.rstrip(initial_text[-1]) + " from genesisDB.ware_books inner join genesisDB.books on genesisDB.ware_books.cod_book = genesisDB.books.cod;"
-			query = (initial_text)
+				initial_text = initial_text	 + "cant_" + str(i.cod) + ", ubic_" + str(i.cod) + ", isok_" + str(i.cod) + ","
+				last_text = last_text + "cant_" + str(i.cod) + ", ubic_" + str(i.cod) + ", isok_" + str(i.cod) + ","
+			
+			initial_text = initial_text + " true as active from genesisDB.ware_books inner join genesisDB.books on genesisDB.ware_books.cod_book = genesisDB.books.cod"
+			last_text = last_text + " false as active from genesisDB.books as p left join genesisDB.ware_books as m on p.cod = m.cod_book where m.cod_book is null;"
+			final_query = initial_text + " union all " + last_text
+			
+			query = (final_query)
 			# -----------  carga data de libros  -----------
 			self.cursor.execute(query)
 			for params in self.cursor:
@@ -190,7 +193,6 @@ class ware_gestor:
 				#objwareBook = ware_book(wares, objLibro,[values[7],values[10],values[13],values[16]],[values[8],values[11],values[14],values[17]],[values[9],values[12],values[15],values[18]])
 				objwareBook = ware_book(objLibro, wares, values)
 				self.ware_list.append(objwareBook)
-
 			# -----------  cerrar conexion db  -----------
 			self.disconnect_db()
 
