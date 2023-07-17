@@ -268,8 +268,25 @@ class Ui_Dialog(QtWidgets.QDialog):
                 ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
         
         elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
-            ret = QMessageBox.question(self, 'Alerta',"El producto se encuentra desactivado",QMessageBox.Ok, QMessageBox.Ok)
-
+            ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text()))
+            succes and QMessageBox.information(self, 'Mensaje', "Producto activado", QMessageBox.Ok, QMessageBox.Ok)
+            ##aqui falta actualizar la tabla del frond luego de actualizar la tabla del back
+            
+    # -----------  user validation  -----------
+    def userValidation(self):
+        # ok: True or False
+        # text: content
+        text, ok = QInputDialog.getText(self, 'Validar usuario', 'Ingrese contraseña', QtWidgets.QLineEdit.Password)
+        if(ok):
+            currentUser = list(filter(lambda x: x.user == self.ownUsers[0], self.ownUsers[1]))[0]
+            if currentUser.passwd == text:
+                return True
+            else:
+                QMessageBox.question(self, 'Alerta', "Contraseña incorrecta", QMessageBox.Ok, QMessageBox.Ok)
+                return False
+        else:
+            return False
 
     # -----------  load_table para cargar tabla de DB, cuando se presiona icono de nube  -----------
     def load_table(self, event = None):
