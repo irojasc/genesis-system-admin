@@ -10,6 +10,7 @@ DOTENV_FILE = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 
+# ware_gestor: maneja datos de almacen
 class wares_gestor:
 	def __init__(self, condition = "main"):
 		if condition == "main":
@@ -77,7 +78,7 @@ class wares_gestor:
 			print("No se puede conectar a genesisDB")
 			self.disconnectDB()
 
-
+# ware_gestor: maneja de items en almacen
 class ware_gestor:
 	def __init__(self):
 		self.ware_list = []
@@ -123,8 +124,6 @@ class ware_gestor:
 					self.temp_list.append(i)
 			return len(self.temp_list)
 		return 0"""
-
-
 
 	def update_quantity(self, list_, tipo, currentWare = "", location = ""):
 		dict = { "ingreso": "+",
@@ -205,6 +204,18 @@ class ware_gestor:
 			print("no pudo cargar libros almacen de DB")
 			self.disconnect_db()
 
+	def activateItem(self, codBook: str = ""):
+		try:
+			self.connect_db()
+			query = ("insert into genesisDB.ware_books (cod_book) values ('%s')" % (codBook))
+			self.cursor.execute(query)
+			self.mydb.commit()
+			self.disconnect_db()
+			return True
+		except:
+			print("No se puede conectar a DB en activación de item")
+			self.disconnect_db()
+			return False
 
 class users_gestor:
 	def __init__(self):
