@@ -68,6 +68,10 @@ class book:
 		self.Pc = Pc #HARDCODEADO
 		self.Pv = float(data[6]) #este
 		self.active = bool(data[-1]) #indica si item esta activo
+	
+	def setActive(self, condition: bool):
+		self.active = condition
+
 
 class ware_:
 	def __init__(self, cod = "", dir = "", enabled = False, toolTip = False):

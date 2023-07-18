@@ -206,15 +206,26 @@ class ware_gestor:
 
 	def activateItem(self, codBook: str = ""):
 		try:
-			self.connect_db()
-			query = ("insert into genesisDB.ware_books (cod_book) values ('%s')" % (codBook))
-			self.cursor.execute(query)
-			self.mydb.commit()
+			if self.activateInnerTable(codBook):
+				self.connect_db()
+				query = ("insert into genesisDB.ware_books (cod_book) values ('%s')" % (codBook))
+				self.cursor.execute(query)
+				self.mydb.commit()
+				self.disconnect_db()
+				return True
+			else:
+				return False
+		except Exception as error:
+			print("Location: Activating Item: ", error)
 			self.disconnect_db()
+			return False
+		
+	def activateInnerTable(self, codBook: str = ""):
+		try:
+			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
+			self.ware_list[index].objBook.setActive(True)
 			return True
-		except:
-			print("No se puede conectar a DB en activación de item")
-			self.disconnect_db()
+		except Exception as error:
 			return False
 
 class users_gestor:
