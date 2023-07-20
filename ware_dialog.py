@@ -233,16 +233,15 @@ class Ui_Dialog(QtWidgets.QDialog):
     def tableWidget_doubleClicked(self):
         row = self.ware_table.currentIndex().row()
         column_ = self.ware_table.currentIndex().column()
-
-        self.ui_CustomInput.exec_()
         
-        # # no permite el cambio de ubicacion si el item esta inactivo
-        # itemSelected = list(filter(lambda x: (x.objBook.cod == self.ware_table.item(row,0).text()), self.real_table))
+        # no permite el cambio de ubicacion si el item esta inactivo
+        itemSelected = list(filter(lambda x: (x.objBook.cod == self.ware_table.item(row,0).text()), self.real_table))
 
-        # if self.ownWares[2][1] == True and column_ == 0 and itemSelected[0].objBook.active:
-        #     try:
-        #         text, validation = QtWidgets.QInputDialog.getText(self, 'Cambiar Ubicación', 'Ingrese nueva ubicación para:\n' + self.ware_table.item(row,column_).text() + "\n" + self.ware_table.item(row,column_+2).text() + "\n" +
-        #                                                           "FORMATO: Mueble (Letra), Fila (Numero)")
+        if self.ownWares[2][1] == True and column_ == 0 and itemSelected[0].objBook.active:
+            try:
+                # validation: Cancel, Ok, Desactivar
+                validation, text = self.openUbicDialog(self.ware_table.item(row,column_).text(), self.ware_table.item(row,column_+2).text())
+                print(validation, text)
         #         if validation and text.split(" ")[0].upper() == "MUEBLE" and text.split(" ")[2].upper() == "FILA":
         #             text_, validation_ = QtWidgets.QInputDialog.getText(self, 'Validar operación', "Ingrese contraseña de usuario", QtWidgets.QLineEdit.Password)
         #             index = next((index for (index, d) in enumerate(self.ownUsers[1]) if d.passwd == text_), None)
@@ -267,16 +266,16 @@ class Ui_Dialog(QtWidgets.QDialog):
         #                                        "Operación sin efecto",
         #                                        QMessageBox.Ok, QMessageBox.Ok)
 
-        #     except:
-        #         ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
+            except:
+                ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
         
-        # elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
-        #     ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        #     succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text()))
-        #     if succes:
-        #         QMessageBox.information(self, 'Mensaje', "Producto activado", QMessageBox.Ok, QMessageBox.Ok)
-        #         self.txtBusChanged()
-        #     ##aqui falta actualizar la tabla del frond luego de actualizar la tabla del back
+        elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
+            ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text()))
+            if succes:
+                QMessageBox.information(self, 'Mensaje', "Producto activado", QMessageBox.Ok, QMessageBox.Ok)
+                self.txtBusChanged()
+            ##aqui falta actualizar la tabla del frond luego de actualizar la tabla del back
             
     # -----------  user validation  -----------
     def userValidation(self):
@@ -403,6 +402,12 @@ class Ui_Dialog(QtWidgets.QDialog):
                     temp = self.ware_table.currentRow()
                     self.actualizar_img(temp)
         return QtCore.QObject.event(source, event)
+    
+    def openUbicDialog(self, code: str = "", title: str = ""):
+        self.ui_CustomInput.cleanInputText()
+        self.ui_CustomInput.setItemData(code, title)
+        if self.ui_CustomInput.exec_() == QDialog.Accepted:
+            return self.ui_CustomInput.returnedVal
     
     def setupUi(self):
         self.setObjectName("Dialog")
@@ -849,12 +854,39 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.lbltxtPrecio.setText(_translate("Dialog", ""))
         self.btnEditarPv.setText(_translate("Dialog", "Editar"))
 
-
 class ui_CustomChangeLocation(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(ui_CustomChangeLocation, self).__init__(parent)
+        self.code = ""
+        self.title = ""
         self.setupUi()
+        
+    def returnValues(self, textButton: str = ""):
+        self.returnedVal = (textButton, self.txtUbic.text())
+        self.submitclose()
+
+    def cleanInputText(self):
+        self.txtUbic.setText("");
+
+    def closeEvent(self, event):
+        self.returnValues("Cancel")
+
+    def setItemData(self, code: str = "", title: str = ""):
+        self.label2.setText(code)
+        self.label2.adjustSize()
+        self.label3.setText(title)
+        self.label3.adjustSize()
+        w1 = self.label4.frameGeometry().width()
+        w2 = self.label3.frameGeometry().width()
+        self.textWidth = w1 + ((w2>w1) and (w2 - w1))
+        self.txtUbic.setFixedWidth(self.textWidth)
+        self.btnCancel.move(self.textWidth - self.btnCancel.frameGeometry().width() , 110)
+        self.btnOk.move(self.textWidth - self.btnCancel.frameGeometry().width() - self.btnOk.frameGeometry().width() , 110)
+        self.btnDesactive.move(self.textWidth - self.btnDesactive.frameGeometry().width(), 135)
     
+    def submitclose(self):
+        self.accept()
+
     def setupUi(self):
         self.setObjectName("QCustomDialog")
         self.setWindowTitle("Cambiar ubicación")
@@ -865,16 +897,16 @@ class ui_CustomChangeLocation(QtWidgets.QDialog):
         self.label1.setStyleSheet("background-color: lightgreen")
         self.label1.adjustSize()
         
-        self.label2 = QLabel("GN_9999",self)
+        self.label2 = QLabel(self)
         self.label2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.label2.move(6, 32)
         self.label2.setStyleSheet("background-color: lightblue")
 
-        self.label3 = QLabel("COMENTARIOS REALES DE LOS INCAS DE SIEMPRE EN LE MUNDO",self)
+        self.label3 = QLabel(self)
         self.label3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.label3.move(6, 49)
         self.label3.setStyleSheet("background-color: lightblue")
-        self.label3.adjustSize()
+        
 
         self.label4 = QLabel("FORMATO: Mueble (Letra), Fila (Numero)",self)
         self.label4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -885,29 +917,29 @@ class ui_CustomChangeLocation(QtWidgets.QDialog):
         self.txtUbic = QLineEdit(self)
         self.txtUbic.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.txtUbic.move(6, 85)
-        w1 = self.label4.frameGeometry().width()
-        w2 = self.label3.frameGeometry().width()
-        self.txtUbic.setMinimumWidth(w1 + ((w2>w1) and (w2 - w1)))
+
+        self.btnCancel = QPushButton('Cancel', self)
+        self.btnCancel.adjustSize()
+        self.btnCancel.clicked.connect(lambda: self.returnValues('Cancel'))
+
+        self.btnOk = QPushButton('OK', self)
+        self.btnOk.adjustSize()
+        self.btnOk.clicked.connect(lambda: self.returnValues("Ok"))
         
-        
-        
-
-
-
-
-
-
+        self.btnDesactive = QPushButton('Desactivar', self)
+        self.btnDesactive.adjustSize()
+        self.btnDesactive.clicked.connect(lambda: self.returnValues("Desactivar"))
 
 
 if __name__ == '__main__':
-    
     app = QApplication(sys.argv)
-    # Dialog = QDialog()
-    # ui = Ui_Dialog(Dialog)
-    ui = ui_CustomChangeLocation()
-    # ui.init_condition()
-    # ui.show_window()
-    ui.exec_()
-    # sys.exit(app.exec_())
+    Dialog = QDialog()
+    ui = Ui_Dialog(Dialog)
+    # ui = ui_CustomChangeLocation()
+    # ui.setItemData("CODIGO DE PRODUCTO", "NOMBRE DE PRODUCTO")
+    ui.init_condition()
+    ui.show_window()
+    # ui.exec_()
+    sys.exit(app.exec_())
 
 
