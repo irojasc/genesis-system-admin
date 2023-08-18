@@ -238,40 +238,38 @@ class Ui_Dialog(QtWidgets.QDialog):
         itemSelected = list(filter(lambda x: (x.objBook.cod == self.ware_table.item(row,0).text()), self.real_table))
 
         if self.ownWares[2][1] == True and column_ == 0 and itemSelected[0].objBook.active:
-            try:
+            
                 # validation: Cancel, Ok, Desactivar
                 validation, text = self.openUbicDialog(self.ware_table.item(row,column_).text(), self.ware_table.item(row,column_+2).text())
-                print(validation, text)
-        #         if validation and text.split(" ")[0].upper() == "MUEBLE" and text.split(" ")[2].upper() == "FILA":
-        #             text_, validation_ = QtWidgets.QInputDialog.getText(self, 'Validar operación', "Ingrese contraseña de usuario", QtWidgets.QLineEdit.Password)
-        #             index = next((index for (index, d) in enumerate(self.ownUsers[1]) if d.passwd == text_), None)
-        #             if index != None:
-        #                 self.ware_gest.upload_location(self.ownWares[0], self.ware_table.item(row,0).text(), text.upper())
-        #                 index_ = next((index for (index, d) in enumerate(self.ware.ware_list) if d.objBook.cod == self.ware_table.item(row,0).text()), None)
-        #                 index__ = next((index for (index, d) in enumerate(self.real_table) if d.objBook.cod == self.ware_table.item(row,0).text()), None)
-        #                 self.ware.ware_list[index_].almacen_data["ubic_" + self.ownWares[0]] = text.upper()
-        #                 self.real_table[index__].almacen_data["ubic_" + self.ownWares[0]] = text.upper()
-        #                 self.ware_table.item(row, 0).setToolTip(text.upper())
-        #                 ret = QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
+                if (validation == "Ok"):
+                    try:
+                        if text.split(" ")[0].upper() == "MUEBLE" and text.split(" ")[2].upper() == "FILA":
+                            if self.userValidation() and self.ware.changeItemLocation(self.ware_table.item(row,0).text(), text, self.ownWares[0]):
+                                QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
+                                self.txtBusChanged()
 
-        #             elif index == None:
-        #                 ret = QMessageBox.question(self, 'Alerta', "Contraseña incorrecta", QMessageBox.Ok, QMessageBox.Ok)
+                        elif len(text) > 0:
+                            ret = QMessageBox.question(self, 'Alerta',
+                                                    "Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",
+                                                    QMessageBox.Ok, QMessageBox.Ok)
+                        elif (validation == "Ok") and len(text) == 0:
+                            ret = QMessageBox.question(self, 'Alerta',
+                                                    "Operación sin efecto",
+                                                    QMessageBox.Ok, QMessageBox.Ok)
+                    except:
+                        ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
+                
+                if (validation == "Desactivar"):
+                    ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO ACTIVO::..\n¿Desea desactivar el producto?\n¡No desactivar productos con cantidad positiva!",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text(), False))
+                    if succes:
+                        QMessageBox.information(self, 'Mensaje', "Producto desactivado", QMessageBox.Ok, QMessageBox.Ok)
+                        self.txtBusChanged()
 
-        #         elif validation and len(text) > 0:
-        #             ret = QMessageBox.question(self, 'Alerta',
-        #                                        "Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",
-        #                                        QMessageBox.Ok, QMessageBox.Ok)
-        #         elif validation and len(text) == 0:
-        #             ret = QMessageBox.question(self, 'Alerta',
-        #                                        "Operación sin efecto",
-        #                                        QMessageBox.Ok, QMessageBox.Ok)
 
-            except:
-                ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
-        
         elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
             ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text()))
+            succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text(), True))
             if succes:
                 QMessageBox.information(self, 'Mensaje', "Producto activado", QMessageBox.Ok, QMessageBox.Ok)
                 self.txtBusChanged()

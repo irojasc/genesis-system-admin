@@ -204,11 +204,14 @@ class ware_gestor:
 			print("no pudo cargar libros almacen de DB")
 			self.disconnect_db()
 
-	def activateItem(self, codBook: str = ""):
+	def activateItem(self, codBook: str = "", condition: bool = True):
 		try:
-			if self.activateInnerTable(codBook):
+			if self.activateInnerItemState(codBook, condition):
 				self.connect_db()
-				query = ("insert into genesisDB.ware_books (cod_book) values ('%s')" % (codBook))
+				if condition:
+					query = ("insert into genesisDB.ware_books (cod_book) values ('%s')" % (codBook))
+				else:
+					query = ("delete from genesisDB.ware_books where cod_book = '%s'" % (codBook))
 				self.cursor.execute(query)
 				self.mydb.commit()
 				self.disconnect_db()
@@ -220,13 +223,38 @@ class ware_gestor:
 			self.disconnect_db()
 			return False
 		
-	def activateInnerTable(self, codBook: str = ""):
+	def changeItemLocation(self, codBook: str = "", location: str= "SIN UBICACION", currentWare: str=""):
+		try:
+			if self.changeInnerItemLocation(codBook, location, currentWare):
+				self.connect_db()
+				query = ("update genesisDB.ware_books set genesisDB.ware_books.ubic_" + currentWare + " = '" + location.upper() + "' where genesisDB.ware_books.cod_book = '" + codBook + "';")
+				self.cursor.execute(query)
+				self.mydb.commit()
+				self.disconnect_db()
+				return True
+			else:
+				return False
+		except Exception as error:
+			print("Location: Activating Item: ", error)
+			self.disconnect_db()
+			return False
+		
+	def activateInnerItemState(self, codBook: str = "", condition: bool = True):
 		try:
 			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
-			self.ware_list[index].objBook.setActive(True)
+			self.ware_list[index].objBook.setActive(condition)
 			return True
 		except Exception as error:
 			return False
+		
+	def changeInnerItemLocation(self, codBook: str = "", location: str= "SIN UBICACION", currentWare: str= ""):
+		try:
+			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
+			self.ware_list[index].almacen_data["ubic_" + currentWare] = location.upper();
+			return True
+		except Exception as error:
+			return False
+		
 
 class users_gestor:
 	def __init__(self):
