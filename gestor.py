@@ -254,7 +254,23 @@ class ware_gestor:
 			return True
 		except Exception as error:
 			return False
-		
+	
+	def isZeroQuantity(self, codBook: str = ""):
+		try:
+			sum = 0
+			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
+			keys_ = list(self.ware_list[index].almacen_data.keys())
+			keys_cant = list(filter(lambda x: x.split("_")[0] == "cant", keys_))
+			for x in keys_cant:
+				sum += abs((self.ware_list[index].almacen_data[x]))
+			if sum == 0:
+				return True
+			else:
+				return False
+		except Exception as error:
+			return False
+
+
 
 class users_gestor:
 	def __init__(self):

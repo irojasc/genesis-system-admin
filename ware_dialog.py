@@ -260,11 +260,15 @@ class Ui_Dialog(QtWidgets.QDialog):
                         ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
                 
                 if (validation == "Desactivar"):
-                    ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO ACTIVO::..\n¿Desea desactivar el producto?\n¡No desactivar productos con cantidad positiva!",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                    succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text(), False))
-                    if succes:
-                        QMessageBox.information(self, 'Mensaje', "Producto desactivado", QMessageBox.Ok, QMessageBox.Ok)
-                        self.txtBusChanged()
+                    if self.ware.isZeroQuantity(self.ware_table.item(row,0).text()):
+                        ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO ACTIVO::..\n¿Desea desactivar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                        succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text(), False))
+                        if succes:
+                            QMessageBox.information(self, 'Mensaje', "Producto desactivado", QMessageBox.Ok, QMessageBox.Ok)
+                            self.txtBusChanged()
+                    else:
+                        QMessageBox.information(self, 'Mensaje', "El producto se encuentra en stock", QMessageBox.Ok, QMessageBox.Ok)
+
 
 
         elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
