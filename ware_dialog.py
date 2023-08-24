@@ -10,6 +10,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QFont, QBrush, QColor
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import pyqtSignal
 from gestor import ware_gestor, wares_gestor
 from inout_dialog import Ui_inoutDialog
 import time
@@ -25,6 +26,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
         self.ui_CustomInput = ui_CustomChangeLocation()
         self.ui_operationDialog = ui_OperationDialog()
+        self.ui_EditDialog = ui_EditItemDialog()
         self.real_table = []
         self.ownUsers = data_users
         self.ownWares = data_wares
@@ -276,7 +278,11 @@ class Ui_Dialog(QtWidgets.QDialog):
                         except:
                             ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
                 if (validation == "Editar"):
-                    print("Entra a la parte de editar")
+                    data = (self.ware_table.item(row,0).text(),self.ware_table.item(row,1).text(), self.ware_table.item(row,2).text(), self.ware_table.item(row,3).text(), self.ware_table.item(row,4).text(), str(self.real_table[row].objBook.Pv))
+                    isUpdate, text = self.openEditItemDialog(data)
+                    print(isUpdate)
+                    
+
 
         elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
             ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -422,6 +428,17 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ui_operationDialog.setItemData(code, title)
         if self.ui_operationDialog.exec_() == QDialog.Accepted:
             return self.ui_operationDialog.returnedVal
+    
+    def openEditItemDialog(self, data: tuple = None):
+        if bool(data):
+            self.ui_EditDialog.setDataFields(data)
+            self.ui_EditDialog.cleanInputFields()
+            if self.ui_EditDialog.exec_() == QDialog.Accepted:
+                # return self.ui_operationDialog.returnedVal
+                return True, None
+            return False, None
+        else:
+            return False, None
     
     def setupUi(self):
         self.setObjectName("Dialog")
@@ -868,6 +885,144 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.lbltxtPrecio.setText(_translate("Dialog", ""))
         self.btnEditarPv.setText(_translate("Dialog", "Editar"))
 
+
+class ui_EditItemDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(ui_EditItemDialog, self).__init__(parent)
+        self.code = ""
+        self.title = ""
+        self.setupUi()
+        
+    def returnValues(self, textButton: str = ""):
+        self.returnedVal = (textButton, self.txtUbic.text())
+        self.submitclose()
+
+    def cleanInputFields(self):
+        # self.txtUbic.setText("");
+        pass
+
+    def closeEvent(self, event):
+        pass
+        # self.returnValues("Cancel")
+
+    def setDataFields(self, data: tuple = None):
+        if bool(data):
+            self.txtId.setText(data[0]);
+            self.txtISBN.setText(data[1]);
+            self.txtTitle.setText(data[2]);
+            self.txtAutor.setText(data[3]);
+            self.txtPublisher.setText(data[4]);
+            self.txtPrice.setText(data[5]);
+    
+    def submitclose(self):
+        self.accept()
+
+    
+    def deactivateLineEdit(self, widget: str = ""):
+        if bool(widget):
+            if widget == "ISBN":
+                print("ISBN")
+            # self.txtId.setReadOnly(False)
+            # palette = self.txtId.palette()
+            # self.txtId.setPalette(self.defaultPalette)
+    
+    
+    def setupUi(self):
+        self.resize(335, 200)
+        self.setFixedSize(335, 200)
+        self.setObjectName("ui_EditItemDialog")
+        self.setWindowTitle("Editar producto")
+        
+        self.lblId = QLabel("CÓDIGO:",self)
+        self.lblId.adjustSize()
+        self.lblId.move(20, 20)
+        self.lblId.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblId.setStyleSheet("background-color: lightgreen")
+        self.txtId = MyLineEdit(self)
+        self.txtId.setFixedHeight(18)
+        self.txtId.setFixedWidth(230)
+        self.txtId.move(85,17)
+        self.txtId.setEnabled(False)
+        self.defaultPalette = self.txtId.palette()
+
+        color = QColor(230,230,230)
+
+        self.lblISBN = QLabel("ISBN:",self)
+        self.lblISBN.adjustSize()
+        self.lblISBN.move(20, 40)
+        self.lblISBN.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblISBN.setStyleSheet("background-color: lightblue")
+        self.txtISBN = MyLineEdit(self)
+        self.txtISBN.setFixedHeight(18)
+        self.txtISBN.setFixedWidth(230)
+        self.txtISBN.move(85,38)
+        self.txtISBN.setReadOnly(True)
+        palette = self.txtISBN.palette()
+        palette.setColor(QtGui.QPalette.Base, color)
+        self.txtISBN.setPalette(palette)
+        self.txtISBN.clicked.connect(lambda: self.deactivateLineEdit("ISBN"))
+        
+        self.lblTitle = QLabel("TÍTULO:",self)
+        self.lblTitle.adjustSize()
+        self.lblTitle.move(20, 60)
+        self.lblTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblTitle.setStyleSheet("background-color: lightblue")
+        self.txtTitle = MyLineEdit(self)
+        self.txtTitle.setFixedHeight(18)
+        self.txtTitle.setFixedWidth(230)
+        self.txtTitle.move(85,58)
+        self.txtTitle.setEnabled(False)
+
+        self.lblAutor = QLabel("AUTOR:",self)
+        self.lblAutor.adjustSize()
+        self.lblAutor.move(20, 80)
+        self.lblAutor.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblAutor.setStyleSheet("background-color: lightblue")
+        self.txtAutor = MyLineEdit(self)
+        self.txtAutor.setFixedHeight(18)
+        self.txtAutor.setFixedWidth(230)
+        self.txtAutor.move(85,78)
+        self.txtAutor.setEnabled(False)
+
+        self.lblPublisher = QLabel("EDITORIAL:",self)
+        self.lblPublisher.adjustSize()
+        self.lblPublisher.move(20, 100)
+        self.lblPublisher.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblPublisher.setStyleSheet("background-color: lightblue")
+        self.txtPublisher = MyLineEdit(self)
+        self.txtPublisher.setFixedHeight(18)
+        self.txtPublisher.setFixedWidth(230)
+        self.txtPublisher.move(85,98)
+        self.txtPublisher.setEnabled(False)
+
+        self.lblPrice = QLabel("PRECIO:",self)
+        self.lblPrice.adjustSize()
+        self.lblPrice.move(20, 120)
+        self.lblPrice.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblPrice.setStyleSheet("background-color: lightblue")
+        self.txtPrice = MyLineEdit(self)
+        self.txtPrice.setFixedHeight(18)
+        self.txtPrice.setFixedWidth(230)
+        self.txtPrice.move(85,118)
+        self.txtPrice.setEnabled(False)
+
+        # self.btnCancel = QPushButton('Cancel', self)
+        # self.btnCancel.adjustSize()
+        # self.btnCancel.clicked.connect(lambda: self.returnValues('Cancel'))
+
+        # self.btnOk = QPushButton('OK', self)
+        # self.btnOk.adjustSize()
+        # self.btnOk.clicked.connect(lambda: self.returnValues("Ok"))
+
+    def show_window(self):
+       self.show()
+
+class MyLineEdit(QLineEdit):
+    clicked = pyqtSignal()
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+        QLineEdit.mousePressEvent(self, event)
+
 class ui_CustomChangeLocation(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(ui_CustomChangeLocation, self).__init__(parent)
@@ -1013,14 +1168,17 @@ class ui_OperationDialog(QtWidgets.QDialog):
         self.show()
 
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     Dialog = QDialog()
-    ui = Ui_Dialog(Dialog)
+    # ui = Ui_Dialog(Dialog)
     # ui = ui_CustomChangeLocation()
+    ui = ui_EditItemDialog(Dialog)
+    ui.setDataFields(("GN_2524", "97845562314", "COMENTARIOS REALES DE LOS INCAS", "INCA GARCILASO DE VEGA", "EL LECTOR", "65.0"))
     # ui = ui_OperationDialog(Dialog)
     # ui.setItemData("", "")
-    ui.init_condition()
+    # ui.init_condition()
     ui.show_window()
     # ui.exec_()
     sys.exit(app.exec_())
