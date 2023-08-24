@@ -894,7 +894,7 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.setupUi()
         
     def returnValues(self, textButton: str = ""):
-        self.returnedVal = (textButton, self.txtUbic.text())
+        self.returnedVal = textButton
         self.submitclose()
 
     def cleanInputFields(self):
@@ -921,10 +921,64 @@ class ui_EditItemDialog(QtWidgets.QDialog):
     def deactivateLineEdit(self, widget: str = ""):
         if bool(widget):
             if widget == "ISBN":
-                print("ISBN")
-            # self.txtId.setReadOnly(False)
-            # palette = self.txtId.palette()
-            # self.txtId.setPalette(self.defaultPalette)
+                self.txtISBN.setReadOnly(False)
+                self.txtISBN.setPalette(self.defaultPalette)
+                self.txtTitle.setPalette(self.darkPalette)
+                self.txtAutor.setPalette(self.darkPalette)
+                self.txtPublisher.setPalette(self.darkPalette)
+                self.txtPrice.setPalette(self.darkPalette)
+                self.txtTitle.setReadOnly(True)
+                self.txtAutor.setReadOnly(True)
+                self.txtPublisher.setReadOnly(True)
+                self.txtPrice.setReadOnly(True)
+
+            elif widget == "Title":
+                self.txtTitle.setReadOnly(False)
+                self.txtTitle.setPalette(self.defaultPalette)
+                self.txtISBN.setPalette(self.darkPalette)
+                self.txtAutor.setPalette(self.darkPalette)
+                self.txtPublisher.setPalette(self.darkPalette)
+                self.txtPrice.setPalette(self.darkPalette)
+                self.txtISBN.setReadOnly(True)
+                self.txtAutor.setReadOnly(True)
+                self.txtPublisher.setReadOnly(True)
+                self.txtPrice.setReadOnly(True)
+
+            elif widget == "Autor":
+                self.txtAutor.setReadOnly(False)
+                self.txtAutor.setPalette(self.defaultPalette)
+                self.txtISBN.setPalette(self.darkPalette)
+                self.txtTitle.setPalette(self.darkPalette)
+                self.txtPublisher.setPalette(self.darkPalette)
+                self.txtPrice.setPalette(self.darkPalette)
+                self.txtISBN.setReadOnly(True)
+                self.txtTitle.setReadOnly(True)
+                self.txtPrice.setReadOnly(True)
+                self.txtPublisher.setReadOnly(True)
+
+            elif widget == "Publisher":
+                self.txtPublisher.setReadOnly(False)
+                self.txtPublisher.setPalette(self.defaultPalette)
+                self.txtISBN.setPalette(self.darkPalette)
+                self.txtTitle.setPalette(self.darkPalette)
+                self.txtAutor.setPalette(self.darkPalette)
+                self.txtPrice.setPalette(self.darkPalette)
+                self.txtISBN.setReadOnly(True)
+                self.txtTitle.setReadOnly(True)
+                self.txtAutor.setReadOnly(True)
+                self.txtPrice.setReadOnly(True)
+
+            elif widget == "Price":
+                self.txtPrice.setReadOnly(False)
+                self.txtPrice.setPalette(self.defaultPalette)
+                self.txtISBN.setPalette(self.darkPalette)
+                self.txtTitle.setPalette(self.darkPalette)
+                self.txtAutor.setPalette(self.darkPalette)
+                self.txtPublisher.setPalette(self.darkPalette)
+                self.txtISBN.setReadOnly(True)
+                self.txtTitle.setReadOnly(True)
+                self.txtAutor.setReadOnly(True)
+                self.txtPublisher.setReadOnly(True)
     
     
     def setupUi(self):
@@ -944,9 +998,9 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.txtId.move(85,17)
         self.txtId.setEnabled(False)
         self.defaultPalette = self.txtId.palette()
+        
 
-        color = QColor(230,230,230)
-
+        self.color = QColor(230,230,230)
         self.lblISBN = QLabel("ISBN:",self)
         self.lblISBN.adjustSize()
         self.lblISBN.move(20, 40)
@@ -958,9 +1012,11 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.txtISBN.move(85,38)
         self.txtISBN.setReadOnly(True)
         palette = self.txtISBN.palette()
-        palette.setColor(QtGui.QPalette.Base, color)
+        palette.setColor(QtGui.QPalette.Base, self.color)
         self.txtISBN.setPalette(palette)
         self.txtISBN.clicked.connect(lambda: self.deactivateLineEdit("ISBN"))
+        self.txtISBN.setMaxLength(15)
+
         
         self.lblTitle = QLabel("TÍTULO:",self)
         self.lblTitle.adjustSize()
@@ -971,7 +1027,13 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.txtTitle.setFixedHeight(18)
         self.txtTitle.setFixedWidth(230)
         self.txtTitle.move(85,58)
-        self.txtTitle.setEnabled(False)
+        self.txtTitle.setReadOnly(True)
+        palette = self.txtTitle.palette()
+        palette.setColor(QtGui.QPalette.Base, self.color)
+        self.darkPalette = palette
+        self.txtTitle.setPalette(self.darkPalette)
+        self.txtTitle.clicked.connect(lambda: self.deactivateLineEdit("Title"))
+        self.txtTitle.setMaxLength(90)
 
         self.lblAutor = QLabel("AUTOR:",self)
         self.lblAutor.adjustSize()
@@ -982,7 +1044,10 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.txtAutor.setFixedHeight(18)
         self.txtAutor.setFixedWidth(230)
         self.txtAutor.move(85,78)
-        self.txtAutor.setEnabled(False)
+        self.txtAutor.setReadOnly(True)
+        self.txtAutor.setPalette(self.darkPalette)
+        self.txtAutor.clicked.connect(lambda: self.deactivateLineEdit("Autor"))
+        self.txtAutor.setMaxLength(45)
 
         self.lblPublisher = QLabel("EDITORIAL:",self)
         self.lblPublisher.adjustSize()
@@ -993,7 +1058,10 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.txtPublisher.setFixedHeight(18)
         self.txtPublisher.setFixedWidth(230)
         self.txtPublisher.move(85,98)
-        self.txtPublisher.setEnabled(False)
+        self.txtPublisher.setReadOnly(True)
+        self.txtPublisher.setPalette(self.darkPalette)
+        self.txtPublisher.clicked.connect(lambda: self.deactivateLineEdit("Publisher"))
+        self.txtPublisher.setMaxLength(45)
 
         self.lblPrice = QLabel("PRECIO:",self)
         self.lblPrice.adjustSize()
@@ -1004,15 +1072,20 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.txtPrice.setFixedHeight(18)
         self.txtPrice.setFixedWidth(230)
         self.txtPrice.move(85,118)
-        self.txtPrice.setEnabled(False)
+        self.txtPrice.setReadOnly(True)
+        self.txtPrice.setPalette(self.darkPalette)
+        self.txtPrice.clicked.connect(lambda: self.deactivateLineEdit("Price"))
+        self.txtPrice.setMaxLength(30)
 
-        # self.btnCancel = QPushButton('Cancel', self)
-        # self.btnCancel.adjustSize()
-        # self.btnCancel.clicked.connect(lambda: self.returnValues('Cancel'))
+        self.btnOk = QPushButton('Editar', self)
+        self.btnOk.adjustSize()
+        self.btnOk.move(80, 155)
+        self.btnOk.clicked.connect(lambda: self.returnValues("Ok"))
 
-        # self.btnOk = QPushButton('OK', self)
-        # self.btnOk.adjustSize()
-        # self.btnOk.clicked.connect(lambda: self.returnValues("Ok"))
+        self.btnCancel = QPushButton('Cancelar', self)
+        self.btnCancel.adjustSize()
+        self.btnCancel.move(190, 155)
+        self.btnCancel.clicked.connect(lambda: self.returnValues('Cancel'))
 
     def show_window(self):
        self.show()
@@ -1022,6 +1095,16 @@ class MyLineEdit(QLineEdit):
     def mousePressEvent(self, event):
         self.clicked.emit()
         QLineEdit.mousePressEvent(self, event)
+        self.textChanged.connect(self.text_changed)
+    
+    def text_changed(self):
+        if self.text().isupper():
+            return
+        else:
+            cursor = self.cursorPosition()
+            self.setText(self.text().upper())
+            self.setCursorPosition(cursor)
+
 
 class ui_CustomChangeLocation(QtWidgets.QDialog):
     def __init__(self, parent=None):
