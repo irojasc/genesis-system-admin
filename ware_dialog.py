@@ -278,11 +278,14 @@ class Ui_Dialog(QtWidgets.QDialog):
                         except:
                             ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
                 if (validation == "Editar"):
-                    data = (self.ware_table.item(row,0).text(),self.ware_table.item(row,1).text(), self.ware_table.item(row,2).text(), self.ware_table.item(row,3).text(), self.ware_table.item(row,4).text(), str(self.real_table[row].objBook.Pv))
+                    data = {"cod": self.ware_table.item(row,0).text(),
+                            "isbn": self.ware_table.item(row,1).text(),
+                            "title": self.ware_table.item(row,2).text(),
+                            "autor": self.ware_table.item(row,3).text(),
+                            "publisher": self.ware_table.item(row,4).text(),
+                            "price": str(self.real_table[row].objBook.Pv)}
                     isUpdate, text = self.openEditItemDialog(data)
-                    print(isUpdate)
-                    
-
+                    print(isUpdate, text)
 
         elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
             ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -429,16 +432,14 @@ class Ui_Dialog(QtWidgets.QDialog):
         if self.ui_operationDialog.exec_() == QDialog.Accepted:
             return self.ui_operationDialog.returnedVal
     
-    def openEditItemDialog(self, data: tuple = None):
+    def openEditItemDialog(self, data: dict = None):
         if bool(data):
             self.ui_EditDialog.setDataFields(data)
-            self.ui_EditDialog.cleanInputFields()
             if self.ui_EditDialog.exec_() == QDialog.Accepted:
-                # return self.ui_operationDialog.returnedVal
-                return True, None
-            return False, None
+                return self.ui_EditDialog.returnedVal
+            return (False, None)
         else:
-            return False, None
+            return (False, None)
     
     def setupUi(self):
         self.setObjectName("Dialog")
@@ -891,28 +892,47 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         super(ui_EditItemDialog, self).__init__(parent)
         self.code = ""
         self.title = ""
+        self.returnedVal = (False, None)
         self.setupUi()
         
-    def returnValues(self, textButton: str = ""):
-        self.returnedVal = textButton
+    def returnValues(self, btnConfirmation: bool = False):
+        # se cambia los keys de los diccionarios segun titulos de base de datos
+        tmp_dict = {}
+        valid = False
+        if btnConfirmation:
+            if (self.innerEditData["isbn"] != self.txtISBN.text()):
+                tmp_dict["isbn"] = self.txtISBN.text()
+            if self.innerEditData["title"] != self.txtTitle.text():
+                tmp_dict["name"] = self.txtTitle.text() 
+            if self.innerEditData["autor"] != self.txtAutor.text():
+                tmp_dict["autor"] = self.txtAutor.text() 
+            if self.innerEditData["publisher"] != self.txtPublisher.text():
+                tmp_dict["editorial"] = self.txtPublisher.text()
+            if self.innerEditData["price"] != self.txtPrice.text():
+                tmp_dict["pv"] = self.txtPrice.text() 
+            if not(not(len(tmp_dict))):
+                self.returnedVal = (True, tmp_dict)
+            else:
+                self.returnedVal = (False, None)
+        else:
+            self.returnedVal = (False, None)   
         self.submitclose()
 
     def cleanInputFields(self):
-        # self.txtUbic.setText("");
         pass
 
     def closeEvent(self, event):
-        pass
-        # self.returnValues("Cancel")
+        self.returnValues(False)
 
-    def setDataFields(self, data: tuple = None):
+    def setDataFields(self, data: dict = None):
+        self.innerEditData = data.copy()
         if bool(data):
-            self.txtId.setText(data[0]);
-            self.txtISBN.setText(data[1]);
-            self.txtTitle.setText(data[2]);
-            self.txtAutor.setText(data[3]);
-            self.txtPublisher.setText(data[4]);
-            self.txtPrice.setText(data[5]);
+            self.txtId.setText(self.innerEditData["cod"]);
+            self.txtISBN.setText(self.innerEditData["isbn"]);
+            self.txtTitle.setText(self.innerEditData["title"]);
+            self.txtAutor.setText(self.innerEditData["autor"]);
+            self.txtPublisher.setText(self.innerEditData["publisher"]);
+            self.txtPrice.setText(self.innerEditData["price"]);
     
     def submitclose(self):
         self.accept()
@@ -1080,12 +1100,12 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.btnOk = QPushButton('Editar', self)
         self.btnOk.adjustSize()
         self.btnOk.move(80, 155)
-        self.btnOk.clicked.connect(lambda: self.returnValues("Ok"))
+        self.btnOk.clicked.connect(lambda: self.returnValues(True))
 
         self.btnCancel = QPushButton('Cancelar', self)
         self.btnCancel.adjustSize()
         self.btnCancel.move(190, 155)
-        self.btnCancel.clicked.connect(lambda: self.returnValues('Cancel'))
+        self.btnCancel.clicked.connect(lambda: self.returnValues(False))
 
     def show_window(self):
        self.show()
