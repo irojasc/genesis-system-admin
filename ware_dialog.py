@@ -885,7 +885,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ware_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Stretch)
 
 
-        self.boxPV.setTitle(_translate("Dialog", "Cuadro de venta"))
+        self.boxPV.setTitle(_translate("Dialog", "Cuadro de información"))
         self.lblPV.setText(_translate("Dialog", "P.Venta:"))
         self.lbltxtPrecio.setText(_translate("Dialog", ""))
         self.btnEditarPv.setText(_translate("Dialog", "Editar"))
