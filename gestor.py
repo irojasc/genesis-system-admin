@@ -68,7 +68,6 @@ class wares_gestor:
 
 	def upload_location(self, almc = "", cod_book = "", ubic = ""):
 		self.connectDB()
-		#query = "use genesisDB;"
 		query = ("update genesisDB.ware_books set genesisDB.ware_books.ubic_" + almc + " = '" + ubic + "' where genesisDB.ware_books.cod_book = '" + cod_book + "';")
 		try:
 			self.cursor.execute(query)
@@ -77,6 +76,26 @@ class wares_gestor:
 		except:
 			print("No se puede conectar a genesisDB")
 			self.disconnectDB()
+
+	def updateDataItem(self, cod: str = "", data: dict = None):
+		self.connectDB()
+		init = "update genesisDB.books set "
+		for item in list(data.keys()):
+			if item != "pv":
+				init = init + item + ' = "' + data[item] + '", '
+			else:
+				init = init + item + ' = ' + data[item] + ', '
+		init = init[:len(init)-2] + ' where cod = "'+ cod + '"'
+		query = (init)
+		try:
+			self.cursor.execute(query)
+			self.mydb.commit()
+			self.disconnectDB()
+			return True
+		except Exception as error:
+			print("Something wrong happen: ", error)
+			self.disconnectDB()
+			return False
 
 # ware_gestor: maneja de items en almacen
 class ware_gestor:
@@ -270,6 +289,16 @@ class ware_gestor:
 		except Exception as error:
 			return False
 
+	def updateInnerItem(self, codBook: str = "", data: dict = None):
+		try:
+			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
+			self.ware_list[index].objBook.setName(data["name"]) if ("name" in data) else None
+			self.ware_list[index].objBook.setAutor(data["autor"]) if ("autor" in data) else None
+			self.ware_list[index].objBook.setEditorial(data["editorial"]) if ("editorial" in data) else None
+			self.ware_list[index].objBook.setPv(data["pv"]) if ("pv" in data) else None
+			return True
+		except Exception as error:
+			return False
 
 
 class users_gestor:

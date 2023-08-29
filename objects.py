@@ -72,6 +72,22 @@ class book:
 	def setActive(self, condition: bool):
 		self.active = condition
 
+	def setISBN(self, isbn: str):
+		self.isbn = isbn
+		
+	def setName(self, name: str):
+		self.name = name
+	
+	def setAutor(self, autor: str):
+		self.autor = autor
+	
+	def setEditorial(self, editorial: str):
+		self.editorial = editorial
+	
+	def setPv(self, pv: float):
+		self.Pv = float(pv)
+
+
 
 class ware_:
 	def __init__(self, cod = "", dir = "", enabled = False, toolTip = False):
