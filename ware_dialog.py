@@ -1012,16 +1012,22 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.setFixedSize(335, 200)
         self.setObjectName("ui_EditItemDialog")
         self.setWindowTitle("Editar producto")
+        warning_text = "¡No ingresar tildes ni caracteres especiales (', \", ´)!"
+        self.lblWarning = QLabel(warning_text,self)
+        self.lblWarning.adjustSize()
+        self.lblWarning.move(50, 10)
+        self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblWarning.setStyleSheet("background-color: red")
         
         self.lblId = QLabel("CÓDIGO:",self)
         self.lblId.adjustSize()
-        self.lblId.move(20, 20)
+        self.lblId.move(20, 30)
         self.lblId.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblId.setStyleSheet("background-color: lightgreen")
         self.txtId = MyLineEdit(self)
         self.txtId.setFixedHeight(18)
         self.txtId.setFixedWidth(230)
-        self.txtId.move(85,17)
+        self.txtId.move(85,27)
         self.txtId.setEnabled(False)
         self.defaultPalette = self.txtId.palette()
         
@@ -1029,13 +1035,13 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         self.color = QColor(230,230,230)
         self.lblISBN = QLabel("ISBN:",self)
         self.lblISBN.adjustSize()
-        self.lblISBN.move(20, 40)
+        self.lblISBN.move(20, 50)
         self.lblISBN.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblISBN.setStyleSheet("background-color: lightblue")
         self.txtISBN = MyLineEdit(self)
         self.txtISBN.setFixedHeight(18)
         self.txtISBN.setFixedWidth(230)
-        self.txtISBN.move(85,38)
+        self.txtISBN.move(85,48)
         self.txtISBN.setReadOnly(True)
         palette = self.txtISBN.palette()
         palette.setColor(QtGui.QPalette.Base, self.color)
@@ -1046,13 +1052,13 @@ class ui_EditItemDialog(QtWidgets.QDialog):
         
         self.lblTitle = QLabel("TÍTULO:",self)
         self.lblTitle.adjustSize()
-        self.lblTitle.move(20, 60)
+        self.lblTitle.move(20, 70)
         self.lblTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblTitle.setStyleSheet("background-color: lightblue")
         self.txtTitle = MyLineEdit(self)
         self.txtTitle.setFixedHeight(18)
         self.txtTitle.setFixedWidth(230)
-        self.txtTitle.move(85,58)
+        self.txtTitle.move(85,68)
         self.txtTitle.setReadOnly(True)
         palette = self.txtTitle.palette()
         palette.setColor(QtGui.QPalette.Base, self.color)
@@ -1063,13 +1069,13 @@ class ui_EditItemDialog(QtWidgets.QDialog):
 
         self.lblAutor = QLabel("AUTOR:",self)
         self.lblAutor.adjustSize()
-        self.lblAutor.move(20, 80)
+        self.lblAutor.move(20, 90)
         self.lblAutor.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblAutor.setStyleSheet("background-color: lightblue")
         self.txtAutor = MyLineEdit(self)
         self.txtAutor.setFixedHeight(18)
         self.txtAutor.setFixedWidth(230)
-        self.txtAutor.move(85,78)
+        self.txtAutor.move(85,88)
         self.txtAutor.setReadOnly(True)
         self.txtAutor.setPalette(self.darkPalette)
         self.txtAutor.clicked.connect(lambda: self.deactivateLineEdit("Autor"))
@@ -1077,13 +1083,13 @@ class ui_EditItemDialog(QtWidgets.QDialog):
 
         self.lblPublisher = QLabel("EDITORIAL:",self)
         self.lblPublisher.adjustSize()
-        self.lblPublisher.move(20, 100)
+        self.lblPublisher.move(20, 110)
         self.lblPublisher.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblPublisher.setStyleSheet("background-color: lightblue")
         self.txtPublisher = MyLineEdit(self)
         self.txtPublisher.setFixedHeight(18)
         self.txtPublisher.setFixedWidth(230)
-        self.txtPublisher.move(85,98)
+        self.txtPublisher.move(85,108)
         self.txtPublisher.setReadOnly(True)
         self.txtPublisher.setPalette(self.darkPalette)
         self.txtPublisher.clicked.connect(lambda: self.deactivateLineEdit("Publisher"))
@@ -1091,13 +1097,13 @@ class ui_EditItemDialog(QtWidgets.QDialog):
 
         self.lblPrice = QLabel("PRECIO:",self)
         self.lblPrice.adjustSize()
-        self.lblPrice.move(20, 120)
+        self.lblPrice.move(20, 130)
         self.lblPrice.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblPrice.setStyleSheet("background-color: lightblue")
         self.txtPrice = MyLineEdit(self)
         self.txtPrice.setFixedHeight(18)
         self.txtPrice.setFixedWidth(230)
-        self.txtPrice.move(85,118)
+        self.txtPrice.move(85,128)
         self.txtPrice.setReadOnly(True)
         self.txtPrice.setPalette(self.darkPalette)
         self.txtPrice.clicked.connect(lambda: self.deactivateLineEdit("Price"))
@@ -1105,12 +1111,12 @@ class ui_EditItemDialog(QtWidgets.QDialog):
 
         self.btnOk = QPushButton('Editar', self)
         self.btnOk.adjustSize()
-        self.btnOk.move(80, 155)
+        self.btnOk.move(80, 165)
         self.btnOk.clicked.connect(lambda: self.returnValues(True))
 
         self.btnCancel = QPushButton('Cancelar', self)
         self.btnCancel.adjustSize()
-        self.btnCancel.move(190, 155)
+        self.btnCancel.move(190, 165)
         self.btnCancel.clicked.connect(lambda: self.returnValues(False))
 
     def show_window(self):
@@ -1130,13 +1136,13 @@ class MyLineEdit(QLineEdit):
     
     def text_changed(self):
         if self.text().isupper():
-            cursor = self.cursorPosition()
-            self.setText(self.removeAccents(self.text().upper()))
-            self.setCursorPosition(cursor)
+            # cursor = self.cursorPosition()
+            # self.setText(self.removeAccents(self.text().upper()))
+            # self.setCursorPosition(cursor)
             return
         else:
             cursor = self.cursorPosition()
-            self.setText(self.removeAccents(self.text().upper()))
+            self.setText(self.text().upper())
             self.setCursorPosition(cursor)
 
 
@@ -1290,8 +1296,14 @@ if __name__ == '__main__':
     Dialog = QDialog()
     # ui = Ui_Dialog(Dialog)
     # ui = ui_CustomChangeLocation()
+    data = {"cod": "GN_2524",
+        "isbn": "97845562314",
+        "title": "COMENTARIOS REALES DE LOS INCAS",
+        "autor": "INCA GARCILASO DE VEGA",
+        "publisher": "EL LECTOR",
+        "price": "65.0"}
     ui = ui_EditItemDialog(Dialog)
-    ui.setDataFields(("GN_2524", "97845562314", "COMENTARIOS REALES DE LOS INCAS", "INCA GARCILASO DE VEGA", "EL LECTOR", "65.0"))
+    ui.setDataFields(data)
     # ui = ui_OperationDialog(Dialog)
     # ui.setItemData("", "")
     # ui.init_condition()
