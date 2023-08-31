@@ -590,7 +590,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.lblLoadTable.setGeometry(QtCore.QRect(890, 23, 101, 67))
         self.lblLoadTable.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.lblLoadTable.setText("")
-        self.lblLoadTable.setPixmap(QtGui.QPixmap("imgs/load_.png"))
+        self.lblLoadTable.setPixmap(QtGui.QPixmap(ROOT + "imgs/load_.png"))
         self.lblLoadTable.setScaledContents(True)
         self.lblLoadTable.setObjectName("lblLoadTable")
         self.lblLoadTable.mousePressEvent = self.load_table

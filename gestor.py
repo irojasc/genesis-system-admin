@@ -364,7 +364,7 @@ class documents:
 class aws_s3:
 	def __init__(self) -> None:
 		self.directions = {
-			"product": lambda x: "imgs/books_imgs/%s.jpg" % (x)
+			"product": lambda x: "C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/imgs/books_imgs/%s.jpg" % (x)
 			}
 
 	def existsLocalFile(self, filepath: str = ""):
