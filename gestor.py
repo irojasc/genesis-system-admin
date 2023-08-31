@@ -1,4 +1,8 @@
 import mysql.connector
+import boto3
+import logging
+import os.path
+import os
 from objects import user
 from objects import ware_book
 from objects import book
@@ -355,6 +359,34 @@ class documents:
 
 	def get_PDFReport(self):
 		print("Hola Mundo")
+
+
+class aws_s3:
+	def __init__(self) -> None:
+		self.directions = {
+			"product": lambda x: "imgs/books_imgs/%s.jpg" % (x)
+			}
+
+	def existsLocalFile(self, filepath: str = ""):
+		return True if os.path.isfile(filepath) else False
+
+	def downloadImage(self, file_name, bucket, object_name):
+		s3_client = boto3.client('s3')
+		try:    
+			s3_client.download_file(bucket, object_name, file_name)
+		except Exception as e:
+			logging.error(e)
+			return False
+		return True
+
+	def get_ProductImage(self, codbook: str = ""):
+		if not(not(codbook)):
+			if not(self.existsLocalFile(self.directions["product"](codbook))) and self.downloadImage(self.directions["product"](codbook), "genesiscuscobucket", "%s.webp" % (codbook)):
+				return True, self.directions["product"](codbook)
+			elif self.existsLocalFile(self.directions["product"](codbook)):
+				return True, self.directions["product"](codbook)
+			else:
+				return False, None
 
 
 

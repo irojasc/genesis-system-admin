@@ -12,10 +12,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QFont, QBrush, QColor
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSignal
-from gestor import ware_gestor, wares_gestor
+from gestor import ware_gestor, wares_gestor, aws_s3
 from inout_dialog import Ui_inoutDialog
-import time
-import copy
 ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 
 
@@ -28,6 +26,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ui_CustomInput = ui_CustomChangeLocation()
         self.ui_operationDialog = ui_OperationDialog()
         self.ui_EditDialog = ui_EditItemDialog()
+        self.objS3 = aws_s3()
         self.real_table = []
         self.ownUsers = data_users
         self.ownWares = data_wares
@@ -229,8 +228,13 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     def actualizar_img(self, tmp):
         if (tmp + 1 <= len(self.real_table)) and (tmp >= 0):
-            #self.lblImg.setPixmap(QtGui.QPixmap("../UI/imgs/books_imgs/" + self.ware_table.item(tmp,0).text() + ".jpg"))
-            #self.lblImg.setScaledContents(True)
+            pathfile = self.objS3.directions["product"](self.ware_table.item(tmp,0).text().lower())
+            if self.objS3.existsLocalFile(pathfile):
+                self.lblImg.setPixmap(QtGui.QPixmap(pathfile))
+                self.lblImg.setScaledContents(True)
+            else:
+                self.lblImg.setPixmap(QtGui.QPixmap())
+                self.lblImg.setScaledContents(True)
             self.lbltxtPrecio.setText("S/." + str(self.real_table[tmp].objBook.Pv))
 
     # -----------  double click event para cambiar ubicacion  -----------
@@ -445,6 +449,17 @@ class Ui_Dialog(QtWidgets.QDialog):
         else:
             return (False, None)
     
+    def loadImage(self):
+        row = self.ware_table.currentIndex().row()
+        if row >= 0: 
+            validator, pathfile = self.objS3.get_ProductImage(self.ware_table.item(row,0).text().lower())
+            if validator:
+                self.lblImg.setPixmap(QtGui.QPixmap(pathfile))
+                self.lblImg.setScaledContents(True)
+            else:
+                self.lblImg.setPixmap(QtGui.QPixmap())
+                QMessageBox.information(self, 'Mensaje', "Error para cargar la imagen", QMessageBox.Ok, QMessageBox.Ok)
+
     def setupUi(self):
         self.setObjectName("Dialog")
         self.resize(1024, 668)
@@ -558,7 +573,7 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         # -----------  cmbSearch Configuration  -----------
         self.cmbSearch = QtWidgets.QComboBox(self.search_box)
-        #self.cmbSearch.setGeometry(QtCore.QRect(20, 35, 101, 31))
+        #self.cmbSearch.setGeometry(QtCore.QRect(20, 35, 101, 31))lblLoadTable
         self.cmbSearch.setGeometry(20, 35, 101, 31)
         self.cmbSearch.setStyleSheet("background-color: rgb(170, 255, 0);")
         font = QFont()
@@ -575,7 +590,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.lblLoadTable.setGeometry(QtCore.QRect(890, 23, 101, 67))
         self.lblLoadTable.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.lblLoadTable.setText("")
-        self.lblLoadTable.setPixmap(QtGui.QPixmap(ROOT + "imgs/load_.png"))
+        self.lblLoadTable.setPixmap(QtGui.QPixmap("imgs/load_.png"))
         self.lblLoadTable.setScaledContents(True)
         self.lblLoadTable.setObjectName("lblLoadTable")
         self.lblLoadTable.mousePressEvent = self.load_table
@@ -818,18 +833,17 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.lbltxtPrecio.setObjectName("lbltxtPrecio")
         
         # -----------  boton Editar Precio Venta  -----------
-        self.btnEditarPv = QtWidgets.QPushButton(self.boxPV)
-        self.btnEditarPv.setGeometry(QtCore.QRect(160, 117, 141, 41))
+        self.btnLoadImage = QtWidgets.QPushButton(self.boxPV)
+        self.btnLoadImage.setGeometry(QtCore.QRect(160, 117, 141, 41))
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
         font.setPointSize(12)
         font.setBold(True)
         font.setWeight(75)
-        self.btnEditarPv.setFont(font)
-        self.btnEditarPv.setStyleSheet("background-color: rgb(240, 240, 240);")
-        self.btnEditarPv.setObjectName("btnEditarPv")
-        #self.btnEditarPv.clicked.connect(self.printCurrent)
-        self.btnEditarPv.setEnabled(False)
+        self.btnLoadImage.setFont(font)
+        self.btnLoadImage.setStyleSheet("background-color: rgb(240, 240, 240);")
+        self.btnLoadImage.setObjectName("btnLoadImage")
+        self.btnLoadImage.clicked.connect(self.loadImage)
 
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -888,7 +902,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.boxPV.setTitle(_translate("Dialog", "Cuadro de información"))
         self.lblPV.setText(_translate("Dialog", "P.Venta:"))
         self.lbltxtPrecio.setText(_translate("Dialog", ""))
-        self.btnEditarPv.setText(_translate("Dialog", "Editar"))
+        self.btnLoadImage.setText(_translate("Dialog", "Cargar imagen"))
 
 
 class ui_EditItemDialog(QtWidgets.QDialog):

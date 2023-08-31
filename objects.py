@@ -1,3 +1,4 @@
+
 class user:
 	def __init__(self, user = "", passwd = "", name = "", doc = "", phone = "", enabled = False, purchaseEnabled = False):
 		self.user = user
@@ -87,16 +88,9 @@ class book:
 	def setPv(self, pv: float):
 		self.Pv = float(pv)
 
-
-
 class ware_:
 	def __init__(self, cod = "", dir = "", enabled = False, toolTip = False):
 		self.cod = cod
 		self.dir = dir
 		self.enabled = enabled
 		self.toolTip = toolTip
-
-
-
-
-
