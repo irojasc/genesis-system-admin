@@ -43,17 +43,26 @@ class daily_sale:
 		self.total_ = total_
 
 class ware_book:
-	def __init__(self, objBook=None, wares = None, data = None):
+	def __init__(self, objBook=None, wares = None, data = None, isFromSystem: bool = False):
 		ware_data = {}
-		for index, i in enumerate(wares[1]):
-			base = 3 * index + 7
-			temp_data = { 
-				"cant_" + i.cod: 0 if data[base] == "" else int(data[base]),
-				"ubic_" + i.cod: str(data[base + 1]),
-				"isok_" + i.cod: bool(data[base + 2])
-			}
-			ware_data.update(temp_data)
-		
+		if not(isFromSystem):
+			for index, i in enumerate(wares[1]):
+				base = 3 * index + 7
+				temp_data = { 
+					"cant_" + i.cod: 0 if data[base] == "" else int(data[base]),
+					"ubic_" + i.cod: str(data[base + 1]),
+					"isok_" + i.cod: bool(data[base + 2])
+				}
+				ware_data.update(temp_data)
+		else:
+			for index, i in enumerate(wares[1]):
+				temp_data = { 
+					"cant_" + i.cod: int(data) if index==0 else 0,
+					"ubic_" + i.cod: "SIN UBICACION",
+					"isok_" + i.cod: True
+				}
+				ware_data.update(temp_data)
+
 		self.objBook = objBook
 		self.almacen_data = ware_data
 

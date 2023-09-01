@@ -82,7 +82,6 @@ class wares_gestor:
 			self.disconnectDB()
 
 	def updateDataItem(self, cod: str = "", data: dict = None):
-		self.connectDB()
 		init = "update genesisDB.books set "
 		for item in list(data.keys()):
 			if item != "pv":
@@ -92,6 +91,7 @@ class wares_gestor:
 		init = init[:len(init)-2] + ' where cod = "'+ cod + '"'
 		query = (init)
 		try:
+			self.connectDB()
 			self.cursor.execute(query)
 			self.mydb.commit()
 			self.disconnectDB()
@@ -100,6 +100,38 @@ class wares_gestor:
 			print("Something wrong happen: ", error)
 			self.disconnectDB()
 			return False
+
+	def getNextCodDB(self):
+		query = "select max(cast(substring(cod,4) as signed)) + 1 as next from genesisDB.books where cod like '%GN_%';"
+		try:
+			self.connectDB()
+			self.cursor.execute(query)
+			nextCod = "GN_%s" % (str(self.cursor.fetchall()[0][0]))
+			self.disconnectDB()
+			return True, nextCod
+		except Exception as error:
+			print("Something wrong happen: ", error)
+			self.disconnectDB()
+			return False, "CODIGO NO ENCONTRADO"
+
+	def insertNewItemDB(self, data: dict = None, currentWare: str = None):
+		if bool(len(data)) and bool(currentWare):
+			query_1 = "insert into genesisDB.books (cod, isbn, name, autor, editorial, pv) values ('%s', '%s','%s','%s','%s', %s);" % (data["cod"],data["isbn"],data["name"], data["autor"], data["editorial"], data["pv"]) if ("isbn" in data) else "insert into genesisDB.books (cod, name, autor, editorial, pv) values ('%s', '%s','%s','%s','%s');" % (data["cod"], data["name"], data["autor"], data["editorial"], data["pv"])
+			query_2 = "insert into genesisDB.ware_books (cod_book) values ('%s');" % (data["cod"])
+			query_3 = "update genesisDB.ware_books set cant_%s = %s where cod_book = '%s';" % (currentWare, data["stock"], data["cod"]) if ("stock" in data) else False
+			try:
+				self.connectDB()
+				self.cursor.execute(query_1)
+				self.cursor.execute(query_2)
+				if bool(query_3): self.cursor.execute(query_3)
+				self.mydb.commit()
+				self.disconnectDB()
+				return True
+			except Exception as error:
+				print("Something wrong happen: ", error)
+				self.disconnectDB()
+				return False
+
 
 # ware_gestor: maneja de items en almacen
 class ware_gestor:
@@ -296,6 +328,7 @@ class ware_gestor:
 	def updateInnerItem(self, codBook: str = "", data: dict = None):
 		try:
 			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
+			self.ware_list[index].objBook.setISBN(data["isbn"]) if ("isbn" in data) else None
 			self.ware_list[index].objBook.setName(data["name"]) if ("name" in data) else None
 			self.ware_list[index].objBook.setAutor(data["autor"]) if ("autor" in data) else None
 			self.ware_list[index].objBook.setEditorial(data["editorial"]) if ("editorial" in data) else None
@@ -304,6 +337,16 @@ class ware_gestor:
 		except Exception as error:
 			return False
 
+	def insertInnerNewItem(self, data: dict = None, own_wares = None):
+		if bool(data):
+			book_params = (data["cod"], data["isbn"] if ("isbn" in data) else "", data["name"], data["autor"], data["editorial"], "", data["pv"], True)
+			objBook = book(book_params)
+			values = data["stock"] if "stock" in data else 0
+			objwareBook = ware_book(objBook, own_wares, values, True)
+			self.ware_list.append(objwareBook)
+			return True
+		else:
+			return False
 
 class users_gestor:
 	def __init__(self):

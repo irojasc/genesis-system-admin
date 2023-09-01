@@ -462,10 +462,20 @@ class Ui_Dialog(QtWidgets.QDialog):
                 QMessageBox.information(self, 'Mensaje', "Error para cargar la imagen", QMessageBox.Ok, QMessageBox.Ok)
 
     def createNewItem(self, event = None):
-        ui_NewItemDialog = ui_EditNewItemDialog(True)
-        ui_NewItemDialog.cleanInputFields()
-        if ui_NewItemDialog.exec_() == QDialog.Accepted:
-            print("Se activo la ventada de editar")
+        isAllowed, data = self.ware_gest.getNextCodDB()
+        if isAllowed:
+            ui_NewItemDialog = ui_EditNewItemDialog(True)
+            ui_NewItemDialog.cleanInputFields()
+            ui_NewItemDialog.setDataFields(data)
+            if ui_NewItemDialog.exec_() == QDialog.Accepted:
+                validator, data = ui_NewItemDialog.returnedVal
+                if validator:
+                    if(self.ware_gest.insertNewItemDB(data, self.ownWares[0]) and self.ware.insertInnerNewItem(data, self.ownWares)):
+                        QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
+                        self.txtBusChanged()
+                    else:
+                        QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
+
 
     def setupUi(self):
         self.setObjectName("Dialog")
@@ -754,25 +764,49 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def returnValues(self, btnConfirmation: bool = False):
         # se cambia los keys de los diccionarios segun titulos de base de datos
         tmp_dict = {}
-        valid = False
-        if btnConfirmation:
-            if self.innerEditData["isbn"] != self.txtISBN.text():
-                tmp_dict["isbn"] = self.txtISBN.text().strip()
-            if self.innerEditData["title"] != self.txtTitle.text():
+        self.returnedVal = (False, None)
+
+        if btnConfirmation and not(self.method):
+            if self.innerEditData["isbn"] != self.txtISBN.text(): tmp_dict["isbn"] = self.txtISBN.text().strip()
+            if self.innerEditData["title"] != self.txtTitle.text() and bool(len(self.txtTitle.text().strip())):
                 tmp_dict["name"] = self.txtTitle.text().strip()
-            if self.innerEditData["autor"] != self.txtAutor.text():
+            if self.innerEditData["autor"] != self.txtAutor.text() and bool(len(self.txtAutor.text().strip())):
                 tmp_dict["autor"] = self.txtAutor.text().strip()
-            if self.innerEditData["publisher"] != self.txtPublisher.text():
+            if self.innerEditData["publisher"] != self.txtPublisher.text() and bool(len(self.txtPublisher.text().strip())):
                 tmp_dict["editorial"] = self.txtPublisher.text().strip()
-            if self.innerEditData["price"] != self.txtPrice.text():
+            if self.innerEditData["price"] != self.txtPrice.text() and bool(len(self.txtPrice.text().strip())):
                 tmp_dict["pv"] = self.txtPrice.text().strip() 
-            if not(not(len(tmp_dict))):
+            
+            if bool(len(tmp_dict)):
                 self.returnedVal = (True, tmp_dict)
             else:
+                QMessageBox.information(self, 'Mensaje', "No se efectuaron cambios o campos vacios.\n>Presione Ok, luego Cancelar", QMessageBox.Ok, QMessageBox.Ok)
+                self.setDataFields()
                 self.returnedVal = (False, None)
+        
+        elif btnConfirmation and self.method:
+            tmp_dict["cod"] = self.txtId.text().strip()
+            if bool(len(self.txtTitle.text().strip())):
+                tmp_dict["name"] = self.txtTitle.text().strip()
+            if bool(len(self.txtAutor.text().strip())):
+                tmp_dict["autor"] = self.txtAutor.text().strip()
+            if bool(len(self.txtPublisher.text().strip())):
+                tmp_dict["editorial"] = self.txtPublisher.text().strip()
+            if bool(len(self.txtPrice.text().strip())):
+                tmp_dict["pv"] = self.txtPrice.text().strip()
+
+            if len(tmp_dict) == 5:
+                if bool(len(self.txtISBN.text().strip())): tmp_dict["isbn"] = self.txtISBN.text().strip()
+                if bool(self.spinInitStock.value()): tmp_dict["stock"] = self.spinInitStock.text().strip()
+                self.returnedVal = (True, tmp_dict)                     
+            else:
+                QMessageBox.information(self, 'Mensaje', "Llenar los campos obligatorios (*)", QMessageBox.Ok, QMessageBox.Ok)
+                self.returnedVal = (False, None)
+
         else:
             self.returnedVal = (False, None)   
-        self.submitclose()
+        
+        self.submitclose() if self.returnedVal[0] else False
 
     def cleanInputFields(self):
         self.txtISBN.setPalette(self.darkPalette)
@@ -784,15 +818,18 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def closeEvent(self, event):
         self.returnValues(False)
 
-    def setDataFields(self, data: dict = None):
-        self.innerEditData = data.copy()
-        if bool(data):
-            self.txtId.setText(self.innerEditData["cod"]);
-            self.txtISBN.setText(self.innerEditData["isbn"]);
-            self.txtTitle.setText(self.innerEditData["title"]);
-            self.txtAutor.setText(self.innerEditData["autor"]);
-            self.txtPublisher.setText(self.innerEditData["publisher"]);
-            self.txtPrice.setText(self.innerEditData["price"]);
+    def setDataFields(self, data = None):
+        if bool(data): self.prevData = data
+        if bool(self.prevData) and not(self.method):
+            self.innerEditData = self.prevData.copy()
+            self.txtId.setText(self.innerEditData["cod"])
+            self.txtISBN.setText(self.innerEditData["isbn"])
+            self.txtTitle.setText(self.innerEditData["title"])
+            self.txtAutor.setText(self.innerEditData["autor"])
+            self.txtPublisher.setText(self.innerEditData["publisher"])
+            self.txtPrice.setText(self.innerEditData["price"])
+        elif bool(self.prevData) and self.method:
+            self.txtId.setText(data)
     
     def submitclose(self):
         self.accept()
@@ -806,12 +843,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtAutor.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
                 self.txtPrice.setPalette(self.darkPalette)
-                self.txtInitStock.setPalette(self.darkPalette)
+                self.spinInitStock.setPalette(self.darkPalette)
                 self.txtTitle.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
                 self.txtPrice.setReadOnly(True)
-                self.txtInitStock.setReadOnly(True)
+                self.spinInitStock.setReadOnly(True)
 
             elif widget == "Title":
                 self.txtTitle.setReadOnly(False)
@@ -820,12 +857,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtAutor.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
                 self.txtPrice.setPalette(self.darkPalette)
-                self.txtInitStock.setPalette(self.darkPalette)
+                self.spinInitStock.setPalette(self.darkPalette)
                 self.txtISBN.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
                 self.txtPrice.setReadOnly(True)
-                self.txtInitStock.setReadOnly(True)
+                self.spinInitStock.setReadOnly(True)
 
             elif widget == "Autor":
                 self.txtAutor.setReadOnly(False)
@@ -834,12 +871,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
                 self.txtPrice.setPalette(self.darkPalette)
-                self.txtInitStock.setPalette(self.darkPalette)
+                self.spinInitStock.setPalette(self.darkPalette)
                 self.txtISBN.setReadOnly(True)
                 self.txtTitle.setReadOnly(True)
                 self.txtPrice.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
-                self.txtInitStock.setReadOnly(True)
+                self.spinInitStock.setReadOnly(True)
 
             elif widget == "Publisher":
                 self.txtPublisher.setReadOnly(False)
@@ -848,16 +885,16 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtAutor.setPalette(self.darkPalette)
                 self.txtPrice.setPalette(self.darkPalette)
-                self.txtInitStock.setPalette(self.darkPalette)
+                self.spinInitStock.setPalette(self.darkPalette)
                 self.txtISBN.setReadOnly(True)
                 self.txtTitle.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
                 self.txtPrice.setReadOnly(True)
-                self.txtInitStock.setReadOnly(True)
+                self.spinInitStock.setReadOnly(True)
 
             elif widget == "Stock":
-                self.txtInitStock.setReadOnly(False)
-                self.txtInitStock.setPalette(self.defaultPalette)
+                self.spinInitStock.setReadOnly(False)
+                self.spinInitStock.setPalette(self.defaultPalette)
                 self.txtPrice.setPalette(self.darkPalette)
                 self.txtISBN.setPalette(self.darkPalette)
                 self.txtTitle.setPalette(self.darkPalette)
@@ -876,49 +913,57 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtAutor.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
-                self.txtInitStock.setPalette(self.darkPalette)
+                self.spinInitStock.setPalette(self.darkPalette)
                 self.txtISBN.setReadOnly(True)
                 self.txtTitle.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
-                self.txtInitStock.setReadOnly(True)
+                self.spinInitStock.setReadOnly(True)
 
-    
     def setupUi(self):
-        self.resize(340, 200)
-        self.setFixedSize(340, 200)
+        self.resize(340, 220)
+        self.setFixedSize(340, 220)
         self.setObjectName("ui_EditNewItemDialog")
         self.setWindowTitle("Editar producto") if not(self.method) else self.setWindowTitle("Registrar nuevo producto")
-        warning_text = "¡No ingresar tildes ni caracteres especiales (,', \", ´,)!"
+
+        warning_text = ">¡No ingresar tildes ni caracteres especiales (,', \", ´,)!"
+
         self.lblWarning = QLabel(warning_text,self)
         self.lblWarning.adjustSize()
-        self.lblWarning.move(50, 10)
+        self.lblWarning.move(55, 15) if not(self.method) else self.lblWarning.move(60, 5)
         self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblWarning.setStyleSheet("background-color: red")
+
         
-        self.lblId = QLabel("CÓDIGO:",self)
+        self.lblWarning = QLabel(">(*): Campos obligatorios",self) if self.method else False
+        if bool(self.lblWarning):
+            self.lblWarning.adjustSize()
+            self.lblWarning.move(60, 20)
+            self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.lblWarning.setStyleSheet("background-color: red")
+        
+        self.lblId = QLabel("CÓDIGO:",self) if not(self.method) else QLabel("CÓDIGO(*):",self)
         self.lblId.adjustSize()
-        self.lblId.move(43, 30)
+        self.lblId.move(43, 40) if not(self.method) else self.lblId.move(33, 40)
         self.lblId.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblId.setStyleSheet("background-color: lightgreen")
         self.txtId = MyLineEdit(self)
         self.txtId.setFixedHeight(18)
         self.txtId.setFixedWidth(230)
-        self.txtId.move(95,27)
+        self.txtId.move(95,37)
         self.txtId.setEnabled(False)
         self.defaultPalette = self.txtId.palette()
         
-
         self.color = QColor(230,230,230)
         self.lblISBN = QLabel("ISBN:",self)
         self.lblISBN.adjustSize()
-        self.lblISBN.move(61, 50)
+        self.lblISBN.move(61, 60)
         self.lblISBN.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblISBN.setStyleSheet("background-color: lightblue")
         self.txtISBN = MyLineEdit(self)
         self.txtISBN.setFixedHeight(18)
         self.txtISBN.setFixedWidth(230)
-        self.txtISBN.move(95,48)
+        self.txtISBN.move(95,58)
         self.txtISBN.setReadOnly(True)
         palette = self.txtISBN.palette()
         palette.setColor(QtGui.QPalette.Base, self.color)
@@ -926,16 +971,15 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.txtISBN.clicked.connect(lambda: self.deactivateLineEdit("ISBN"))
         self.txtISBN.setMaxLength(15)
 
-        
-        self.lblTitle = QLabel("TÍTULO:",self)
+        self.lblTitle = QLabel("TÍTULO:",self) if not(self.method) else QLabel("TÍTULO(*):",self)
         self.lblTitle.adjustSize()
-        self.lblTitle.move(48, 70)
+        self.lblTitle.move(48, 80) if not(self.method) else self.lblTitle.move(38, 80)
         self.lblTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblTitle.setStyleSheet("background-color: lightblue")
         self.txtTitle = MyLineEdit(self)
         self.txtTitle.setFixedHeight(18)
         self.txtTitle.setFixedWidth(230)
-        self.txtTitle.move(95,68)
+        self.txtTitle.move(95,78)
         self.txtTitle.setReadOnly(True)
         palette = self.txtTitle.palette()
         palette.setColor(QtGui.QPalette.Base, self.color)
@@ -944,79 +988,82 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.txtTitle.clicked.connect(lambda: self.deactivateLineEdit("Title"))
         self.txtTitle.setMaxLength(90)
 
-        self.lblAutor = QLabel("AUTOR:",self)
+        self.lblAutor = QLabel("AUTOR:",self) if not(self.method) else QLabel("AUTOR(*):",self)
         self.lblAutor.adjustSize()
-        self.lblAutor.move(49, 90)
+        self.lblAutor.move(49, 100) if not(self.method) else self.lblAutor.move(39, 100)
         self.lblAutor.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblAutor.setStyleSheet("background-color: lightblue")
         self.txtAutor = MyLineEdit(self)
         self.txtAutor.setFixedHeight(18)
         self.txtAutor.setFixedWidth(230)
-        self.txtAutor.move(95,88)
+        self.txtAutor.move(95,98)
         self.txtAutor.setReadOnly(True)
         self.txtAutor.setPalette(self.darkPalette)
         self.txtAutor.clicked.connect(lambda: self.deactivateLineEdit("Autor"))
         self.txtAutor.setMaxLength(45)
 
-        self.lblPublisher = QLabel("EDITORIAL:",self)
+        self.lblPublisher = QLabel("EDITORIAL:",self) if not(self.method) else QLabel("EDITORIAL(*):",self)
         self.lblPublisher.adjustSize()
-        self.lblPublisher.move(31, 110)
+        self.lblPublisher.move(31, 120) if not(self.method) else self.lblPublisher.move(21, 120)
         self.lblPublisher.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblPublisher.setStyleSheet("background-color: lightblue")
         self.txtPublisher = MyLineEdit(self)
         self.txtPublisher.setFixedHeight(18)
         self.txtPublisher.setFixedWidth(230)
-        self.txtPublisher.move(95,108)
+        self.txtPublisher.move(95,118)
         self.txtPublisher.setReadOnly(True)
         self.txtPublisher.setPalette(self.darkPalette)
         self.txtPublisher.clicked.connect(lambda: self.deactivateLineEdit("Publisher"))
         self.txtPublisher.setMaxLength(45)
 
-
-        self.lblInitStock = QLabel("STOCK INGRESO:",self)
-        self.lblInitStock.adjustSize()
-        self.lblInitStock.move(5, 130)
-        self.lblInitStock.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblInitStock.setStyleSheet("background-color: lightblue")
-        self.txtInitStock = MyLineEdit(self)
-        self.txtInitStock.setFixedHeight(18)
-        self.txtInitStock.setFixedWidth(230)
-        self.txtInitStock.move(95,128)
-        self.txtInitStock.setReadOnly(True)
-        self.txtInitStock.setPalette(self.darkPalette)
-        self.txtInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
-        self.txtInitStock.setMaxLength(45)
-        self.txtInitStock.setEnabled(False) if not(self.method) else self.txtInitStock.setEnabled(True)
-        self.txtInitStock.setPlaceholderText("DESABILITADO") if not(self.method) else self.txtInitStock.setPlaceholderText("EN ALMACEN ACTUAL")
-
-        self.lblPrice = QLabel("PRECIO:",self)
+        self.lblPrice = QLabel("PRECIO:",self) if not(self.method) else QLabel("PRECIO(*):",self)
         self.lblPrice.adjustSize()
-        self.lblPrice.move(47, 150)
+        self.lblPrice.move(47, 140) if not(self.method) else self.lblPrice.move(37, 140)
         self.lblPrice.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblPrice.setStyleSheet("background-color: lightblue")
         self.txtPrice = MyLineEdit(self)
+        self.txtPrice.setPlaceholderText("Ingresar solo numeros")
         self.txtPrice.setFixedHeight(18)
         self.txtPrice.setFixedWidth(230)
-        self.txtPrice.move(95,148)
+        self.txtPrice.move(95,138)
         self.txtPrice.setReadOnly(True)
         self.txtPrice.setPalette(self.darkPalette)
         self.txtPrice.clicked.connect(lambda: self.deactivateLineEdit("Price"))
         self.txtPrice.setMaxLength(30)
 
+        self.lblInitStock = QLabel("STOCK INGRESO:",self)
+        self.lblInitStock.adjustSize()
+        self.lblInitStock.move(5, 163)
+        self.lblInitStock.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblInitStock.setStyleSheet("background-color: lightblue")
+        self.spinInitStock = MySpinBox(self)
+        self.spinInitStock.setGeometry(100, 100, 50, 20)
+        self.spinInitStock.move(95,159)
+        self.spinInitStock.setReadOnly(True)
+        self.spinInitStock.setPalette(self.darkPalette)
+        self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
+        self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
+        
         self.btnCancel = QPushButton('Cancelar', self)
         self.btnCancel.adjustSize()
-        self.btnCancel.move(190, 170)
-        self.btnCancel.clicked.connect(lambda: self.returnValues(False))
+        self.btnCancel.move(190, 185)
+        self.btnCancel.clicked.connect(lambda: self.submitclose())
         
         self.btnOk = QPushButton(self)
         self.btnOk.setText("Editar") if not(self.method) else self.btnOk.setText("Registrar")
         self.btnOk.adjustSize()
-        self.btnOk.move(80, 170)
-        self.btnOk.clicked.connect(lambda: self.returnValues(True)) if not(self.method) else print("Modo registrar")
-
+        self.btnOk.move(80, 185)
+        self.btnOk.clicked.connect(lambda: self.returnValues(True))
 
     def show_window(self):
        self.show()
+
+
+class MySpinBox(QSpinBox):
+    clicked = pyqtSignal()
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+        QSpinBox.mousePressEvent(self, event)
 
 class MyLineEdit(QLineEdit):
     clicked = pyqtSignal()
@@ -1200,6 +1247,7 @@ if __name__ == '__main__':
         "price": "65.0"}
     ui = ui_EditNewItemDialog(True)
     # ui.setDataFields(data)
+    ui.setDataFields("GN_2025")
     ui.cleanInputFields()
     # ui = ui_OperationDialog(Dialog)
     # ui.setItemData("", "")
