@@ -470,11 +470,12 @@ class Ui_Dialog(QtWidgets.QDialog):
             if ui_NewItemDialog.exec_() == QDialog.Accepted:
                 validator, data = ui_NewItemDialog.returnedVal
                 if validator:
-                    if(self.userValidation() and self.ware_gest.insertNewItemDB(data, self.ownWares[0]) and self.ware.insertInnerNewItem(data, self.ownWares)):
-                        QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
-                        self.txtBusChanged()
-                    else:
-                        QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
+                    if self.userValidation():
+                        if(self.ware_gest.insertNewItemDB(data, self.ownWares[0]) and self.ware.insertInnerNewItem(data, self.ownWares)):
+                            QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
+                            self.txtBusChanged()
+                        else:
+                            QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
 
     def setupUi(self):
         self.setObjectName("Dialog")
