@@ -13,6 +13,7 @@ from PyQt5.QtGui import QFont, QBrush, QColor
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSignal, Qt
 from gestor import ware_gestor, wares_gestor, aws_s3
+from objects import ware, user
 from inout_dialog import Ui_inoutDialog
 from uiConfigurations import *
 ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
@@ -20,7 +21,7 @@ ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 
 class Ui_Dialog(QtWidgets.QDialog):
     # -----------  constructor  -----------
-    def __init__(self, data_users = None, data_wares = None, parent=None):
+    def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, parent=None):
         super(Ui_Dialog, self).__init__(parent)
         self.ware = ware_gestor()  ##se crea el objeto ware
         self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
@@ -29,16 +30,17 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ui_EditDialog = ui_EditNewItemDialog()
         self.objS3 = aws_s3()
         self.real_table = []
-        self.ownUsers = data_users
-        self.ownWares = data_wares
+        self.ownUsers = currentUser
+        self.ownWares = currentWare
+        self.restWares = restWare
         self.setupUi()
         # -----------  cargar datos en tabla  -----------
-        self.ware.load_mainlist(self.ownWares) ##para cargar la tabla principal del gestor
-        self.loadData("main")
+        # self.ware.load_mainlist(self.ownWares) ##para cargar la tabla principal del gestor
+        # self.loadData("main")
 
         # -----------  QDialog para ventana in/out  -----------
-        self.dialog = QDialog()
-        self.ui_dialog = Ui_inoutDialog(data_users, data_wares, self.dialog)
+        # self.dialog = QDialog()
+        # self.ui_dialog = Ui_inoutDialog(data_users, data_wares, self.dialog)
         self.init = 0
 
     # -----------  condiciones iniciales al abrir ventana  -----------
@@ -47,12 +49,12 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.cmbSearch.setEnabled(True)
         self.txtSearch.setEnabled(True)
         self.txtSearch.clear()
-        self.lblInOut.setEnabled(True)  # label in/out
+        self.lblInOut.setEnabled(False)  # label in/out
         item_all = ['cod','isbn','titulo','autor','editorial']
         self.cmbSearch.clear()
         self.cmbSearch.addItems(item_all)
         self.cmbSearch.setCurrentIndex(-1)
-        self.loadData("main")
+        # self.loadData("main")
         self.ware_table.setCurrentCell(0, 0)
         self.actualizar_img(0)
 
@@ -69,7 +71,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         return result_books +  result_nobooks
 
     ## Funcion que permite la apertura de ventana ware desde el main_
-    def show_window(self):
+    def showWindow(self):
         self.show()
 
     def upload_quantity(self):
@@ -93,12 +95,13 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     # -----------  close event configuration  -----------
     def closeEvent(self, event):
-        if self.ui_dialog.isVisible():
-            ret = QMessageBox.information(self, 'Aviso', "Debe cerrar la ventana entrada/salida")
-            event.ignore()
-        else:
-            self.accept()
-            event.accept()
+        event.accept()
+        # if self.ui_dialog.isVisible():
+        #     ret = QMessageBox.information(self, 'Aviso', "Debe cerrar la ventana entrada/salida")
+        #     event.ignore()
+        # else:
+        #     self.accept()
+        #     event.accept()
 
     def updateRealTable(self): #se actualiza la tabla actual con los datos del back
         for i in self.real_table:
@@ -396,17 +399,13 @@ class Ui_Dialog(QtWidgets.QDialog):
             return len(self.real_table)
         return 0
 
-    # -----------  fill combobox wares from sql  -----------
-    def fillcmbWares(self):
-        tmp_List = []
+    # -----------  obtiene lista de wares sobrantes  -----------
+    def getRestWare(self) -> list:
         try:
-            for i in self.ownWares[1]:
-                if i.cod != self.ownWares[0] and i.enabled == True:
-                    tmp_List.append(i.cod)
-            #self.seColumn = str(tmp_List[0])
+            tmp_List = list(map(lambda x: x.cod, self.restWares))
             return tmp_List
         except:
-            return tmp_List
+            return []
     
     # -----------  keyPressed for QtableWidget  -----------
     def KeyPressed(self,event):
@@ -624,7 +623,8 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.cmbWares.setObjectName("cmWares")
         self.cmbWares.currentIndexChanged.connect(self.onCurrentIndexChanged)
         self.cmbWares.clear()
-        self.cmbWares.addItems(self.fillcmbWares())
+        #Dentro de esta parte se carga los datos de cmbwares
+        self.cmbWares.addItems(self.getRestWare())
 
         # -----------  frame configuration  -----------
         self.frame_2 = QtWidgets.QFrame(self)
@@ -731,7 +731,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
         item = self.ware_table.horizontalHeaderItem(5)
-        item.setText(_translate("Dialog", "[" + self.ownWares[0] + "]"))
+        item.setText(_translate("Dialog", "[" + self.ownWares.cod + "]"))
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
         item = self.ware_table.horizontalHeaderItem(6)

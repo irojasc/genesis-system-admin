@@ -3,34 +3,33 @@ from PyQt5.QtCore import Qt
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ware_dialog import Ui_Dialog
 from datetime import datetime # estos es para mostrar la hora en el main
-# import threading
-import time
-from datetime import datetime
 from decouple import Config, RepositoryEnv
 from objects import user, ware
+from datetime import datetime
 from uiConfigurations import *
+import time
+import threading
 
-enable_datetime = True
 env_config = Config(RepositoryEnv('C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'))
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
     def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, wareName:str = None, parent=None):
         super(Ui_MainWindow, self).__init__(parent)
+        self.enable_datetime = True
         # currentWare: ware , datos de almacen actual
         # restWare: list[ware], datos de los demas almacenes
         # currentUser: user, datos de usuario actual
         self.ware_name = wareName
         self.usr_text = currentUser.user
-
         #NOS QUEDAMOS EN ESTA PARTE
-        # self.dialog = QDialog()
-        # self.ui_dialog = Ui_Dialog(data_user, data_ware, self.dialog)
+        self.dialog = QDialog()
+        self.uiWareProduct = Ui_Dialog(currentUser, currentWare, restWare, self.dialog)
         self.setupUi()
 
     def setupUi(self):
         self.setObjectName("MainWindow")
-        self.resize(1280, 1024)
-        self.setFixedSize(1280, 1024)
+        self.resize(1280, 700)
+        self.setFixedSize(1280, 700)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
 
@@ -62,17 +61,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.wareName.setStyleSheet("background-color: rgb(50, 50, 50);")
         self.wareName.setObjectName("wareName")
 
-        self.date_label = QtWidgets.QLabel(self.frame)
-        self.date_label.setGeometry(QtCore.QRect(1060, 60, 191, 31))
-        self.date_label.setPalette(getDatePalette())
-        font = QtGui.QFont()
-        font.setFamily("Open Sans Semibold")
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setWeight(75)
-        self.date_label.setFont(font)
-        self.date_label.setStyleSheet("background-color: rgb(50, 50, 50);")
-        self.date_label.setObjectName("date_label")
+        self.dateText = QtWidgets.QLabel(self.frame)
+        self.dateText.setGeometry(QtCore.QRect(1060, 60, 191, 31))
+        self.dateText.setPalette(getDatePalette())
+        self.dateText.setFont(font)
+        self.dateText.setStyleSheet("background-color: rgb(50, 50, 50);")
+        self.dateText.setObjectName("dateText")
         # -----------  warelabel cofiguration  -----------
 
         self.wareIcon = QtWidgets.QLabel(self.frame)
@@ -81,8 +75,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.wareIcon.setPixmap(QtGui.QPixmap(env_config.get('ROOT') + "imgs/warehouse_icon.png"))
         self.wareIcon.setScaledContents(True)
         self.wareIcon.setObjectName("wareIcon")
-        self.wareIcon.mousePressEvent = self.open_wareWindow
-
+        self.wareIcon.mousePressEvent = self.openWareDialog
 
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
         self.label_3.setGeometry(QtCore.QRect(0, 737, 1280, 287))
@@ -112,34 +105,37 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.retranslateUi()
         #QtCore.QMetaObject.connectSlotsByName(MainWindow)
-        # QtCore.QMetaObject.connectSlotsByName(self)
-        # self.run_threads()
+        QtCore.QMetaObject.connectSlotsByName(self)
+        self.run_threads()
 
-    def open_wareWindow(self, event):
-        self.ui_dialog.init_condition()
+    def closeEvent(self, event):
+        self.enable_datetime = False
+        event.accept()
+
+    def openWareDialog(self, event):
+        self.uiWareProduct.init_condition()
         self.setEnabled(False)
-        self.ui_dialog.show_window()
-        if self.ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
+        self.uiWareProduct.showWindow()
+        if self.uiWareProduct.exec_() == QtWidgets.QDialog.Accepted:
             self.setEnabled(True)
 
     def update_datetime(self):
-        while(enable_datetime):
-            self.date_label.setText(datetime.now().strftime("%H:%M %d/%m/%Y"))
+        while(self.enable_datetime):
+            self.dateText.setText(datetime.now().strftime("%H:%M %d/%m/%Y"))
             time.sleep(0.5)
 
-    # def run_threads(self):
-    #     self.t1 = threading.Thread(target=self.update_datetime)
-    #     self.t1.start()
+    def run_threads(self):
+        self.t1 = threading.Thread(target=self.update_datetime)
+        self.t1.start()
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("MainWindow", "Genesis - [Museo del Libro]"))
         self.userName.setText(_translate("MainWindow", "USER: " + self.usr_text.upper()))
-        self.date_label.setText(_translate("MainWindow", "18:39 20/04/2021"))
+        self.dateText.setText(_translate("MainWindow", "18:39 20/04/2021"))
         self.wareName.setText(_translate("MainWindow", "ALMACEN: " + self.ware_name.upper()))
         self.wareName.adjustSize() #Ajusta el tamaño del label al tamaño de las letras
         self.wareName.move(1040 - self.wareName.width(),66) #cambia la posicion del label
-
         item = self.notification_table.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "N°"))
         item = self.notification_table.horizontalHeaderItem(1)
