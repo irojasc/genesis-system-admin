@@ -14,6 +14,7 @@ from PyQt5.QtCore import QEvent
 from gestor import users_gestor, wares_gestor
 from main_window import Ui_MainWindow
 from decouple import Config, RepositoryEnv
+import time
 
 # DOTENV_FILE = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'
 env_config = Config(RepositoryEnv('C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'))
@@ -22,6 +23,7 @@ env_config = Config(RepositoryEnv('C:/Users/IROJAS/Desktop/Genesis/genesis-syste
 class Ui_LoginWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None): #para que puse el parent = None?
         super(Ui_LoginWindow, self).__init__(parent)
+        self.setupUi()
         #se crea el gestor de almacenes
         self.user_gest = users_gestor()     
         self.ware_gest = wares_gestor()
@@ -35,8 +37,8 @@ class Ui_LoginWindow(QtWidgets.QMainWindow):
         if bool(currentUser) and validator:
             # QMessageBox.information(self, 'Mensaje', "Log In Correcto", QMessageBox.Ok, QMessageBox.Ok)
             self.ui = Ui_MainWindow(currentUser, objWares[0], objWares[1], currentWareName)
-            LoginWindow.close()
             self.ui.show()
+            self.close()
 
         elif not(bool(currentUser)) and validator:
             self.label_message.setVisible(True)
@@ -62,11 +64,11 @@ class Ui_LoginWindow(QtWidgets.QMainWindow):
             #print('key press:', (event.key(), event.text()))
         return super(Ui_LoginWindow, self).eventFilter(source, event)
 
-    def setupUi(self, LoginWindow):
-        LoginWindow.setObjectName("LoginWindow")
-        LoginWindow.resize(380, 312)
-        LoginWindow.setFixedSize(380,312)
-        self.centralwidget = QtWidgets.QWidget(LoginWindow)
+    def setupUi(self):
+        self.setObjectName("LoginWindow")
+        self.resize(380, 312)
+        self.setFixedSize(380,312)
+        self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
 
         # -----------  Login Button  -----------
@@ -152,17 +154,17 @@ class Ui_LoginWindow(QtWidgets.QMainWindow):
         self.label_message.setVisible(False)
 
         # ======  End of wrongLogin label   =======
-        LoginWindow.setCentralWidget(self.centralwidget)
-        self.statusbar = QtWidgets.QStatusBar(LoginWindow)
+        self.setCentralWidget(self.centralwidget)
+        self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbar.setObjectName("statusbar")
-        LoginWindow.setStatusBar(self.statusbar)
+        self.setStatusBar(self.statusbar)
 
-        self.retranslateUi(LoginWindow)
-        QtCore.QMetaObject.connectSlotsByName(LoginWindow)
+        self.retranslateUi()
+        QtCore.QMetaObject.connectSlotsByName(self)
 
-    def retranslateUi(self, LoginWindow):
+    def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        LoginWindow.setWindowTitle(_translate("LoginWindow", "Genesis - [Museo del Libro]"))
+        self.setWindowTitle(_translate("LoginWindow", "Genesis - [Museo del Libro]"))
         self.pushButton.setText(_translate("LoginWindow", "Log in"))
         self.txtUser.setPlaceholderText(_translate("LoginWindow", "User"))
         self.txtPwd.setPlaceholderText(_translate("LoginWindow", "Password"))
@@ -171,10 +173,10 @@ class Ui_LoginWindow(QtWidgets.QMainWindow):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    LoginWindow = QtWidgets.QMainWindow()
+    # LoginWindow = QtWidgets.QMainWindow()
     ui = Ui_LoginWindow()
-    ui.setupUi(LoginWindow)
-    LoginWindow.show()
-    app.exec_()
-    enable_datetime = False
+    # ui.setupUi(LoginWindow)
+    ui.show()
+    sys.exit(app.exec_())
+    # enable_datetime = False
 

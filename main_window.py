@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ware_dialog import Ui_Dialog
 from datetime import datetime # estos es para mostrar la hora en el main
-import threading
+# import threading
 import time
 from datetime import datetime
 from decouple import Config, RepositoryEnv
@@ -15,23 +15,31 @@ env_config = Config(RepositoryEnv('C:/Users/IROJAS/Desktop/Genesis/genesis-syste
 class Ui_MainWindow(QtWidgets.QMainWindow):
     def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, wareName:str = None, parent=None):
         super(Ui_MainWindow, self).__init__(parent)
-        """**data_ware y data_user = (objectCODE, objects(List), Permisos)"""
+        # currentWare: ware , datos de almacen actual
+        # restWare: list[ware], datos de los demas almacenes
+        # currentUser: user, datos de usuario actual
         self.ware_name = wareName
-        """TODO DE USUARIO"""
         self.usr_text = currentUser.user
-        """TODO DE WARES"""
+
         #NOS QUEDAMOS EN ESTA PARTE
         # self.dialog = QDialog()
         # self.ui_dialog = Ui_Dialog(data_user, data_ware, self.dialog)
         self.setupUi()
 
-    #def setupUi(self, MainWindow):
+    # -----------  close event configuration  -----------
+    def closeEvent(self, event):
+        # self.accept()
+        event.accept()
+        self.destroy()
+
     def setupUi(self):
         self.setObjectName("MainWindow")
         self.resize(1280, 1024)
         self.setFixedSize(1280, 1024)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
+
+
         self.frame = QtWidgets.QFrame(self.centralwidget)
         self.frame.setGeometry(QtCore.QRect(0, 0, 1280, 100))
         self.frame.setAutoFillBackground(False)
@@ -40,8 +48,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame.setObjectName("frame")
-        self.user_label = QtWidgets.QLabel(self.frame)
-        self.user_label.setGeometry(QtCore.QRect(1060, 20, 191, 31))
+        self.userName = QtWidgets.QLabel(self.frame)
+        self.userName.setGeometry(QtCore.QRect(1060, 20, 191, 31))
+
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         brush.setStyle(QtCore.Qt.SolidPattern)
@@ -79,29 +88,23 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         brush = QtGui.QBrush(QtGui.QColor(50, 50, 50))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Window, brush)
-        self.user_label.setPalette(palette)
+
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
         font.setPointSize(14)
         font.setBold(True)
         font.setWeight(75)
-        self.user_label.setFont(font)
-        self.user_label.setStyleSheet("background-color: rgb(50, 50, 50);")
-        self.user_label.setObjectName("user_label")
+        self.userName.setPalette(palette)
+        self.userName.setFont(font)
+        self.userName.setStyleSheet("background-color: rgb(50, 50, 50);")
+        self.userName.setObjectName("userName")
 
-
-        self.ware_labe = QtWidgets.QLabel(self.frame)
-        self.ware_labe.setGeometry(QtCore.QRect(780, 60, 255, 31))
-        self.ware_labe.setPalette(palette)
-        font = QtGui.QFont()
-        font.setFamily("Open Sans Semibold")
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setWeight(75)
-        self.ware_labe.setFont(font)
-        self.ware_labe.setStyleSheet("background-color: rgb(50, 50, 50);")
-        self.ware_labe.setObjectName("ware_labe")
-
+        self.wareName = QtWidgets.QLabel(self.frame)
+        self.wareName.setGeometry(QtCore.QRect(780, 60, 255, 31))
+        self.wareName.setPalette(palette)
+        self.wareName.setFont(font)
+        self.wareName.setStyleSheet("background-color: rgb(50, 50, 50);")
+        self.wareName.setObjectName("wareName")
 
         self.date_label = QtWidgets.QLabel(self.frame)
         self.date_label.setGeometry(QtCore.QRect(1060, 60, 191, 31))
@@ -153,13 +156,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.date_label.setObjectName("date_label")
         # -----------  warelabel cofiguration  -----------
 
-        self.ware_label = QtWidgets.QLabel(self.frame)
-        self.ware_label.setGeometry(QtCore.QRect(30, 15, 72, 72))
-        self.ware_label.setText("")
-        self.ware_label.setPixmap(QtGui.QPixmap(env_config.get('ROOT') + "imgs/warehouse_icon.png"))
-        self.ware_label.setScaledContents(True)
-        self.ware_label.setObjectName("ware_label")
-        self.ware_label.mousePressEvent = self.open_wareWindow
+        self.wareIcon = QtWidgets.QLabel(self.frame)
+        self.wareIcon.setGeometry(QtCore.QRect(30, 15, 72, 72))
+        self.wareIcon.setText("")
+        self.wareIcon.setPixmap(QtGui.QPixmap(env_config.get('ROOT') + "imgs/warehouse_icon.png"))
+        self.wareIcon.setScaledContents(True)
+        self.wareIcon.setObjectName("wareIcon")
+        self.wareIcon.mousePressEvent = self.open_wareWindow
 
 
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
@@ -190,8 +193,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.retranslateUi()
         #QtCore.QMetaObject.connectSlotsByName(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(self)
-        self.run_threads()
+        # QtCore.QMetaObject.connectSlotsByName(self)
+        # self.run_threads()
 
     def open_wareWindow(self, event):
         self.ui_dialog.init_condition()
@@ -205,18 +208,18 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.date_label.setText(datetime.now().strftime("%H:%M %d/%m/%Y"))
             time.sleep(0.5)
 
-    def run_threads(self):
-        self.t1 = threading.Thread(target=self.update_datetime)
-        self.t1.start()
+    # def run_threads(self):
+    #     self.t1 = threading.Thread(target=self.update_datetime)
+    #     self.t1.start()
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("MainWindow", "Genesis - [Museo del Libro]"))
-        self.user_label.setText(_translate("MainWindow", "USER: " + self.usr_text.upper()))
+        self.userName.setText(_translate("MainWindow", "USER: " + self.usr_text.upper()))
         self.date_label.setText(_translate("MainWindow", "18:39 20/04/2021"))
-        self.ware_labe.setText(_translate("MainWindow", "ALMACEN: " + self.ware_name.upper()))
-        self.ware_labe.adjustSize() #Ajusta el tamaño del label al tamaño de las letras
-        self.ware_labe.move(1040 - self.ware_labe.width(),66) #cambia la posicion del label
+        self.wareName.setText(_translate("MainWindow", "ALMACEN: " + self.ware_name.upper()))
+        self.wareName.adjustSize() #Ajusta el tamaño del label al tamaño de las letras
+        self.wareName.move(1040 - self.wareName.width(),66) #cambia la posicion del label
 
         item = self.notification_table.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "N°"))
@@ -224,3 +227,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         item.setText(_translate("MainWindow", "Notificación"))
         item = self.notification_table.horizontalHeaderItem(2)
         item.setText(_translate("MainWindow", "Estado"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+
+    sys.exit(app.exec_())

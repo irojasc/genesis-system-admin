@@ -22,7 +22,7 @@ class wares_gestor:
 			self.load_wares()
 
 	def connectDB(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
 		self.cursor = self.mydb.cursor()
 
 	def disconnectDB(self):
@@ -159,7 +159,7 @@ class ware_gestor:
 		self.temp_list = []
 	
 	def connect_db(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
 		self.cursor = self.mydb.cursor()
 
 	def disconnect_db(self):
@@ -373,7 +373,7 @@ class users_gestor:
 		self.fill_users()
 
 	def connectDB(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
 		# print("MySQL connection is open")
 		self.cursor = self.mydb.cursor()
 
