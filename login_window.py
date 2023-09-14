@@ -255,7 +255,7 @@ class Ui_LoginWindow(QtWidgets.QMainWindow):
         #lineEdit = usr, lineEdit_2 = passwd ???
 
         if param1 and self.ware_exist and data_user[2] and data_ware[2][0] == True:
-            self.window = QtWidgets.QMainWindow()
+            # self.window = QtWidgets.QMainWindow()
             self.ui = Ui_MainWindow(data_user, data_ware, self.lineEdit.text(), ware_name)
             LoginWindow.close()
             self.ui.show()
