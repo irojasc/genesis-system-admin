@@ -95,6 +95,7 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     # -----------  close event configuration  -----------
     def closeEvent(self, event):
+        self.accept()
         event.accept()
         # if self.ui_dialog.isVisible():
         #     ret = QMessageBox.information(self, 'Aviso', "Debe cerrar la ventana entrada/salida")
@@ -402,8 +403,7 @@ class Ui_Dialog(QtWidgets.QDialog):
     # -----------  obtiene lista de wares sobrantes  -----------
     def getRestWare(self) -> list:
         try:
-            tmp_List = list(map(lambda x: x.cod, self.restWares))
-            return tmp_List
+            return list(map(lambda x: x.cod, self.restWares))
         except:
             return []
     

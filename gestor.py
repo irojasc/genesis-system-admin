@@ -394,7 +394,7 @@ class users_gestor:
 	
 	def fill_users(self):
 		query = ("select idDoc, user, pw, enabled, us.* from genesisdb.user u inner join genesisdb.userset us on u.userSet = us.lvl;")
-		query2 = ("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'userset';")
+		query2 = ("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'userset' ORDER BY ordinal_position;")
 		try:
 			self.connectDB()
 			self.cursor.execute(query)

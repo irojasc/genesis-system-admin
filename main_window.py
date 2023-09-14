@@ -19,6 +19,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # currentWare: ware , datos de almacen actual
         # restWare: list[ware], datos de los demas almacenes
         # currentUser: user, datos de usuario actual
+        self.currentUser = currentUser
         self.ware_name = wareName
         self.usr_text = currentUser.user
         #NOS QUEDAMOS EN ESTA PARTE
@@ -26,6 +27,18 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.uiWareProduct = Ui_Dialog(currentUser, currentWare, restWare, self.dialog)
         self.setupUi()
 
+    def openWareDialog(self, event):
+        print(self.currentUser.auth)
+        if self.currentUser.auth["productSrch"]:
+            self.uiWareProduct.init_condition()
+            self.setEnabled(False)
+            self.uiWareProduct.showWindow()
+            if self.uiWareProduct.exec_() == QtWidgets.QDialog.Accepted:
+                self.setEnabled(True)
+        else:
+            QMessageBox.about(self, "Alerta", "No tiene permisos para ingresar almacen")
+    
+    
     def setupUi(self):
         self.setObjectName("MainWindow")
         self.resize(1280, 700)
@@ -112,12 +125,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.enable_datetime = False
         event.accept()
 
-    def openWareDialog(self, event):
-        self.uiWareProduct.init_condition()
-        self.setEnabled(False)
-        self.uiWareProduct.showWindow()
-        if self.uiWareProduct.exec_() == QtWidgets.QDialog.Accepted:
-            self.setEnabled(True)
+
 
     def update_datetime(self):
         while(self.enable_datetime):
