@@ -1,13 +1,20 @@
 
 class user:
-	def __init__(self, user = "", passwd = "", name = "", doc = "", phone = "", enabled = False, purchaseEnabled = False):
+	def __repr__(self):
+		return "user()"
+	
+	def __str__(self):
+		return str(self.auth)
+	
+	def __init__(self, user: str = None, pwd: str = None, name: str = None, doc: str = None, phone: str = None, auth: dict = None, level: int = None):
 		self.user = user
-		self.passwd = passwd
+		self.pwd = pwd
 		self.name = name
 		self.doc = doc
 		self.phone = phone
-		self.enabled = enabled
-		self.purchaseEnabled = purchaseEnabled
+		# auth es dict que contiene [enabled, producSrch]
+		self.auth = auth
+		self.level = level
 
 class supplier:
 	def __init__(self, id, name, admin, phone, direction, mail):
@@ -97,9 +104,14 @@ class book:
 	def setPv(self, pv: float):
 		self.Pv = float(pv)
 
-class ware_:
-	def __init__(self, cod = "", dir = "", enabled = False, toolTip = False):
+class ware:
+	def __repr__(self):
+		return "ware()"
+	
+	def __str__(self):
+		return str(self.auth)
+
+	def __init__(self, id: int = None, cod = "", auth: dict = None):
+		self.id = id
 		self.cod = cod
-		self.dir = dir
-		self.enabled = enabled
-		self.toolTip = toolTip
+		self.auth = auth

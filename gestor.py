@@ -6,7 +6,7 @@ import os
 from objects import user
 from objects import ware_book
 from objects import book
-from objects import ware_
+from objects import ware
 from decouple import Config, RepositoryEnv
 
 
@@ -18,54 +18,73 @@ ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 class wares_gestor:
 	def __init__(self, condition = "main"):
 		if condition == "main":
-			self.wares = []
+			self.wareList = []
 			self.load_wares()
 
 	def connectDB(self):
-		try:
-			self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
-			self.cursor = self.mydb.cursor()
-		except:
-			print("No se puede conectar a genesisDB")
-			self.cursor.close()
-			self.mydb.close()
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
+		self.cursor = self.mydb.cursor()
 
 	def disconnectDB(self):
 		self.cursor.close()
 		self.mydb.close()
 
+	def createWare(self, index_value, perheaders):
+		index, value = index_value
+		headers = perheaders.copy()
+		headers.pop(0)
+		perDict = {}
+		perDict.update({"enabled": bool(value[2])})
+		for index, header in enumerate(headers):
+			pair = {header[0]: bool(value[4+index])}
+			perDict.update(pair)
+		return ware(value[0], value[1], perDict)
+	
 	def load_wares(self):
-		self.connectDB()
-		query = "select * from genesisDB.wares where enabled = true order by id asc;"
+		query = "select id, code, enabled, ws.* from genesisdb.ware w inner join genesisdb.wareset ws on w.warelvl = ws.lvl where enabled = true and isVirtual = False order by id asc;"
+		query2 = ("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'wareset';")
 		try:
+			self.connectDB()
 			self.cursor.execute(query)
-			# param5: ware enabled, param6: tooltip enabled
-			for (param1, param2, param3, param4, param5, param6) in self.cursor:
-				objWare = ware_(param2, param3, bool(param5), bool(param6))
-				self.wares.append(objWare)
-			self.disconnectDB()
-		except:
-			print("No se puede conectar a genesisDB")
-			self.disconnectDB()
+			wareRows = self.cursor.fetchall()
+			#query2 para obtener headers de wareset
+			self.cursor.execute(query2)
+			headers = self.cursor.fetchall()
+			self.wareList = list(map(lambda x: self.createWare(x, headers), enumerate(wareRows)))
 
-	def sort_ware(self):
+		except mysql.connector.Error as error:
+			print("Error: {}".format(error))
+
+		finally:
+			try:
+				if self.mydb.is_connected():
+					self.disconnectDB()
+					# print("MySQL connection is closed")
+			except:
+				print("No se pudo conectar")
+
+	def sort_ware(self, fileWare: str = None):
 		# funcion que mueve a primera posicion los datos de almacen actual
-		self.wares.insert(0, self.wares.pop(next((i for i, item in enumerate(self.wares) if item.cod == self.abrev), -1)))
+		# self.wareList.insert(0, self.wareList.pop(next((i for i, item in enumerate(self.wareList) if item.cod == fileWare), -1)))
+		self.wareList.insert(0, self.wareList.pop(next((i for i, item in enumerate(self.wareList) if item.cod == fileWare), -1)))
+		index = list(map(lambda x: x[0] if x[1].cod == fileWare else None, enumerate(self.wareList)))
+		return True if isinstance(index[0], int) else False
+		
 
 	def exist_ware(self):
 		ware_name = ""
 		try:
 			file = open(ROOT + "registro.txt", "r")
 			vect = file.readlines()
-			self.abrev = vect[0].split(":")[1].strip('\n')
+			abrev = vect[0].split(":")[1].strip('\n')
 			ware_name = vect[1].split(":")[1].strip('\n')
-			for i in self.wares:
-				if i.cod == self.abrev:
-					file.close()
-					self.sort_ware()
-					return True, (i.cod, self.wares, (i.enabled, i.toolTip)), ware_name
 			file.close()
-			return False, None, "UNKNOWN"
+			if self.sort_ware(abrev):
+				copiedList = self.wareList.copy()
+				fstWare = copiedList.pop(0)
+				return True, (fstWare, copiedList), ware_name
+			else:
+				return False, None, "UNKNOWN"
 		except:
 			file.close()
 			return False, None, "UNKNOWN"
@@ -350,51 +369,58 @@ class ware_gestor:
 
 class users_gestor:
 	def __init__(self):
-		self.users = []
+		self.userList = []
 		self.fill_users()
-		#try:
-		#	self.mydb = mysql.connector.connect(host = "mysql-28407-0.cloudclusters.net", user="admin01", passwd="alayza2213", port="28416")
-		#	self.cursor = self.mydb.cursor()
-		#except:
-		#	print("No se puede conectar a genesisDB")
-		#	self.cursor.close()
-		#	self.mydb.close()
 
 	def connectDB(self):
-		try:
-			self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
-			self.cursor = self.mydb.cursor()
-		except:
-			print("No se puede conectar a genesisDB")
-			self.cursor.close()
-			self.mydb.close()
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
+		# print("MySQL connection is open")
+		self.cursor = self.mydb.cursor()
 
 	def disconnectDB(self):
 		self.cursor.close()
 		self.mydb.close()
 
+	def createUser(self, index_value, perheaders: list = None):
+		index, value = index_value
+		headers = perheaders.copy()
+		headers.pop(0)
+		perDict = {}
+		perDict.update({"enabled": bool(value[3])})
+		for index, header in enumerate(headers):
+			pair = {header[0]: bool(value[5+index])}
+			perDict.update(pair)
+		return user(value[1], value[2], None, value[0], None, perDict, value[4])
+	
 	def fill_users(self):
-		self.connectDB()
-		query = ("use genesisDB;")
-		query1 = ("select * from users;")
+		query = ("select idDoc, user, pw, enabled, us.* from genesisdb.user u inner join genesisdb.userset us on u.userSet = us.lvl;")
+		query2 = ("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'userset';")
 		try:
+			self.connectDB()
 			self.cursor.execute(query)
-			self.cursor.execute(query1)
-			#param2: usr, param3: pssswd, param4: name, param5: doc, param6: phone, param7: enabled
-			for (param1, param2, param3, param4, param5, param6, param7, param8) in self.cursor:
-				objUser = user(param2, param3, param4, param5, param6, bool(param7), bool(param8))
-				self.users.append(objUser)
-			self.disconnectDB()
-		except:
-			print("No se puede conectar a genesisDB")
-			self.disconnectDB()
+			userRows = self.cursor.fetchall()
+			# nombres de las cabeceras de los permisos de usuario
+			self.cursor.execute(query2)
+			perHeaders = self.cursor.fetchall()
+			self.userList = list(map(lambda x: self.createUser(x, perHeaders), enumerate(userRows)))
+		
+		except mysql.connector.Error as error:
+			print("Error: {}".format(error))
 
-	def check_login(self, name, passwd):
-		for i in self.users:
-			if i.user == name and i.passwd == passwd:
-				return True, (i.user, self.users, i.enabled, i.purchaseEnabled)
-		return False, (i.user, self.users, False)
+		finally:
+			try:
+				if self.mydb.is_connected():
+					self.disconnectDB()
+					# print("MySQL connection is closed")
+			except:
+				print("No se pudo conectar")
 
+	def check_login(self, usr: str = "", pwd: str = ""):
+		objResult = next((obj for obj in self.userList if (obj.user == usr and obj.pwd == pwd)), None)
+		if bool(objResult):
+			return objResult
+		else:
+			return None
 
 class documents:
 	def __init__(self):

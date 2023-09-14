@@ -6,4 +6,5 @@ myenv
 .env
 imgs
 registro.txt
+conexion.py
 token_Bot.txt
