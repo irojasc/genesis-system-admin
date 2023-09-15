@@ -35,14 +35,15 @@ class wares_gestor:
 		headers.pop(0)
 		perDict = {}
 		perDict.update({"enabled": bool(value[2])})
+		perDict.update({"isVirtual": bool(value[3])})
 		for index, header in enumerate(headers):
-			pair = {header[0]: bool(value[4+index])}
+			pair = {header[0]: bool(value[5+index])}
 			perDict.update(pair)
 		return ware(value[0], value[1], perDict)
 	
 	def load_wares(self):
-		query = "select id, code, enabled, ws.* from genesisdb.ware w inner join genesisdb.wareset ws on w.warelvl = ws.lvl where enabled = true and isVirtual = False order by id asc;"
-		query2 = ("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'wareset';")
+		query = "select id, code, enabled, isVirtual, ws.* from genesisdb.ware w inner join genesisdb.wareset ws on w.warelvl = ws.lvl where enabled = true order by id asc;"
+		query2 = ("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'wareset' order by ordinal_position;")
 		try:
 			self.connectDB()
 			self.cursor.execute(query)

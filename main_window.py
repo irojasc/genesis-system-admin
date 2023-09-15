@@ -28,7 +28,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setupUi()
 
     def openWareDialog(self, event):
-        print(self.currentUser.auth)
         if self.currentUser.auth["productSrch"]:
             self.uiWareProduct.init_condition()
             self.setEnabled(False)
