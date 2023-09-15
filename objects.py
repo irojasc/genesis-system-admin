@@ -74,7 +74,9 @@ class ware_book:
 		self.almacen_data = ware_data
 
 class book:
-	def __init__(self, data, genderID="", Pc=0):
+	def __init__(self, id data, genderID="", Pc=0):
+		self.id =
+
 		self.cod = str(data[0]) # este
 		self.isbn = str(data[1]) # este
 		self.name = str(data[2]) # este
