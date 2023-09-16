@@ -403,7 +403,7 @@ class Ui_Dialog(QtWidgets.QDialog):
     # -----------  obtiene lista de wares sobrantes  -----------
     def getRestWare(self) -> list:
         try:
-            return list(map(lambda y: y.cod ,list(filter(lambda x: True if not(x.auth["isVirtual"]) else False, self.restWares))))
+            return list(map(lambda y: y.cod ,list(filter(lambda x: True if (x.auth["enabled"] and not(x.auth["isVirtual"])) else False, self.restWares))))
         except:
             return []
     

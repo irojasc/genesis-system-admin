@@ -3,10 +3,7 @@ import boto3
 import logging
 import os.path
 import os
-from objects import user
-from objects import ware_book
-from objects import book
-from objects import ware
+from objects import user, ware, ware_book, product
 from decouple import Config, RepositoryEnv
 
 
@@ -70,7 +67,6 @@ class wares_gestor:
 		self.wareList.insert(0, self.wareList.pop(next((i for i, item in enumerate(self.wareList) if item.cod == fileWare), -1)))
 		index = list(map(lambda x: x[0] if x[1].cod == fileWare else None, enumerate(self.wareList)))
 		return True if isinstance(index[0], int) else False
-		
 
 	def exist_ware(self):
 		ware_name = ""
@@ -151,7 +147,6 @@ class wares_gestor:
 				print("Something wrong happen: ", error)
 				self.disconnectDB()
 				return False
-
 
 # ware_gestor: maneja de items en almacen
 class ware_gestor:
@@ -418,7 +413,7 @@ class users_gestor:
 
 	def check_login(self, usr: str = "", pwd: str = ""):
 		objResult = next((obj for obj in self.userList if (obj.user == usr and obj.pwd == pwd)), None)
-		if bool(objResult):
+		if (bool(objResult) and objResult.auth["enabled"]):
 			return objResult
 		else:
 			return None
@@ -429,7 +424,6 @@ class documents:
 
 	def get_PDFReport(self):
 		print("Hola Mundo")
-
 
 class aws_s3:
 	def __init__(self) -> None:

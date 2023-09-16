@@ -73,10 +73,10 @@ class ware_book:
 		self.objBook = objBook
 		self.almacen_data = ware_data
 
-class book:
-	def __init__(self, id data, genderID="", Pc=0):
-		self.id =
-
+class product:
+	def __init__(self, type: str = None, id: int = None, data: list = [], genderID="", Pc=0):
+		self.type = type
+		self.id = id
 		self.cod = str(data[0]) # este
 		self.isbn = str(data[1]) # este
 		self.name = str(data[2]) # este
