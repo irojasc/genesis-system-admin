@@ -293,7 +293,6 @@ class Ui_Dialog(QtWidgets.QDialog):
                     if isUpdate and self.userValidation() and self.ware.updateInnerItem(data["cod"], text) and self.ware_gest.updateDataItem(data["cod"], text):
                         QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                         self.txtBusChanged()
-                    
 
         elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
             ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
