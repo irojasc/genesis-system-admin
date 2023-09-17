@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QFont, QBrush, QColor
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSignal, Qt
-from gestor import ware_gestor, wares_gestor, aws_s3
+from gestor import WareProduct, wares_gestor, aws_s3
 from objects import ware, user
 from inout_dialog import Ui_inoutDialog
 from uiConfigurations import *
@@ -23,7 +23,7 @@ class Ui_Dialog(QtWidgets.QDialog):
     # -----------  constructor  -----------
     def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, parent=None):
         super(Ui_Dialog, self).__init__(parent)
-        self.ware = ware_gestor()  ##se crea el objeto ware
+        self.gestWareProduct = WareProduct()  ##se crea el objeto getWareProduct: Maneja la tabla ware -> WareProduct <- Product
         self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
         self.ui_CustomInput = ui_CustomChangeLocation()
         self.ui_operationDialog = ui_OperationDialog()
@@ -31,12 +31,12 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.objS3 = aws_s3()
         self.real_table = []
         self.ownUsers = currentUser
-        self.ownWares = currentWare
+        self.currWare = currentWare
         self.restWares = restWare
         self.setupUi()
         # -----------  cargar datos en tabla  -----------
-        # self.ware.load_mainlist(self.ownWares) ##para cargar la tabla principal del gestor
-        # self.loadData("main")
+        self.gestWareProduct.load_mainlist() ##para cargar la tabla principal del gestor
+        self.loadData("main")
 
         # -----------  QDialog para ventana in/out  -----------
         # self.dialog = QDialog()
@@ -56,7 +56,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.cmbSearch.setCurrentIndex(-1)
         # self.loadData("main")
         self.ware_table.setCurrentCell(0, 0)
-        self.actualizar_img(0)
+        # self.actualizar_img(0)
 
     def sortTable(self, unsortList):
         # separar items que pertencen a libros
@@ -77,13 +77,13 @@ class Ui_Dialog(QtWidgets.QDialog):
     def upload_quantity(self):
         if self.ui_dialog.button_condition == "aceptar" and self.ui_dialog.criterio == " + ":
             for j in self.ui_dialog.main_table:
-                for i in self.ware.ware_list:
+                for i in self.gestWareProduct.ware_list:
                     if i.book.cod == j["cod"]:
                         i.almacen_quantity[1] += j["cantidad"]
 
         elif self.ui_dialog.button_condition == "aceptar" and self.ui_dialog.criterio == " - ":
             for j in self.ui_dialog.main_table:
-                for i in self.ware.ware_list:
+                for i in self.gestWareProduct.ware_list:
                     if i.book.cod == j["cod"]:
                         i.almacen_quantity[1] -= j["cantidad"]
         self.loadData()
@@ -106,9 +106,9 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     def updateRealTable(self): #se actualiza la tabla actual con los datos del back
         for i in self.real_table:
-            for j in self.ware.ware_list:
+            for j in self.gestWareProduct.ware_list:
                 if i.objBook.cod == j.objBook.cod:
-                    i.almacen_data["cant_" + self.ownWares[0]] = j.almacen_data["cant_"+ self.ownWares[0]]
+                    i.almacen_data["cant_" + self.currWare[0]] = j.almacen_data["cant_"+ self.currWare[0]]
         self.loadData()
 
     # -----------  carga tabla qtableWidget  -----------
@@ -117,45 +117,55 @@ class Ui_Dialog(QtWidgets.QDialog):
         flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
         if condition == "main":
             # sortTable: ordena la tabla que llega de gestor por tipo de producto y nivel de codigo
-            self.real_table = self.sortTable(self.ware.ware_list.copy())
+            # self.real_table = self.sortTable(self.gestWareProduct.ware_list.copy())
+            self.real_table = self.gestWareProduct.innerWareList.copy()
 
         # -----------  esta parte para llenar la tabla  -----------
         row = 0
         self.ware_table.setRowCount(len(self.real_table))
         for ware_li in self.real_table:
-            item = QtWidgets.QTableWidgetItem(ware_li.objBook.cod)
-            backgrounditem(item, ware_li.objBook.active)
+
+            item = QtWidgets.QTableWidgetItem(ware_li.product.prdCode)
+            # backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 0, item)
-            if self.ownWares[2][1] == True:
-                self.ware_table.item(row, 0).setToolTip(str(ware_li.almacen_data["ubic_"+self.ownWares[0]]))
-            item = QtWidgets.QTableWidgetItem(ware_li.objBook.isbn)
-            backgrounditem(item, ware_li.objBook.active)
+
+            # if self.currWare[2][1] == True:
+            #     self.ware_table.item(row, 0).setToolTip(str(ware_li.almacen_data["ubic_"+self.currWare[0]]))
+
+            item = QtWidgets.QTableWidgetItem(ware_li.product.isbn)
+            # backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 1, item)
-            item = QtWidgets.QTableWidgetItem(ware_li.objBook.name)
-            backgrounditem(item, ware_li.objBook.active)
+
+
+            item = QtWidgets.QTableWidgetItem(ware_li.product.title)
+            # backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 2, item)
-            item = QtWidgets.QTableWidgetItem(ware_li.objBook.autor)
-            backgrounditem(item, ware_li.objBook.active)
+
+            item = QtWidgets.QTableWidgetItem(ware_li.product.autor)
+            # backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 3, item)
-            item = QtWidgets.QTableWidgetItem(ware_li.objBook.editorial)
-            backgrounditem(item, ware_li.objBook.active)
+
+            item = QtWidgets.QTableWidgetItem(ware_li.product.publisher)
+            # backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 4, item)
-            text = str(ware_li.almacen_data["cant_"+self.ownWares[0]]) if ware_li.objBook.active else "-" 
-            item = QtWidgets.QTableWidgetItem(text)
-            backgrounditem(item, ware_li.objBook.active)
+
+            # text = str(ware_li.almacen_data["cant_"+self.currWare[0]]) if ware_li.objBook.active else "-" 
+            item = QtWidgets.QTableWidgetItem(str(ware_li.wareData[self.currWare.cod]["qtyNew"]))
+            # backgrounditem(item, ware_li.objBook.active)
             item.setFlags(flag)
             self.ware_table.setItem(row, 5, item)
-            if self.cmbWares.currentIndex() != -1:
-                text = str(ware_li.almacen_data["cant_"+self.cmbWares.currentText()]) if ware_li.objBook.active else "-" 
-                item = QtWidgets.QTableWidgetItem(text)
-                backgrounditem(item, ware_li.objBook.active)
-                item.setFlags(flag)
-                self.ware_table.setItem(row, 6, item)
+
+            # if self.cmbWares.currentIndex() != -1:
+            #     text = str(ware_li.almacen_data["cant_"+self.cmbWares.currentText()]) if ware_li.objBook.active else "-" 
+            #     item = QtWidgets.QTableWidgetItem(text)
+            #     backgrounditem(item, ware_li.objBook.active)
+            #     item.setFlags(flag)
+            #     self.ware_table.setItem(row, 6, item)
             row += 1
 
     def txtBusChanged(self):
@@ -250,15 +260,15 @@ class Ui_Dialog(QtWidgets.QDialog):
         # no permite el cambio de ubicacion si el item esta inactivo
         itemSelected = list(filter(lambda x: (x.objBook.cod == self.ware_table.item(row,0).text()), self.real_table))
 
-        if self.ownWares[2][1] == True and column_ == 0 and itemSelected[0].objBook.active:
+        if self.currWare[2][1] == True and column_ == 0 and itemSelected[0].objBook.active:
             
                 # validation: Cancel, Ok, Desactivar
                 validation = self.openOperationDialog(self.ware_table.item(row,column_).text(), self.ware_table.item(row,column_+2).text())
 
                 if (validation == "Desactivar"):
-                    if self.ware.isZeroQuantity(self.ware_table.item(row,0).text()):
+                    if self.gestWareProduct.isZeroQuantity(self.ware_table.item(row,0).text()):
                         ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO ACTIVO::..\n¿Desea desactivar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                        succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text(), False))
+                        succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.gestWareProduct.activateItem(self.ware_table.item(row,0).text(), False))
                         if succes:
                             QMessageBox.information(self, 'Mensaje', "Producto desactivado", QMessageBox.Ok, QMessageBox.Ok)
                             self.txtBusChanged()
@@ -271,7 +281,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                     if (ubicValidation == "Ok"):
                         try:
                             if text.split(" ")[0].upper() == "MUEBLE" and text.split(" ")[2].upper() == "FILA":
-                                if self.userValidation() and self.ware.changeItemLocation(self.ware_table.item(row,0).text(), text, self.ownWares[0]):
+                                if self.userValidation() and self.gestWareProduct.changeItemLocation(self.ware_table.item(row,0).text(), text, self.currWare[0]):
                                     QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                                     self.txtBusChanged()
 
@@ -294,14 +304,13 @@ class Ui_Dialog(QtWidgets.QDialog):
                             "publisher": self.ware_table.item(row,4).text(),
                             "price": str(self.real_table[row].objBook.Pv)}
                     isUpdate, text = self.openEditItemDialog(data)
-                    if isUpdate and self.userValidation() and self.ware.updateInnerItem(data["cod"], text) and self.ware_gest.updateDataItem(data["cod"], text):
+                    if isUpdate and self.userValidation() and self.gestWareProduct.updateInnerItem(data["cod"], text) and self.ware_gest.updateDataItem(data["cod"], text):
                         QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                         self.txtBusChanged()
-                    
 
-        elif self.ownWares[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
+        elif self.currWare[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
             ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.ware.activateItem(self.ware_table.item(row,0).text(), True))
+            succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.gestWareProduct.activateItem(self.ware_table.item(row,0).text(), True))
             if succes:
                 QMessageBox.information(self, 'Mensaje', "Producto activado", QMessageBox.Ok, QMessageBox.Ok)
                 self.txtBusChanged()
@@ -324,7 +333,7 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     # -----------  load_table para cargar tabla de DB, cuando se presiona icono de nube  -----------
     def load_table(self, event = None):
-        self.ware.load_mainlist(self.ownWares)
+        self.gestWareProduct.load_mainlist(self.currWare)
         self.loadData("main")
         if self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() != "":
             self.txtBusChanged()
@@ -344,14 +353,14 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.change_state("in/out")
         
         # separar solo items activos y enviar a in/out form
-        result_books = list(filter(lambda x: x.objBook.active, self.ware.ware_list.copy()))
+        result_books = list(filter(lambda x: x.objBook.active, self.gestWareProduct.ware_list.copy()))
         self.ui_dialog.mainList = result_books.copy()
 
         self.ui_dialog.init_condition()
         if self.ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
             self.change_state("ventas")
             if self.ui_dialog.return_val[2]:
-                self.ware.update_backtablequantity(self.ui_dialog.return_val[0], self.ui_dialog.return_val[1], self.ownWares[0])
+                self.gestWareProduct.update_backtablequantity(self.ui_dialog.return_val[0], self.ui_dialog.return_val[1], self.currWare[0])
                 self.updateRealTable()
         # self.ui_dialog.show_window()
 
@@ -373,28 +382,28 @@ class Ui_Dialog(QtWidgets.QDialog):
     def buscar(self, criterio, patron):
         self.real_table.clear()
         if criterio == "cod":
-            for i in self.ware.ware_list:
+            for i in self.gestWareProduct.ware_list:
                 if i.objBook.cod == str.upper(patron):
                     self.real_table.append(i)
             return len(self.real_table)
         elif criterio == "isbn":
-            for i in self.ware.ware_list:
+            for i in self.gestWareProduct.ware_list:
                 if(i.objBook.isbn.find(str.upper(patron)) >= 0):
                     self.real_table.append(i)
             return len(self.real_table)
 
         elif criterio == "titulo":
-            for i in self.ware.ware_list:
+            for i in self.gestWareProduct.ware_list:
                 if(i.objBook.name.find(str.upper(patron)) >= 0):
                     self.real_table.append(i)
             return len(self.real_table)
         elif criterio == "autor":
-            for i in self.ware.ware_list:
+            for i in self.gestWareProduct.ware_list:
                 if(i.objBook.autor.find(str.upper(patron)) >= 0):
                     self.real_table.append(i)
             return len(self.real_table)
         elif criterio == "editorial":
-            for i in self.ware.ware_list:
+            for i in self.gestWareProduct.ware_list:
                 if (i.objBook.editorial.find(str.upper(patron)) >= 0):
                     self.real_table.append(i)
             return len(self.real_table)
@@ -470,7 +479,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 validator, data = ui_NewItemDialog.returnedVal
                 if validator:
                     if self.userValidation():
-                        if(self.ware_gest.insertNewItemDB(data, self.ownWares[0]) and self.ware.insertInnerNewItem(data, self.ownWares)):
+                        if(self.ware_gest.insertNewItemDB(data, self.currWare[0]) and self.gestWareProduct.insertInnerNewItem(data, self.currWare)):
                             QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
                             self.txtBusChanged()
                         else:
@@ -731,7 +740,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
         item = self.ware_table.horizontalHeaderItem(5)
-        item.setText(_translate("Dialog", "[" + self.ownWares.cod + "]"))
+        item.setText(_translate("Dialog", "[" + self.currWare.cod + "]"))
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
         item = self.ware_table.horizontalHeaderItem(6)

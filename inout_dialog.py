@@ -13,7 +13,7 @@ from PyQt5.QtGui import QFont, QBrush, QColor
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtCore import Qt, QThread, QObject, pyqtSignal
 from PyQt5.QtWidgets import *
-from gestor import ware_gestor
+from gestor import WareProduct
 import time
 import copy
 
@@ -29,7 +29,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.cantItems = 0
         self.valCell = ""
         self.operacion = None #define estado neutro para el closeevent
-        self.ware_in = ware_gestor() #esto es para realizar el update
+        self.ware_in = WareProduct() #esto es para realizar el update
         self.setupUi()
         self.init_condition()
 

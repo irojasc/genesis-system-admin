@@ -3,7 +3,7 @@ import boto3
 import logging
 import os.path
 import os
-from objects import user, ware, ware_book, product
+from objects import user, ware, ware_product, product
 from decouple import Config, RepositoryEnv
 
 
@@ -149,9 +149,9 @@ class wares_gestor:
 				return False
 
 # ware_gestor: maneja de items en almacen
-class ware_gestor:
+class WareProduct:
 	def __init__(self):
-		self.ware_list = []
+		self.innerWareList = []
 		self.temp_list = []
 	
 	def connect_db(self):
@@ -164,7 +164,7 @@ class ware_gestor:
 
 	def update_backtablequantity(self, list = None, operacion = None, currentWare = None):
 		for i in list:
-			for j in self.ware_list:
+			for j in self.innerWareList:
 				if j.objBook.cod == i["cod"]:
 					if operacion == "ingreso":
 						j.almacen_data["cant_" + currentWare] += i["cantidad"]
@@ -173,23 +173,23 @@ class ware_gestor:
 	"""def buscar(self, criterio, patron):
 		self.temp_list.clear()
 		if criterio == "cod":
-			for i in self.ware_list:
+			for i in self.innerWareList:
 				if(i.book.cod == str.upper(patron)):
 					self.temp_list.append(i)
 			return len(self.temp_list)
 		elif criterio == "isbn":
-			for i in self.ware_list:
+			for i in self.innerWareList:
 				if(i.book.isbn == patron):
 					self.temp_list.append(i)
 			return len(self.temp_list)
 		elif criterio == "nombre":
-			for i in self.ware_list:
+			for i in self.innerWareList:
 				if(i.book.name.find(str.upper(patron)) >= 0):
 					self.temp_list.append(i)
 			return len(self.temp_list)
 
 		elif criterio == "autor":
-			for i in self.ware_list:
+			for i in self.innerWareList:
 				if(i.book.autor.find(str.upper(patron)) >= 0):
 					self.temp_list.append(i)
 			return len(self.temp_list)
@@ -232,47 +232,47 @@ class ware_gestor:
 		else:
 			tup = ()
 		return tup
+	
+	def createWareProduct(self):
+		pass
 
-	def load_mainlist(self, wares = None):
-		self.ware_list.clear()
-		self.connect_db()
+
+	def load_mainlist(self, wares: tuple = None):
+		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p inner join genesisdb.ware_product wp on wp.idProduct = p.id inner join genesisdb.language l on l.id = p.idLanguage inner join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem order by p.id asc;")
 		try:
-			initial_text = "select cod_book, isbn, name, autor, editorial, supplierID, pv, "
-			last_text = "select cod as cod_book, isbn, name, autor, editorial, supplierID, pv, "
-
-			for i in wares[1]:
-				initial_text = initial_text	 + "cant_" + str(i.cod) + ", ubic_" + str(i.cod) + ", isok_" + str(i.cod) + ","
-				last_text = last_text + "cant_" + str(i.cod) + ", ubic_" + str(i.cod) + ", isok_" + str(i.cod) + ","
-			
-			initial_text = initial_text + " true as active from genesisDB.ware_books inner join genesisDB.books on genesisDB.ware_books.cod_book = genesisDB.books.cod"
-			last_text = last_text + " false as active from genesisDB.books as p left join genesisDB.ware_books as m on p.cod = m.cod_book where m.cod_book is null;"
-			final_query = initial_text + " union all " + last_text
-			
-			query = (final_query)
-			# -----------  carga data de libros  -----------
+			self.innerWareList.clear()
+			self.connect_db()
 			self.cursor.execute(query)
-			for params in self.cursor:
-				values = self.None_Type(tuple(params))
-				#values = self.None_Type((params[0], params[1], params[2], params[3], params[4], params[5], params[6],
-				#						 params[7], params[8], params[9], params[10], params[11], params[12],
-				#						 params[13], params[14], params[15], params[16], params[17]))
-				### 0 = cod_book, 1 = isbn, 2 = name, 3 = autor, 4 = editorial, 5 = supplierID, 6= pv, 7,8,9 - 10,11,12 - 13,14,15 - 16,17,18 = cant,ubc,isok
-				#objLibro = book(str(values[0]),str(values[1]),str(values[2]),str(values[3]),str(values[4]),str(values[5]),str(values[6]))
-				objLibro = book(values)
-				#objwareBook = ware_book(wares, objLibro,[values[7],values[10],values[13],values[16]],[values[8],values[11],values[14],values[17]],[values[9],values[12],values[15],values[18]])
-				objwareBook = ware_book(objLibro, wares, values)
-				self.ware_list.append(objwareBook)
-			# -----------  cerrar conexion db  -----------
-			self.disconnect_db()
+			WareProductsRows = self.cursor.fetchall()
 
-			# -----------  eliminar los codigos de almacen que no tienen objeto libro  -----------
-			#for i in ware_list:
-			#	if(type(i.book) != str):
-			#		self.ware_list.append(i)
+			for WareProduct in WareProductsRows:
+				if not(len(self.innerWareList)):
+					item = product(WareProduct[1], WareProduct[2], WareProduct[3], WareProduct[4], WareProduct[5], WareProduct[6],
+					WareProduct[7].strftime("%Y"), WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
+					wareproduct = ware_product(item, {})
+					wareproduct.addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
+					self.innerWareList.append(wareproduct)
+				else:
+					index = next((i for i, item in enumerate(self.innerWareList) if item.product.prdCode == '%s_%d' % (WareProduct[1], WareProduct[2])), None)
+					if isinstance(index, int):
+						self.innerWareList[index].addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
+					else:
+						item = product(WareProduct[1], WareProduct[2], WareProduct[3], WareProduct[4], WareProduct[5], WareProduct[6],
+						WareProduct[7].strftime("%Y"), WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
+						wareproduct = ware_product(item, {})
+						wareproduct.addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
+						self.innerWareList.append(wareproduct)
 
-		except:
-			print("no pudo cargar libros almacen de DB")
-			self.disconnect_db()
+		except mysql.connector.Error as error:
+			print("Error: {}".format(error))
+		finally:
+			try:
+				if self.mydb.is_connected():
+					self.disconnect_db()
+			except:
+				print("No se pudo conectar a DB en load_mainlist")
+
+
 
 	def activateItem(self, codBook: str = "", condition: bool = True):
 		try:
@@ -311,16 +311,16 @@ class ware_gestor:
 		
 	def activateInnerItemState(self, codBook: str = "", condition: bool = True):
 		try:
-			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
-			self.ware_list[index].objBook.setActive(condition)
+			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.innerWareList)))[0][0]
+			self.innerWareList[index].objBook.setActive(condition)
 			return True
 		except Exception as error:
 			return False
 		
 	def changeInnerItemLocation(self, codBook: str = "", location: str= "SIN UBICACION", currentWare: str= ""):
 		try:
-			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
-			self.ware_list[index].almacen_data["ubic_" + currentWare] = location.upper();
+			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.innerWareList)))[0][0]
+			self.innerWareList[index].almacen_data["ubic_" + currentWare] = location.upper();
 			return True
 		except Exception as error:
 			return False
@@ -328,11 +328,11 @@ class ware_gestor:
 	def isZeroQuantity(self, codBook: str = ""):
 		try:
 			sum = 0
-			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
-			keys_ = list(self.ware_list[index].almacen_data.keys())
+			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.innerWareList)))[0][0]
+			keys_ = list(self.innerWareList[index].almacen_data.keys())
 			keys_cant = list(filter(lambda x: x.split("_")[0] == "cant", keys_))
 			for x in keys_cant:
-				sum += abs((self.ware_list[index].almacen_data[x]))
+				sum += abs((self.innerWareList[index].almacen_data[x]))
 			if sum == 0:
 				return True
 			else:
@@ -342,12 +342,12 @@ class ware_gestor:
 
 	def updateInnerItem(self, codBook: str = "", data: dict = None):
 		try:
-			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.ware_list)))[0][0]
-			self.ware_list[index].objBook.setISBN(data["isbn"]) if ("isbn" in data) else None
-			self.ware_list[index].objBook.setName(data["name"]) if ("name" in data) else None
-			self.ware_list[index].objBook.setAutor(data["autor"]) if ("autor" in data) else None
-			self.ware_list[index].objBook.setEditorial(data["editorial"]) if ("editorial" in data) else None
-			self.ware_list[index].objBook.setPv(data["pv"]) if ("pv" in data) else None
+			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.innerWareList)))[0][0]
+			self.innerWareList[index].objBook.setISBN(data["isbn"]) if ("isbn" in data) else None
+			self.innerWareList[index].objBook.setName(data["name"]) if ("name" in data) else None
+			self.innerWareList[index].objBook.setAutor(data["autor"]) if ("autor" in data) else None
+			self.innerWareList[index].objBook.setEditorial(data["editorial"]) if ("editorial" in data) else None
+			self.innerWareList[index].objBook.setPv(data["pv"]) if ("pv" in data) else None
 			return True
 		except Exception as error:
 			return False
@@ -357,8 +357,8 @@ class ware_gestor:
 			book_params = (data["cod"], data["isbn"] if ("isbn" in data) else "", data["name"], data["autor"], data["editorial"], "", data["pv"], True)
 			objBook = book(book_params)
 			values = data["stock"] if "stock" in data else 0
-			objwareBook = ware_book(objBook, own_wares, values, True)
-			self.ware_list.append(objwareBook)
+			objwareBook = ware_product(objBook, own_wares, values, True)
+			self.innerWareList.append(objwareBook)
 			return True
 		else:
 			return False

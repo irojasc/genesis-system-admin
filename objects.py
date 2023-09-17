@@ -49,44 +49,38 @@ class daily_sale:
 		self.date = date
 		self.total_ = total_
 
-class ware_book:
-	def __init__(self, objBook=None, wares = None, data = None, isFromSystem: bool = False):
-		ware_data = {}
-		if not(isFromSystem):
-			for index, i in enumerate(wares[1]):
-				base = 3 * index + 7
-				temp_data = { 
-					"cant_" + i.cod: 0 if data[base] == "" else int(data[base]),
-					"ubic_" + i.cod: str(data[base + 1]),
-					"isok_" + i.cod: bool(data[base + 2])
-				}
-				ware_data.update(temp_data)
-		else:
-			for index, i in enumerate(wares[1]):
-				temp_data = { 
-					"cant_" + i.cod: int(data) if index==0 else 0,
-					"ubic_" + i.cod: "SIN UBICACION",
-					"isok_" + i.cod: True
-				}
-				ware_data.update(temp_data)
-
-		self.objBook = objBook
-		self.almacen_data = ware_data
-
 class product:
-	def __init__(self, type: str = None, id: int = None, data: list = [], genderID="", Pc=0):
-		self.type = type
-		self.id = id
-		self.cod = str(data[0]) # este
-		self.isbn = str(data[1]) # este
-		self.name = str(data[2]) # este
-		self.autor = str(data[3]) # este
-		self.editorial = str(data[4]) #este
-		self.supplierID = str(data[5]) #este
-		self.genderID = genderID #HARDCODEADO
-		self.Pc = Pc #HARDCODEADO
-		self.Pv = float(data[6]) #este
-		self.active = bool(data[-1]) #indica si item esta activo
+
+	def __repr__(self):
+		return '{prCod: %s, isbn: %s, title: %s, autor: %s, publisher: %s, dateOut: %s, lang: %s, pages: %d, edition: %d, cover: %s}' % (self.prdCode,
+																																	self.isbn, self.title,
+																																	self.autor, self.publisher,
+																																	self.dateOut, self.lang,
+																																	self.pages, self.edition,
+																																	self.cover)
+	
+	def __str__(self):
+		return '{prCod: %s, isbn: %s, title: %s, autor: %s, publisher: %s, dateOut: %s, lang: %s, pages: %d, edition: %d, cover: %s}' % (self.prdCode,
+																																	self.isbn, self.title,
+																																	self.autor, self.publisher,
+																																	self.dateOut, self.lang,
+																																	self.pages, self.edition,
+																																	self.cover)
+
+	def __init__(self, itemCode: str = None, id: int = None, isbn: str = None, title: str = None, autor: str = None, publisher: str = None, dateOut: str = None,
+			  lang: str = None, pages: int = None, edition: int = None, cover: bool = False, width: int = None, height: int = None):
+		self.prdCode = "%s_%d" % (itemCode, id)
+		self.isbn = isbn
+		self.title = title
+		self.autor = autor
+		self.publisher = publisher 
+		self.dateOut = dateOut
+		self.lang = lang
+		self.pages = pages
+		self.edition = edition
+		self.cover = "DURA" if cover else "BLANDA"
+		self.width = width
+		self.height = height
 	
 	def setActive(self, condition: bool):
 		self.active = condition
@@ -105,6 +99,29 @@ class product:
 	
 	def setPv(self, pv: float):
 		self.Pv = float(pv)
+
+class ware_product:
+
+	def __str__(self):
+		return self.wareData
+	
+	def __init__(self, item: product = None, wareData: dict = {}):
+		self.product = item
+		self.wareData = wareData
+
+	def addDataWareProduct(self, wareName:str = None, qtyNew: int = None, qtyOld: int = None, qtyMinimun: int = 1,
+						 pvNew: float = 0.0, pvOld: float = 0.0, dsct: int = 0, loc: str = None, isEnabled: bool = True):
+		dataTemp = {
+			"qtyNew": qtyNew,
+			"qtyOld": qtyOld,
+			"qtyMinimun": qtyMinimun,
+			"pvNew": pvNew,
+			"pvOld": pvOld,
+			"dsct": dsct,
+			"loc": loc,
+			"isEnabled": isEnabled
+		}
+		self.wareData.update({wareName: dataTemp})
 
 class ware:
 	def __repr__(self):
