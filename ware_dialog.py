@@ -160,12 +160,12 @@ class Ui_Dialog(QtWidgets.QDialog):
             item.setFlags(flag)
             self.ware_table.setItem(row, 5, item)
 
-            # if self.cmbWares.currentIndex() != -1:
-            #     text = str(ware_li.almacen_data["cant_"+self.cmbWares.currentText()]) if ware_li.objBook.active else "-" 
-            #     item = QtWidgets.QTableWidgetItem(text)
-            #     backgrounditem(item, ware_li.objBook.active)
-            #     item.setFlags(flag)
-            #     self.ware_table.setItem(row, 6, item)
+            if self.cmbWares.currentIndex() != -1:
+                text = str(ware_li.wareData[self.cmbWares.currentText()]["qtyNew"]) if ware_li.wareData[self.cmbWares.currentText()]["isEnabled"] else "-" 
+                item = QtWidgets.QTableWidgetItem(text)
+                backgrounditem(item, ware_li.wareData[self.cmbWares.currentText()]["isEnabled"])
+                item.setFlags(flag)
+                self.ware_table.setItem(row, 6, item)
             row += 1
 
     def txtBusChanged(self):
