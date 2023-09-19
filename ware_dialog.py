@@ -67,7 +67,6 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         # # ordenar items de libros por codigo de menor a mayor
         # result_books.sort(key=lambda z: int(z.objBook.cod.split("_")[1]))
-
         return result_books +  result_nobooks
 
     ## Funcion que permite la apertura de ventana ware desde el main_
