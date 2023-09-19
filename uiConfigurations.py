@@ -198,5 +198,29 @@ def getUserNamePalette():
     palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Window, brush)
     return palette
 
+def getFontxPV():
+    font = QtGui.QFont()
+    font.setFamily("Open Sans Semibold")
+    font.setPointSize(18)
+    font.setBold(True)
+    font.setWeight(75)
+    return font
+
+def getFontxUnAvailable():
+    font = QtGui.QFont()
+    font.setFamily("Open Sans Semibold")
+    font.setPointSize(14)
+    font.setBold(True)
+    font.setWeight(75)
+    return font
+
+def getFontxSecond():
+    font = QtGui.QFont()
+    font.setFamily("Open Sans Semibold")
+    font.setPointSize(12)
+    font.setBold(True)
+    font.setWeight(75)
+    return font
+
 
 

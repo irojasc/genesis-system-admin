@@ -243,7 +243,8 @@ class Ui_Dialog(QtWidgets.QDialog):
         if self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() != "":
             self.txtBusChanged()
 
-    def actualizar_img(self, tmp):
+    def actualizar_img(self, tmp: int = None):
+        #el paramatro tmp es el index de la fila en la tabla
         if (tmp + 1 <= len(self.real_table)) and (tmp >= 0):
             pathfile = self.objS3.directions["product"](self.ware_table.item(tmp,0).text().lower())
             if self.objS3.existsLocalFile(pathfile):
@@ -252,7 +253,22 @@ class Ui_Dialog(QtWidgets.QDialog):
             else:
                 self.lblImg.setPixmap(QtGui.QPixmap())
                 self.lblImg.setScaledContents(True)
-            self.lbltxtPrecio.setText("S/." + str(self.real_table[tmp].objBook.Pv))
+            
+            if (self.currWare.cod in self.real_table[tmp].wareData) and (self.real_table[tmp].wareData[self.currWare.cod]["isEnabled"]):
+                self.lblValuePrice.setFont(getFontxPV())
+                self.lblValuePrice.move(229,24)
+                self.lblValuePrice.setText("S/." + str(self.real_table[tmp].wareData[self.currWare.cod]["pvNew"]))
+            else:
+                self.lblValuePrice.setFont(getFontxUnAvailable())
+                self.lblValuePrice.move(229, 19)
+                self.lblValuePrice.setText("No\nDisponible")
+
+            counter = 0
+            for key in self.real_table[tmp].wareData:
+                if self.real_table[tmp].wareData[key]["isEnabled"]:
+                    counter += int(self.real_table[tmp].wareData[key]["qtyOld"])
+
+            if counter >            
 
     # -----------  double click event para cambiar ubicacion  -----------
     def tableWidget_doubleClicked(self):
@@ -646,8 +662,10 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_2.setObjectName("frame_2")
+        
+        # ----------- frame for image and price information  -----------
         self.boxPV = QtWidgets.QGroupBox(self.frame_2)
-        self.boxPV.setGeometry(QtCore.QRect(30, 10, 331, 171))
+        self.boxPV.setGeometry(QtCore.QRect(30, 10, 370, 171))
         self.boxPV.setPalette(getPalette())
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
@@ -657,36 +675,46 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.boxPV.setFont(font)
         self.boxPV.setObjectName("boxPV")
 
-        # -----------  lblPV configuration  -----------
-        self.lblPV = QtWidgets.QLabel(self.boxPV)
-        self.lblPV.setGeometry(QtCore.QRect(160, 20, 151, 41))
+        # -----------  lblPVP configuration  -----------
+        self.lblPVP = QtWidgets.QLabel("PVP:",self.boxPV)
+        self.lblPVP.setGeometry(QtCore.QRect(160, 30, 62, 41))
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
-        font.setPointSize(22)
+        font.setPointSize(20)
         font.setBold(True)
         font.setWeight(75)
-        self.lblPV.setFont(font)
-        self.lblPV.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
-        self.lblPV.setObjectName("lblPV")
+        self.lblPVP.setFont(font)
+        self.lblPVP.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+        self.lblPVP.setObjectName("lblPVP")
+
+        # -----------  lblValuePrice configuration  -----------
+        self.lblValuePrice = QtWidgets.QLabel(self.boxPV)
+        self.lblValuePrice.setGeometry(QtCore.QRect(229, 26, 151, 50))
+        self.lblValuePrice.setPalette(getPricePalette())
+        self.lblValuePrice.setFont(getFontxPV())
+        self.lblValuePrice.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+        self.lblValuePrice.setObjectName("lblValuePrice")
+
+        # -----------  lblPVP 2DA configuration  -----------
+        self.lblPVP2 = QtWidgets.QLabel("PVP(2):",self.boxPV)
+        self.lblPVP2.setGeometry(QtCore.QRect(160, 70, 65, 41))
+        self.lblPVP2.setFont(getFontxSecond())
+        self.lblPVP2.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+        self.lblPVP2.setObjectName("lblPVP2")
+
+        # -----------  lblValuePVP2 configuration  -----------
+        self.lblValuePVP2 = QtWidgets.QLabel(self.boxPV)
+        self.lblValuePVP2.setGeometry(QtCore.QRect(229, 65, 151, 50))
+        self.lblValuePVP2.setPalette(getPricePalette())
+        self.lblValuePVP2.setFont(getFontxSecond())
+        self.lblValuePVP2.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+        self.lblValuePVP2.setObjectName("lblValuePVP2")
 
         # -----------  lblImg configuration  -----------
         self.lblImg = QtWidgets.QLabel(self.boxPV)
         self.lblImg.setGeometry(QtCore.QRect(10, 30, 131, 131))
         self.lblImg.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.lblImg.setObjectName("lblImg")
-
-        # -----------  lbltxtPrecio configuration  -----------
-        self.lbltxtPrecio = QtWidgets.QLabel(self.boxPV)
-        self.lbltxtPrecio.setGeometry(QtCore.QRect(160, 60, 151, 41))
-        self.lbltxtPrecio.setPalette(getPricePalette())
-        font = QtGui.QFont()
-        font.setFamily("Open Sans Semibold")
-        font.setPointSize(22)
-        font.setBold(True)
-        font.setWeight(75)
-        self.lbltxtPrecio.setFont(font)
-        self.lbltxtPrecio.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
-        self.lbltxtPrecio.setObjectName("lbltxtPrecio")
         
         # -----------  boton Editar Precio Venta  -----------
         self.btnLoadImage = QtWidgets.QPushButton(self.boxPV)
@@ -704,6 +732,7 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
+
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
@@ -754,11 +783,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         # self.ware_table.horizontalHeader().setStretchLastSection(True) # metodo que setea que extienda solo la ultiam columna
         self.ware_table.horizontalHeader().setSectionResizeMode(5,QHeaderView.Stretch)
         self.ware_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Stretch)
-
-
         self.boxPV.setTitle(_translate("Dialog", "Cuadro de información"))
-        self.lblPV.setText(_translate("Dialog", "P.Venta:"))
-        self.lbltxtPrecio.setText(_translate("Dialog", ""))
         self.btnLoadImage.setText(_translate("Dialog", "Cargar imagen"))
 
 
