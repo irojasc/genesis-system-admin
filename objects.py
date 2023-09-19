@@ -118,7 +118,7 @@ class ware_product:
 			"pvNew": pvNew,
 			"pvOld": pvOld,
 			"dsct": dsct,
-			"loc": loc,
+			"loc": loc if loc != None else "SIN UBICACION",
 			"isEnabled": isEnabled
 		}
 		self.wareData.update({wareName: dataTemp})

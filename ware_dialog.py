@@ -60,13 +60,13 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     def sortTable(self, unsortList):
         # separar items que pertencen a libros
-        result_books = list(filter(lambda x: x.objBook.cod.split("_")[0] == "GN", unsortList))
+        result_books = list(filter(lambda x: x.product.prdCode.split("_")[0] == "GN", unsortList))
         
         # separar items que no pertencen a libros
-        result_nobooks = list(filter(lambda x: x.objBook.cod.split("_")[0] != "GN", unsortList))
+        result_nobooks = list(filter(lambda x: x.product.prdCode.split("_")[0] != "GN", unsortList))
 
-        # ordenar items de libros por codigo de menor a mayor
-        result_books.sort(key=lambda z: int(z.objBook.cod.split("_")[1]))
+        # # ordenar items de libros por codigo de menor a mayor
+        # result_books.sort(key=lambda z: int(z.objBook.cod.split("_")[1]))
 
         return result_books +  result_nobooks
 
@@ -117,53 +117,56 @@ class Ui_Dialog(QtWidgets.QDialog):
         flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
         if condition == "main":
             # sortTable: ordena la tabla que llega de gestor por tipo de producto y nivel de codigo
-            # self.real_table = self.sortTable(self.gestWareProduct.ware_list.copy())
-            self.real_table = self.gestWareProduct.innerWareList.copy()
+            self.real_table = self.sortTable(self.gestWareProduct.innerWareList.copy())
 
         # -----------  esta parte para llenar la tabla  -----------
         row = 0
         self.ware_table.setRowCount(len(self.real_table))
         for ware_li in self.real_table:
+            # isExistActive: primero comprueba que el item exista en el almacen, luego recien verifica que el item este habilitado en el almacen
+            isExistActive = (self.currWare.cod in ware_li.wareData) and ware_li.wareData[self.currWare.cod]["isEnabled"]
 
             item = QtWidgets.QTableWidgetItem(ware_li.product.prdCode)
-            # backgrounditem(item, ware_li.objBook.active)
+            backgrounditem(item, isExistActive)
             item.setFlags(flag)
             self.ware_table.setItem(row, 0, item)
-
-            # if self.currWare[2][1] == True:
-            #     self.ware_table.item(row, 0).setToolTip(str(ware_li.almacen_data["ubic_"+self.currWare[0]]))
+            # Self.currWare.auth["locTooltip"]: este permiso es propio del current ware
+            if isExistActive and self.currWare.auth["locTooltip"]:
+                self.ware_table.item(row, 0).setToolTip(str(ware_li.wareData[self.currWare.cod]["loc"]))
 
             item = QtWidgets.QTableWidgetItem(ware_li.product.isbn)
-            # backgrounditem(item, ware_li.objBook.active)
+            backgrounditem(item, isExistActive)
             item.setFlags(flag)
             self.ware_table.setItem(row, 1, item)
 
 
             item = QtWidgets.QTableWidgetItem(ware_li.product.title)
-            # backgrounditem(item, ware_li.objBook.active)
+            backgrounditem(item, isExistActive)
             item.setFlags(flag)
             self.ware_table.setItem(row, 2, item)
 
             item = QtWidgets.QTableWidgetItem(ware_li.product.autor)
-            # backgrounditem(item, ware_li.objBook.active)
+            backgrounditem(item, isExistActive)
             item.setFlags(flag)
             self.ware_table.setItem(row, 3, item)
 
             item = QtWidgets.QTableWidgetItem(ware_li.product.publisher)
-            # backgrounditem(item, ware_li.objBook.active)
+            backgrounditem(item, isExistActive)
             item.setFlags(flag)
             self.ware_table.setItem(row, 4, item)
 
-            # text = str(ware_li.almacen_data["cant_"+self.currWare[0]]) if ware_li.objBook.active else "-" 
-            item = QtWidgets.QTableWidgetItem(str(ware_li.wareData[self.currWare.cod]["qtyNew"]))
-            # backgrounditem(item, ware_li.objBook.active)
+            text = str(ware_li.wareData[self.currWare.cod]["qtyNew"]) if (isExistActive) else "-" 
+            item = QtWidgets.QTableWidgetItem(text)
+            backgrounditem(item, isExistActive)
             item.setFlags(flag)
             self.ware_table.setItem(row, 5, item)
 
             if self.cmbWares.currentIndex() != -1:
-                text = str(ware_li.wareData[self.cmbWares.currentText()]["qtyNew"]) if ware_li.wareData[self.cmbWares.currentText()]["isEnabled"] else "-" 
+                currTextCmbWare = self.cmbWares.currentText()
+                isWareEnEx = ((currTextCmbWare in ware_li.wareData) and ware_li.wareData[currTextCmbWare]["isEnabled"])
+                text = str(ware_li.wareData[currTextCmbWare]["qtyNew"]) if isWareEnEx else "-" 
                 item = QtWidgets.QTableWidgetItem(text)
-                backgrounditem(item, ware_li.wareData[self.cmbWares.currentText()]["isEnabled"])
+                backgrounditem(item, isWareEnEx)
                 item.setFlags(flag)
                 self.ware_table.setItem(row, 6, item)
             row += 1
