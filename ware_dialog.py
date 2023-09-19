@@ -54,9 +54,10 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.cmbSearch.clear()
         self.cmbSearch.addItems(item_all)
         self.cmbSearch.setCurrentIndex(-1)
-        # self.loadData("main")
+        # las dos lineas de abajo actualizan los datos de precio con el item de la primera fila
+        self.loadData("main")
         self.ware_table.setCurrentCell(0, 0)
-        # self.actualizar_img(0)
+        self.actualizar_img(0)
 
     def sortTable(self, unsortList):
         # separar items que pertencen a libros
@@ -261,14 +262,22 @@ class Ui_Dialog(QtWidgets.QDialog):
             else:
                 self.lblValuePrice.setFont(getFontxUnAvailable())
                 self.lblValuePrice.move(229, 19)
-                self.lblValuePrice.setText("No\nDisponible")
+                self.lblValuePrice.setText("*********")
 
             counter = 0
+            pv = 0
             for key in self.real_table[tmp].wareData:
                 if self.real_table[tmp].wareData[key]["isEnabled"]:
                     counter += int(self.real_table[tmp].wareData[key]["qtyOld"])
+                    pv = self.real_table[tmp].wareData[key]["pvOld"]
 
-            if counter >            
+            if counter > 0 and pv > 0:
+                self.lblValuePVP2.setPalette(getPricePalette2())
+                self.lblValuePVP2.setText("S/.%s"%(str(pv)))
+            else:
+                self.lblValuePVP2.setPalette(getPricePalette2())
+                self.lblValuePVP2.setText("*********")
+
 
     # -----------  double click event para cambiar ubicacion  -----------
     def tableWidget_doubleClicked(self):
@@ -665,7 +674,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         
         # ----------- frame for image and price information  -----------
         self.boxPV = QtWidgets.QGroupBox(self.frame_2)
-        self.boxPV.setGeometry(QtCore.QRect(30, 10, 370, 171))
+        self.boxPV.setGeometry(QtCore.QRect(30, 10, 350, 171))
         self.boxPV.setPalette(getPalette())
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
@@ -705,7 +714,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         # -----------  lblValuePVP2 configuration  -----------
         self.lblValuePVP2 = QtWidgets.QLabel(self.boxPV)
         self.lblValuePVP2.setGeometry(QtCore.QRect(229, 65, 151, 50))
-        self.lblValuePVP2.setPalette(getPricePalette())
+        self.lblValuePVP2.setPalette(getPricePalette2())
         self.lblValuePVP2.setFont(getFontxSecond())
         self.lblValuePVP2.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.lblValuePVP2.setObjectName("lblValuePVP2")
