@@ -22,7 +22,7 @@ ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 
 class Ui_Dialog(QtWidgets.QDialog):
     # -----------  constructor  -----------
-    def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, editWareDate: datetime.date = None, parent=None):
+    def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, WareProdDate: datetime.date = None, parent=None):
         super(Ui_Dialog, self).__init__(parent)
         self.gestWareProduct = WareProduct()  ##se crea el objeto getWareProduct: Maneja la tabla ware -> WareProduct <- Product
         self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
@@ -34,10 +34,10 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ownUsers = currentUser
         self.currWare = currentWare
         self.restWares = restWare
-        self.editWareDate = editWareDate
+        self.WareProdDate = WareProdDate
         self.setupUi()
         # -----------  cargar datos en tabla  -----------
-        self.gestWareProduct.load_mainlist() ##para cargar la tabla principal del gestor
+        self.gestWareProduct.loadInnerTable() ##para cargar la tabla principal del gestor
         self.loadData("main")
 
         # -----------  QDialog para ventana in/out  -----------
@@ -361,16 +361,6 @@ class Ui_Dialog(QtWidgets.QDialog):
         else:
             return False
 
-    # -----------  load_table para cargar tabla de DB, cuando se presiona icono de nube  -----------
-    def load_table(self, event = None):
-        self.gestWareProduct.load_mainlist(self.currWare)
-        self.loadData("main")
-        if self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() != "":
-            self.txtBusChanged()
-        elif self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() == "":
-            self.ware_table.setCurrentCell(0, 0)
-            self.actualizar_img(0)
-
     def change_state(self, state): #cambia el estado de self. state y color de los frames
         if state == "ventas":
             self.top_frame.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0.298507 rgba(83, 97, 142, 255), stop:1 rgba(97, 69, 128, 255));")
@@ -507,6 +497,18 @@ class Ui_Dialog(QtWidgets.QDialog):
                             self.txtBusChanged()
                         else:
                             QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
+
+    # -----------  load_table carga tabla inner desde DB, cuando se presiona icono de Actualizar tabla  -----------
+    def load_table(self, event = None):
+        #si retorna true debe actualizar la fecha con la ultima actualizada
+        if self.gestWareProduct.loadInnerTable(self.WareProdDate):
+            self.WareProdDate = datetime.now().date()
+        self.loadData("main")
+        if self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() != "":
+            self.txtBusChanged()
+        elif self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() == "":
+            self.ware_table.setCurrentCell(0, 0)
+            self.actualizar_img(0)
 
     def setupUi(self):
         self.setObjectName("Dialog")
@@ -737,7 +739,6 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
-
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate

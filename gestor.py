@@ -5,6 +5,7 @@ import os.path
 import os
 from objects import user, ware, ware_product, product
 from decouple import Config, RepositoryEnv
+from datetime import datetime
 
 
 DOTENV_FILE = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'
@@ -237,8 +238,10 @@ class WareProduct:
 		pass
 
 
-	def load_mainlist(self, wares: tuple = None):
-		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p inner join genesisdb.ware_product wp on wp.idProduct = p.id inner join genesisdb.language l on l.id = p.idLanguage inner join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem order by p.id asc;")
+	def loadInnerTable(self, updateDate: datetime.date = None):
+		
+		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p inner join genesisdb.ware_product wp on wp.idProduct = p.id inner join genesisdb.language l on l.id = p.idLanguage inner join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem order by p.id asc;") if updateDate == None else ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p inner join genesisdb.ware_product wp on wp.idProduct = p.id inner join genesisdb.language l on l.id = p.idLanguage inner join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem where p.creationDate >= '{0}' or p.editDate >= '{0}' or wp.editDate >= '{0}' order by p.id asc;".format(updateDate))
+
 		try:
 			self.innerWareList.clear()
 			self.connect_db()
@@ -269,8 +272,10 @@ class WareProduct:
 			try:
 				if self.mydb.is_connected():
 					self.disconnect_db()
+					return True
 			except:
 				print("No se pudo conectar a DB en load_mainlist")
+				return False
 
 
 

@@ -16,7 +16,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, wareName:str = None, parent=None):
         super(Ui_MainWindow, self).__init__(parent)
         self.enable_datetime = True
-        self.strtDate = datetime.now().date()
+        self.WareProdDate = datetime.now().date()
         # currentWare: ware , datos de almacen actual
         # restWare: list[ware], datos de los demas almacenes
         # currentUser: user, datos de usuario actual
@@ -25,7 +25,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.usr_text = currentUser.user
         #NOS QUEDAMOS EN ESTA PARTE
         self.dialog = QDialog()
-        self.uiWareProduct = Ui_Dialog(currentUser, currentWare, restWare, self.strtDate, self.dialog)
+        self.uiWareProduct = Ui_Dialog(currentUser, currentWare, restWare, self.WareProdDate, self.dialog)
         self.setupUi()
 
     def openWareDialog(self, event):
