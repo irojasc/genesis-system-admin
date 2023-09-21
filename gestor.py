@@ -247,6 +247,7 @@ class WareProduct:
 			self.connect_db()
 			self.cursor.execute(query)
 			WareProductsRows = self.cursor.fetchall()
+			print(WareProductsRows)
 
 			for WareProduct in WareProductsRows:
 				if not(len(self.innerWareList)):
