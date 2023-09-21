@@ -16,12 +16,13 @@ from gestor import WareProduct, wares_gestor, aws_s3
 from objects import ware, user
 from inout_dialog import Ui_inoutDialog
 from uiConfigurations import *
+from datetime import datetime
 ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 
 
 class Ui_Dialog(QtWidgets.QDialog):
     # -----------  constructor  -----------
-    def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, parent=None):
+    def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, editWareDate: datetime.date = None, parent=None):
         super(Ui_Dialog, self).__init__(parent)
         self.gestWareProduct = WareProduct()  ##se crea el objeto getWareProduct: Maneja la tabla ware -> WareProduct <- Product
         self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
@@ -33,6 +34,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ownUsers = currentUser
         self.currWare = currentWare
         self.restWares = restWare
+        self.editWareDate = editWareDate
         self.setupUi()
         # -----------  cargar datos en tabla  -----------
         self.gestWareProduct.load_mainlist() ##para cargar la tabla principal del gestor
@@ -160,6 +162,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             backgrounditem(item, isExistActive)
             item.setFlags(flag)
             self.ware_table.setItem(row, 5, item)
+            if isExistActive: self.ware_table.item(row, 5).setToolTip("-->[%s]"%str(ware_li.wareData[self.currWare.cod]["qtyOld"]))
 
             if self.cmbWares.currentIndex() != -1:
                 currTextCmbWare = self.cmbWares.currentText()
@@ -169,6 +172,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 backgrounditem(item, isWareEnEx)
                 item.setFlags(flag)
                 self.ware_table.setItem(row, 6, item)
+                if isWareEnEx: self.ware_table.item(row, 6).setToolTip("-->[%s]"%str(ware_li.wareData[currTextCmbWare]["qtyOld"]))
             row += 1
 
     def txtBusChanged(self):
@@ -176,7 +180,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             ret = QMessageBox.information(self, 'Aviso', "Ingresar criterio de busqueda")
 
         elif str(self.cmbSearch.currentText()) == "" and self.txtSearch.text() == "":
-            # self.loadData("main"), para copiar todos los items del back al frond
+            # self.loadData("main"): para copiar toda la lista inner to frond
             self.loadData("main")
             self.ware_table.setCurrentCell(0, 0)
             self.actualizar_img(0)
@@ -277,7 +281,6 @@ class Ui_Dialog(QtWidgets.QDialog):
             else:
                 self.lblValuePVP2.setPalette(getPricePalette2())
                 self.lblValuePVP2.setText("*********")
-
 
     # -----------  double click event para cambiar ubicacion  -----------
     def tableWidget_doubleClicked(self):
@@ -406,33 +409,26 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.init += 1
 
     # -----------  funcion buscar  -----------
-    def buscar(self, criterio, patron):
+    def buscar(self, criterio: str = None, patron: str = None):
         self.real_table.clear()
         if criterio == "cod":
-            for i in self.gestWareProduct.ware_list:
-                if i.objBook.cod == str.upper(patron):
-                    self.real_table.append(i)
+            self.real_table = list(filter(lambda x: x.product.prdCode == str.upper(patron) ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
+        
         elif criterio == "isbn":
-            for i in self.gestWareProduct.ware_list:
-                if(i.objBook.isbn.find(str.upper(patron)) >= 0):
-                    self.real_table.append(i)
+            self.real_table = list(filter(lambda x: x.product.isbn.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
-
+        
         elif criterio == "titulo":
-            for i in self.gestWareProduct.ware_list:
-                if(i.objBook.name.find(str.upper(patron)) >= 0):
-                    self.real_table.append(i)
+            self.real_table = list(filter(lambda x: x.product.title.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
+        
         elif criterio == "autor":
-            for i in self.gestWareProduct.ware_list:
-                if(i.objBook.autor.find(str.upper(patron)) >= 0):
-                    self.real_table.append(i)
+            self.real_table = list(filter(lambda x: x.product.autor.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
+        
         elif criterio == "editorial":
-            for i in self.gestWareProduct.ware_list:
-                if (i.objBook.editorial.find(str.upper(patron)) >= 0):
-                    self.real_table.append(i)
+            self.real_table = list(filter(lambda x: x.product.publisher.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
         return 0
 
