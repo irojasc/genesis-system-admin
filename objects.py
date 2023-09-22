@@ -51,13 +51,13 @@ class daily_sale:
 
 class product:
 
-	def __repr__(self):
-		return '{prCod: %s, isbn: %s, title: %s, autor: %s, publisher: %s, dateOut: %s, lang: %s, pages: %d, edition: %d, cover: %s}' % (self.prdCode,
-																																	self.isbn, self.title,
-																																	self.autor, self.publisher,
-																																	self.dateOut, self.lang,
-																																	self.pages, self.edition,
-																																	self.cover)
+	# def __repr__(self):
+	# 	return '{prCod: %s, isbn: %s, title: %s, autor: %s, publisher: %s, dateOut: %s, lang: %s, pages: %d, edition: %d, cover: %s}' % (self.prdCode,
+	# 																																self.isbn, self.title,
+	# 																																self.autor, self.publisher,
+	# 																																self.dateOut, self.lang,
+	# 																																self.pages, self.edition,
+	# 																																self.cover)
 	
 	def __str__(self):
 		return '{prCod: %s, isbn: %s, title: %s, autor: %s, publisher: %s, dateOut: %s, lang: %s, pages: %d, edition: %d, cover: %s}' % (self.prdCode,
@@ -68,13 +68,13 @@ class product:
 																																	self.cover)
 
 	def __init__(self, itemCode: str = None, id: int = None, isbn: str = None, title: str = None, autor: str = None, publisher: str = None, dateOut: str = None,
-			  lang: str = None, pages: int = None, edition: int = None, cover: bool = False, width: int = None, height: int = None):
+			  lang: str = None, pages: int = None, edition: int = None, cover: bool = None, width: int = None, height: int = None):
 		self.prdCode = "%s_%d" % (itemCode, id)
 		self.isbn = isbn
 		self.title = title
 		self.autor = autor
 		self.publisher = publisher 
-		self.dateOut = dateOut
+		self.dateOut = dateOut.strftime("%Y") if bool(dateOut) else None
 		self.lang = lang
 		self.pages = pages
 		self.edition = edition

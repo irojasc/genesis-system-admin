@@ -247,12 +247,10 @@ class WareProduct:
 			self.connect_db()
 			self.cursor.execute(query)
 			WareProductsRows = self.cursor.fetchall()
-			print(WareProductsRows)
-
 			for WareProduct in WareProductsRows:
 				if not(len(self.innerWareList)):
 					item = product(WareProduct[1], WareProduct[2], WareProduct[3], WareProduct[4], WareProduct[5], WareProduct[6],
-					WareProduct[7].strftime("%Y"), WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
+					WareProduct[7], WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
 					wareproduct = ware_product(item, {})
 					wareproduct.addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
 					self.innerWareList.append(wareproduct)
@@ -261,14 +259,23 @@ class WareProduct:
 					if isinstance(index, int):
 						self.innerWareList[index].addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
 					else:
+						# print("este es el dato que me esta haciendo dudar", WareProduct[7].strftime("%Y"))
+						print("[destructured]",WareProduct[1],WareProduct[2],WareProduct[3],WareProduct[4],WareProduct[5],WareProduct[6],WareProduct[7],WareProduct[8],WareProduct[9],WareProduct[10],WareProduct[11],WareProduct[12],WareProduct[13])
 						item = product(WareProduct[1], WareProduct[2], WareProduct[3], WareProduct[4], WareProduct[5], WareProduct[6],
-						WareProduct[7].strftime("%Y"), WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
+						WareProduct[7], WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
+						print("[composed]", item)
 						wareproduct = ware_product(item, {})
 						wareproduct.addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
 						self.innerWareList.append(wareproduct)
+						# print("Por que no imprime esta linea")
+						# print("La longitud de inner list", len(self.innerWareList))
 
-		except mysql.connector.Error as error:
-			print("Error: {}".format(error))
+		# except mysql.connector.Error as error:
+		# 	print("Error: {}".format(error))
+		# 	print("Hay error")
+
+		except Exception as error:
+			print("An error occurred:", error) 
 		finally:
 			try:
 				if self.mydb.is_connected():
@@ -277,8 +284,6 @@ class WareProduct:
 			except:
 				print("No se pudo conectar a DB en load_mainlist")
 				return False
-
-
 
 	def activateItem(self, codBook: str = "", condition: bool = True):
 		try:
