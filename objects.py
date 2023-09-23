@@ -51,16 +51,16 @@ class daily_sale:
 
 class product:
 
-	# def __repr__(self):
-	# 	return '{prCod: %s, isbn: %s, title: %s, autor: %s, publisher: %s, dateOut: %s, lang: %s, pages: %d, edition: %d, cover: %s}' % (self.prdCode,
-	# 																																self.isbn, self.title,
-	# 																																self.autor, self.publisher,
-	# 																																self.dateOut, self.lang,
-	# 																																self.pages, self.edition,
-	# 																																self.cover)
+	def __repr__(self):
+		return '{{prdCode: {0}, isbn: {1}, title: {2}, autor: {3}, publisher: {4}, dateOut: {5}, lang: {6}, pages: {7}, edition: {8}, cover: {9}}}'.format(self.prdCode,
+																																	self.isbn, self.title,
+																																	self.autor, self.publisher,
+																																	self.dateOut, self.lang,
+																																	self.pages, self.edition,
+																																	self.cover)
 	
 	def __str__(self):
-		return '{prCod: %s, isbn: %s, title: %s, autor: %s, publisher: %s, dateOut: %s, lang: %s, pages: %d, edition: %d, cover: %s}' % (self.prdCode,
+		return "{{prdCode: {0}, isbn: {1}, title: {2}, autor: {3}, publisher: {4}, dateOut: {5}, lang: {6}, pages: {7}, edition: {8}, cover: {9}}}".format(self.prdCode,
 																																	self.isbn, self.title,
 																																	self.autor, self.publisher,
 																																	self.dateOut, self.lang,
@@ -69,7 +69,7 @@ class product:
 
 	def __init__(self, itemCode: str = None, id: int = None, isbn: str = None, title: str = None, autor: str = None, publisher: str = None, dateOut: str = None,
 			  lang: str = None, pages: int = None, edition: int = None, cover: bool = None, width: int = None, height: int = None):
-		self.prdCode = "%s_%d" % (itemCode, id)
+		self.prdCode = '{0}_{1}'.format(itemCode, str(id))
 		self.isbn = isbn
 		self.title = title
 		self.autor = autor

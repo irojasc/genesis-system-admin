@@ -503,12 +503,20 @@ class Ui_Dialog(QtWidgets.QDialog):
         #si retorna true debe actualizar la fecha con la ultima actualizada
         if self.gestWareProduct.loadInnerTable(self.WareProdDate):
             self.WareProdDate = datetime.now().date()
-        self.loadData("main")
-        if self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() != "":
-            self.txtBusChanged()
-        elif self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() == "":
-            self.ware_table.setCurrentCell(0, 0)
-            self.actualizar_img(0)
+        # guarda el active index antiguo
+        row = self.ware_table.currentIndex().row()
+        self.txtBusChanged()
+        # setea el index antiguo a la tabla actualizada
+        self.ware_table.setCurrentCell(row, 0)
+        self.actualizar_img(row)
+        # self.loadData("main")
+        # if self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() != "":
+        #     self.txtBusChanged()
+        # elif self.cmbSearch.currentIndex() == -1 and self.txtSearch.text() == "":
+        #     self.txtBusChanged()
+        # elif self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() == "":
+        #     self.ware_table.setCurrentCell(0, 0)
+        #     self.actualizar_img(0)
 
     def setupUi(self):
         self.setObjectName("Dialog")

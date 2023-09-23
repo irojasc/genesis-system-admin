@@ -6,6 +6,8 @@ import os
 from objects import user, ware, ware_product, product
 from decouple import Config, RepositoryEnv
 from datetime import datetime
+import traceback
+
 
 
 DOTENV_FILE = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'
@@ -234,16 +236,12 @@ class WareProduct:
 			tup = ()
 		return tup
 	
-	def createWareProduct(self):
-		pass
-
-
 	def loadInnerTable(self, updateDate: datetime.date = None):
 		
 		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p inner join genesisdb.ware_product wp on wp.idProduct = p.id inner join genesisdb.language l on l.id = p.idLanguage inner join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem order by p.id asc;") if updateDate == None else ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p inner join genesisdb.ware_product wp on wp.idProduct = p.id inner join genesisdb.language l on l.id = p.idLanguage inner join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem where p.creationDate >= '{0}' or p.editDate >= '{0}' or wp.editDate >= '{0}' order by p.id asc;".format(updateDate))
 
 		try:
-			self.innerWareList.clear()
+			# self.innerWareList.clear()
 			self.connect_db()
 			self.cursor.execute(query)
 			WareProductsRows = self.cursor.fetchall()
@@ -257,25 +255,26 @@ class WareProduct:
 				else:
 					index = next((i for i, item in enumerate(self.innerWareList) if item.product.prdCode == '%s_%d' % (WareProduct[1], WareProduct[2])), None)
 					if isinstance(index, int):
+						if updateDate != None:
+							self.innerWareList[index].product = product(WareProduct[1], WareProduct[2], WareProduct[3], WareProduct[4], WareProduct[5], WareProduct[6],
+					WareProduct[7], WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
 						self.innerWareList[index].addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
 					else:
-						# print("este es el dato que me esta haciendo dudar", WareProduct[7].strftime("%Y"))
-						print("[destructured]",WareProduct[1],WareProduct[2],WareProduct[3],WareProduct[4],WareProduct[5],WareProduct[6],WareProduct[7],WareProduct[8],WareProduct[9],WareProduct[10],WareProduct[11],WareProduct[12],WareProduct[13])
+						# print("[destructured]",WareProduct[1],WareProduct[2],WareProduct[3],WareProduct[4],WareProduct[5],WareProduct[6],WareProduct[7],WareProduct[8],WareProduct[9],WareProduct[10],WareProduct[11],WareProduct[12],WareProduct[13])
 						item = product(WareProduct[1], WareProduct[2], WareProduct[3], WareProduct[4], WareProduct[5], WareProduct[6],
 						WareProduct[7], WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
-						print("[composed]", item)
+						# print("[composed]", item)
 						wareproduct = ware_product(item, {})
 						wareproduct.addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
 						self.innerWareList.append(wareproduct)
-						# print("Por que no imprime esta linea")
-						# print("La longitud de inner list", len(self.innerWareList))
 
-		# except mysql.connector.Error as error:
-		# 	print("Error: {}".format(error))
-		# 	print("Hay error")
+		except mysql.connector.Error as error:
+			print("Error: {}".format(error))
 
-		except Exception as error:
-			print("An error occurred:", error) 
+		# except Exception:
+		# 	# print("An error occurred:", error) 
+		# 	traceback.print_exc()
+			
 		finally:
 			try:
 				if self.mydb.is_connected():
