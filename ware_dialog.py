@@ -24,26 +24,36 @@ class Ui_Dialog(QtWidgets.QDialog):
     # -----------  constructor  -----------
     def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, WareProdDate: datetime.date = None, parent=None):
         super(Ui_Dialog, self).__init__(parent)
-        self.gestWareProduct = WareProduct()  ##se crea el objeto getWareProduct: Maneja la tabla ware -> WareProduct <- Product
-        self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
-        self.ui_CustomInput = ui_CustomChangeLocation()
-        self.ui_operationDialog = ui_OperationDialog()
-        self.ui_EditDialog = ui_EditNewItemDialog()
-        self.objS3 = aws_s3()
-        self.real_table = []
-        self.ownUsers = currentUser
-        self.currWare = currentWare
-        self.restWares = restWare
-        self.WareProdDate = WareProdDate
-        self.setupUi()
-        # -----------  cargar datos en tabla  -----------
-        self.gestWareProduct.loadInnerTable() ##para cargar la tabla principal del gestor
-        self.loadData("main")
 
-        # -----------  QDialog para ventana in/out  -----------
-        # self.dialog = QDialog()
-        # self.ui_dialog = Ui_inoutDialog(data_users, data_wares, self.dialog)
-        self.init = 0
+        if(bool(currentUser) or bool(currentWare) or bool(restWare) or bool(WareProdDate) or bool(parent)):
+            self.gestWareProduct = WareProduct()  ##se crea el objeto getWareProduct: Maneja la tabla ware -> WareProduct <- Product
+            self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
+            self.ui_CustomInput = ui_CustomChangeLocation()
+            self.ui_operationDialog = ui_OperationDialog()
+            self.ui_EditDialog = ui_EditNewItemDialog()
+            self.objS3 = aws_s3()
+            self.real_table = []
+            self.ownUsers = currentUser
+            self.currWare = currentWare
+            self.restWares = restWare
+            self.WareProdDate = WareProdDate
+            self.setupUi()
+            # -----------  cargar datos en tabla  -----------
+            self.gestWareProduct.loadInnerTable() ##para cargar la tabla principal del gestor
+            self.loadData("main")
+            # -----------  QDialog para ventana in/out  -----------
+            # self.dialog = QDialog()
+            # self.ui_dialog = Ui_inoutDialog(data_users, data_wares, self.dialog)
+            self.init = 0
+            print(self.currWare, self.restWares)
+        else:
+            self.ownUsers =  None
+            self.currWare = None
+            self.restWares = None
+            self.WareProdDate = None
+            self.setupUi()
+            self.init = 0
+
 
     # -----------  condiciones iniciales al abrir ventana  -----------
     def init_condition(self):
@@ -55,6 +65,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         item_all = ['cod','isbn','titulo','autor','editorial']
         self.cmbSearch.clear()
         self.cmbSearch.addItems(item_all)
+        self.cmbWarePrice.addItems([self.currWare.cod] + self.getRestWare(True))
         self.cmbSearch.setCurrentIndex(-1)
         # las dos lineas de abajo actualizan los datos de precio con el item de la primera fila
         self.loadData("main")
@@ -64,7 +75,7 @@ class Ui_Dialog(QtWidgets.QDialog):
     def sortTable(self, unsortList):
         # separar items que pertencen a libros
         result_books = list(filter(lambda x: x.product.prdCode.split("_")[0] == "GN", unsortList))
-        
+
         # separar items que no pertencen a libros
         result_nobooks = list(filter(lambda x: x.product.prdCode.split("_")[0] != "GN", unsortList))
 
@@ -157,7 +168,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             item.setFlags(flag)
             self.ware_table.setItem(row, 4, item)
 
-            text = str(ware_li.wareData[self.currWare.cod]["qtyNew"]) if (isExistActive) else "-" 
+            text = str(ware_li.wareData[self.currWare.cod]["qtyNew"]) if (isExistActive) else "-"
             item = QtWidgets.QTableWidgetItem(text)
             backgrounditem(item, isExistActive)
             item.setFlags(flag)
@@ -167,7 +178,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             if self.cmbWares.currentIndex() != -1:
                 currTextCmbWare = self.cmbWares.currentText()
                 isWareEnEx = ((currTextCmbWare in ware_li.wareData) and ware_li.wareData[currTextCmbWare]["isEnabled"])
-                text = str(ware_li.wareData[currTextCmbWare]["qtyNew"]) if isWareEnEx else "-" 
+                text = str(ware_li.wareData[currTextCmbWare]["qtyNew"]) if isWareEnEx else "-"
                 item = QtWidgets.QTableWidgetItem(text)
                 backgrounditem(item, isWareEnEx)
                 item.setFlags(flag)
@@ -258,18 +269,20 @@ class Ui_Dialog(QtWidgets.QDialog):
             else:
                 self.lblImg.setPixmap(QtGui.QPixmap())
                 self.lblImg.setScaledContents(True)
-            
+
             if (self.currWare.cod in self.real_table[tmp].wareData) and (self.real_table[tmp].wareData[self.currWare.cod]["isEnabled"]):
+                self.cmbWarePrice.setCurrentIndex(0)
                 self.lblValuePrice.setFont(getFontxPV())
-                self.lblValuePrice.move(229,24)
+                self.lblValuePrice.move(238,34)
                 self.lblValuePrice.setText("S/." + str(self.real_table[tmp].wareData[self.currWare.cod]["pvNew"]))
             else:
                 self.lblValuePrice.setFont(getFontxUnAvailable())
-                self.lblValuePrice.move(229, 19)
+                self.lblValuePrice.move(238, 38)
                 self.lblValuePrice.setText("*********")
 
             counter = 0
             pv = 0
+
             for key in self.real_table[tmp].wareData:
                 if self.real_table[tmp].wareData[key]["isEnabled"]:
                     counter += int(self.real_table[tmp].wareData[key]["qtyOld"])
@@ -286,12 +299,12 @@ class Ui_Dialog(QtWidgets.QDialog):
     def tableWidget_doubleClicked(self):
         row = self.ware_table.currentIndex().row()
         column_ = self.ware_table.currentIndex().column()
-        
+
         # no permite el cambio de ubicacion si el item esta inactivo
         itemSelected = list(filter(lambda x: (x.objBook.cod == self.ware_table.item(row,0).text()), self.real_table))
 
         if self.currWare[2][1] == True and column_ == 0 and itemSelected[0].objBook.active:
-            
+
                 # validation: Cancel, Ok, Desactivar
                 validation = self.openOperationDialog(self.ware_table.item(row,column_).text(), self.ware_table.item(row,column_+2).text())
 
@@ -325,7 +338,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                                                         QMessageBox.Ok, QMessageBox.Ok)
                         except:
                             ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
-                
+
                 if (validation == "Editar"):
                     data = {"cod": self.ware_table.item(row,0).text(),
                             "isbn": self.ware_table.item(row,1).text(),
@@ -345,7 +358,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 QMessageBox.information(self, 'Mensaje', "Producto activado", QMessageBox.Ok, QMessageBox.Ok)
                 self.txtBusChanged()
             ##aqui falta actualizar la tabla del frond luego de actualizar la tabla del back
-            
+
     # -----------  user validation  -----------
     def userValidation(self):
         # ok: True or False
@@ -371,7 +384,7 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     def inout_operation(self,event):
         self.change_state("in/out")
-        
+
         # separar solo items activos y enviar a in/out form
         result_books = list(filter(lambda x: x.objBook.active, self.gestWareProduct.ware_list.copy()))
         self.ui_dialog.mainList = result_books.copy()
@@ -392,6 +405,20 @@ class Ui_Dialog(QtWidgets.QDialog):
             #self.seColumn = str(self.cmbWares.currentText())
             self.loadData()
 
+    def onCmbWarePriceIndexChanged(self):
+        if self.cmbWarePrice.currentIndex() != -1:
+            # ware_table es el widget
+            tblCurrentIndex = self.ware_table.currentRow()
+            if (self.cmbWarePrice.currentText() in self.real_table[tblCurrentIndex].wareData) and (self.real_table[tblCurrentIndex].wareData[self.cmbWarePrice.currentText()]["isEnabled"]):
+                self.lblValuePrice.setFont(getFontxPV())
+                self.lblValuePrice.move(238,34)
+                self.lblValuePrice.setText("S/." + str(self.real_table[tblCurrentIndex].wareData[self.cmbWarePrice.currentText()]["pvNew"]))
+            else:
+                self.lblValuePrice.setFont(getFontxUnAvailable())
+                self.lblValuePrice.move(238, 38)
+                self.lblValuePrice.setText("*********")
+            
+
     def resizeEvent(self, event):
         if self.init > 0:
             self.frame_2.setGeometry(QtCore.QRect(0, self.frameGeometry().height() - 188 - 40, 1024, 188))
@@ -404,34 +431,38 @@ class Ui_Dialog(QtWidgets.QDialog):
         if criterio == "cod":
             self.real_table = list(filter(lambda x: x.product.prdCode == str.upper(patron) ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
-        
+
         elif criterio == "isbn":
             self.real_table = list(filter(lambda x: x.product.isbn.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
-        
+
         elif criterio == "titulo":
             self.real_table = list(filter(lambda x: x.product.title.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
-        
+
         elif criterio == "autor":
             self.real_table = list(filter(lambda x: x.product.autor.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
-        
+
         elif criterio == "editorial":
             self.real_table = list(filter(lambda x: x.product.publisher.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
         return 0
 
-    # -----------  obtiene lista de wares sobrantes  -----------
-    def getRestWare(self) -> list:
+    # -----------  obtiene lista de wares que son virtuales y estan activos si virtual es True  -----------
+    def getRestWare(self, virtual: bool = False) -> list:
         try:
-            return list(map(lambda y: y.cod ,list(filter(lambda x: True if (x.auth["enabled"] and not(x.auth["isVirtual"])) else False, self.restWares))))
+            if not(virtual):
+                return list(map(lambda y: y.cod ,list(filter(lambda x: True if (x.auth["enabled"] and not(x.auth["isVirtual"])) else False, self.restWares))))
+            else:
+                return list(map(lambda y: y.cod ,list(filter(lambda x: True if x.auth["enabled"] else False, self.restWares))))
         except:
             return []
-    
+
     # -----------  keyPressed for QtableWidget  -----------
     def KeyPressed(self,event):
         if self.ware_table.selectedIndexes() != []:
+            # ware_table es el widget
             temp = self.ware_table.currentRow()
             if event.key() == QtCore.Qt.Key_Up:
                 temp -= 1
@@ -440,7 +471,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 temp += 1
                 self.actualizar_img(temp)
         return QtWidgets.QTableWidget.keyPressEvent(self.ware_table, event)
-    
+
     # -----------  eventFilter para MouseEvent  -----------
     def eventFilter(self, source, event):
         if self.ware_table.selectedIndexes() != []:
@@ -449,18 +480,18 @@ class Ui_Dialog(QtWidgets.QDialog):
                     temp = self.ware_table.currentRow()
                     self.actualizar_img(temp)
         return QtCore.QObject.event(source, event)
-    
+
     def openUbicDialog(self, code: str = "", title: str = ""):
         self.ui_CustomInput.cleanInputText()
         self.ui_CustomInput.setItemData(code, title)
         if self.ui_CustomInput.exec_() == QDialog.Accepted:
             return self.ui_CustomInput.returnedVal
-        
+
     def openOperationDialog(self, code: str = "", title: str = ""):
         self.ui_operationDialog.setItemData(code, title)
         if self.ui_operationDialog.exec_() == QDialog.Accepted:
             return self.ui_operationDialog.returnedVal
-    
+
     def openEditItemDialog(self, data: dict = None):
         if bool(data):
             self.ui_EditDialog.setDataFields(data)
@@ -470,10 +501,10 @@ class Ui_Dialog(QtWidgets.QDialog):
             return (False, None)
         else:
             return (False, None)
-    
+
     def loadImage(self):
         row = self.ware_table.currentIndex().row()
-        if row >= 0: 
+        if row >= 0:
             validator, pathfile = self.objS3.get_ProductImage(self.ware_table.item(row,0).text().lower())
             if validator:
                 self.lblImg.setPixmap(QtGui.QPixmap(pathfile))
@@ -566,7 +597,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.cmbSearch.setFont(font) 
+        self.cmbSearch.setFont(font)
         self.cmbSearch.setObjectName("cmbSearch")
         self.cmbSearch.currentIndexChanged.connect(self.CmbIndexChanged)
 
@@ -606,7 +637,7 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         # -----------  ware_table configuration  -----------
         self.ware_table = QtWidgets.QTableWidget(self)
-        self.ware_table.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers) 
+        self.ware_table.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
         self.ware_table.setGeometry(QtCore.QRect(0, 130, 1024, 450))
         self.ware_table.setMinimumHeight(100) ## esto se agrego
         self.ware_table.setObjectName("ware_table")
@@ -642,7 +673,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.ware_table.viewport().installEventFilter(self)
         self.ware_table.keyPressEvent = self.KeyPressed
         self.ware_table.doubleClicked.connect(self.tableWidget_doubleClicked)
-       
+
         # -----------  frame configuration  -----------
         self.frame = QtWidgets.QFrame(self)
         self.frame.setGeometry(QtCore.QRect(0, 100, 1024, 30))
@@ -677,10 +708,10 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_2.setObjectName("frame_2")
-        
+
         # ----------- frame for image and price information  -----------
         self.boxPV = QtWidgets.QGroupBox(self.frame_2)
-        self.boxPV.setGeometry(QtCore.QRect(30, 10, 350, 171))
+        self.boxPV.setGeometry(QtCore.QRect(30, 5, 359, 170))
         self.boxPV.setPalette(getPalette())
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
@@ -691,20 +722,36 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.boxPV.setObjectName("boxPV")
 
         # -----------  lblPVP configuration  -----------
-        self.lblPVP = QtWidgets.QLabel("PVP:",self.boxPV)
-        self.lblPVP.setGeometry(QtCore.QRect(160, 30, 62, 41))
+        self.lblPVP = QtWidgets.QLabel("Precio de Venta:", self.boxPV)
+        self.lblPVP.setGeometry(QtCore.QRect(160, 8, 170, 41))
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
-        font.setPointSize(20)
+        font.setPointSize(15)
         font.setBold(True)
         font.setWeight(75)
         self.lblPVP.setFont(font)
         self.lblPVP.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.lblPVP.setObjectName("lblPVP")
 
+        # -----------  lblComboWarePrice configuration  -----------
+        self.cmbWarePrice = QtWidgets.QComboBox(self.boxPV)
+        self.cmbWarePrice.setGeometry(160, 46, 68, 30)
+        self.cmbWarePrice.setStyleSheet("background-color: rgb(170, 255, 0);")
+        # self.cmbWarePrice.setStyleSheet("background-color: rgb(255, 255, 255);")
+        font = QFont()
+        font.setFamily("Open Sans Semibold")
+        font.setPointSize(9)
+        font.setBold(True)
+        font.setWeight(75)
+        self.cmbWarePrice.setFont(font)
+        self.cmbWarePrice.setObjectName("cmbWarePrice")
+        self.cmbWarePrice.currentIndexChanged.connect(self.onCmbWarePriceIndexChanged)
+        self.cmbWarePrice.clear()
+        #Dentro de esta parte se carga los datos de cmbWarePrice
+
         # -----------  lblValuePrice configuration  -----------
-        self.lblValuePrice = QtWidgets.QLabel(self.boxPV)
-        self.lblValuePrice.setGeometry(QtCore.QRect(229, 26, 151, 50))
+        self.lblValuePrice = QtWidgets.QLabel("S/.200.0",self.boxPV)
+        self.lblValuePrice.setGeometry(QtCore.QRect(240, 36, 181, 50))
         self.lblValuePrice.setPalette(getPricePalette())
         self.lblValuePrice.setFont(getFontxPV())
         self.lblValuePrice.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
@@ -712,14 +759,14 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         # -----------  lblPVP 2DA configuration  -----------
         self.lblPVP2 = QtWidgets.QLabel("PVP(2):",self.boxPV)
-        self.lblPVP2.setGeometry(QtCore.QRect(160, 70, 65, 41))
+        self.lblPVP2.setGeometry(QtCore.QRect(160, 80, 65, 41))
         self.lblPVP2.setFont(getFontxSecond())
         self.lblPVP2.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.lblPVP2.setObjectName("lblPVP2")
 
         # -----------  lblValuePVP2 configuration  -----------
         self.lblValuePVP2 = QtWidgets.QLabel(self.boxPV)
-        self.lblValuePVP2.setGeometry(QtCore.QRect(229, 65, 151, 50))
+        self.lblValuePVP2.setGeometry(QtCore.QRect(229, 75, 151, 50))
         self.lblValuePVP2.setPalette(getPricePalette2())
         self.lblValuePVP2.setFont(getFontxSecond())
         self.lblValuePVP2.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
@@ -727,18 +774,18 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         # -----------  lblImg configuration  -----------
         self.lblImg = QtWidgets.QLabel(self.boxPV)
-        self.lblImg.setGeometry(QtCore.QRect(10, 30, 131, 131))
+        self.lblImg.setGeometry(QtCore.QRect(12, 25, 128, 138))
         self.lblImg.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.lblImg.setObjectName("lblImg")
-        
+
         # -----------  boton Editar Precio Venta  -----------
         self.btnLoadImage = QtWidgets.QPushButton(self.boxPV)
-        self.btnLoadImage.setGeometry(QtCore.QRect(160, 117, 141, 41))
+        self.btnLoadImage.setGeometry(QtCore.QRect(170, 122, 131, 31))
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
-        font.setPointSize(12)
+        font.setPointSize(10)
         font.setBold(True)
-        font.setWeight(75)
+        font.setWeight(70)
         self.btnLoadImage.setFont(font)
         self.btnLoadImage.setStyleSheet("background-color: rgb(240, 240, 240);")
         self.btnLoadImage.setObjectName("btnLoadImage")
@@ -749,56 +796,58 @@ class Ui_Dialog(QtWidgets.QDialog):
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def retranslateUi(self):
-        _translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("Dialog", "Genesis - [Museo del libro]"))
-        self.search_box.setTitle(_translate("Dialog", "Cuadro de busqueda"))
-        self.cmbSearch.setItemText(1, _translate("Dialog", "cod"))
-        self.cmbSearch.setItemText(2, _translate("Dialog", "isbn"))
-        self.cmbSearch.setItemText(3, _translate("Dialog", "titulo"))
-        self.cmbSearch.setItemText(4, _translate("Dialog", "autor"))
-        self.cmbSearch.setItemText(5, _translate("Dialog", "editorial"))
+        if(bool(self.ownUsers) or bool(self.currWare) or bool(self.restWares) or bool(self.WareProdDate)):
+            print("si entra a esta parte")
+            _translate = QtCore.QCoreApplication.translate
+            self.setWindowTitle(_translate("Dialog", "Genesis - [Museo del libro]"))
+            self.search_box.setTitle(_translate("Dialog", "Cuadro de busqueda"))
+            self.cmbSearch.setItemText(1, _translate("Dialog", "cod"))
+            self.cmbSearch.setItemText(2, _translate("Dialog", "isbn"))
+            self.cmbSearch.setItemText(3, _translate("Dialog", "titulo"))
+            self.cmbSearch.setItemText(4, _translate("Dialog", "autor"))
+            self.cmbSearch.setItemText(5, _translate("Dialog", "editorial"))
 
-        font = QtGui.QFont()
-        font.setFamily("Open Sans Semibold")
-        font.setPointSize(10)
-        font.setWeight(85)
-        font.setBold(True)
+            font = QtGui.QFont()
+            font.setFamily("Open Sans Semibold")
+            font.setPointSize(10)
+            font.setWeight(85)
+            font.setBold(True)
 
-        item = self.ware_table.horizontalHeaderItem(0)
-        item.setText(_translate("Dialog", "cod"))
-        item.setFont(font)
-        item.setForeground(QBrush(QColor(0,0,0)))
-        item = self.ware_table.horizontalHeaderItem(1)
-        item.setText(_translate("Dialog", "isbn"))
-        item.setFont(font)
-        item.setForeground(QBrush(QColor(0,0,0)))
-        item = self.ware_table.horizontalHeaderItem(2)
-        item.setText(_translate("Dialog", "titulo"))
-        item.setFont(font)
-        item.setForeground(QBrush(QColor(0,0,0)))
-        item = self.ware_table.horizontalHeaderItem(3)
-        item.setText(_translate("Dialog", "autor"))
-        item.setFont(font)
-        item.setForeground(QBrush(QColor(0,0,0)))
-        item = self.ware_table.horizontalHeaderItem(4)
-        item.setText(_translate("Dialog", "editorial"))
-        item.setFont(font)
-        item.setForeground(QBrush(QColor(0,0,0)))
-        item = self.ware_table.horizontalHeaderItem(5)
-        item.setText(_translate("Dialog", "[" + self.currWare.cod + "]"))
-        item.setFont(font)
-        item.setForeground(QBrush(QColor(0,0,0)))
-        item = self.ware_table.horizontalHeaderItem(6)
+            item = self.ware_table.horizontalHeaderItem(0)
+            item.setText(_translate("Dialog", "cod"))
+            item.setFont(font)
+            item.setForeground(QBrush(QColor(0,0,0)))
+            item = self.ware_table.horizontalHeaderItem(1)
+            item.setText(_translate("Dialog", "isbn"))
+            item.setFont(font)
+            item.setForeground(QBrush(QColor(0,0,0)))
+            item = self.ware_table.horizontalHeaderItem(2)
+            item.setText(_translate("Dialog", "titulo"))
+            item.setFont(font)
+            item.setForeground(QBrush(QColor(0,0,0)))
+            item = self.ware_table.horizontalHeaderItem(3)
+            item.setText(_translate("Dialog", "autor"))
+            item.setFont(font)
+            item.setForeground(QBrush(QColor(0,0,0)))
+            item = self.ware_table.horizontalHeaderItem(4)
+            item.setText(_translate("Dialog", "editorial"))
+            item.setFont(font)
+            item.setForeground(QBrush(QColor(0,0,0)))
+            item = self.ware_table.horizontalHeaderItem(5)
+            item.setText(_translate("Dialog", "[" + self.currWare.cod + "]"))
+            item.setFont(font)
+            item.setForeground(QBrush(QColor(0,0,0)))
+            item = self.ware_table.horizontalHeaderItem(6)
 
-        item.setFont(font)
-        item.setForeground(QBrush(QColor(0,0,0)))
+            item.setFont(font)
+            item.setForeground(QBrush(QColor(0,0,0)))
 
-        #self.ware_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # metodo que setea ancho de columnas por igual
-        # self.ware_table.horizontalHeader().setStretchLastSection(True) # metodo que setea que extienda solo la ultiam columna
-        self.ware_table.horizontalHeader().setSectionResizeMode(5,QHeaderView.Stretch)
-        self.ware_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Stretch)
-        self.boxPV.setTitle(_translate("Dialog", "Cuadro de información"))
-        self.btnLoadImage.setText(_translate("Dialog", "Cargar imagen"))
+            #self.ware_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # metodo que setea ancho de columnas por igual
+            # self.ware_table.horizontalHeader().setStretchLastSection(True) # metodo que setea que extienda solo la ultiam columna
+            self.ware_table.horizontalHeader().setSectionResizeMode(5,QHeaderView.Stretch)
+            self.ware_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Stretch)
+            self.boxPV.setTitle(_translate("Dialog", "Cuadro de información"))
+            self.btnLoadImage.setText(_translate("Dialog", "Cargar imagen"))
 
 
 class ui_EditNewItemDialog(QtWidgets.QDialog):
@@ -810,7 +859,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.title = ""
         self.returnedVal = (False, None)
         self.setupUi()
-        
+
     def returnValues(self, btnConfirmation: bool = False):
         # se cambia los keys de los diccionarios segun titulos de base de datos
         tmp_dict = {}
@@ -825,15 +874,15 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             if self.innerEditData["publisher"] != self.txtPublisher.text() and bool(len(self.txtPublisher.text().strip())):
                 tmp_dict["editorial"] = self.txtPublisher.text().strip()
             if self.innerEditData["price"] != self.txtPrice.text() and bool(len(self.txtPrice.text().strip())):
-                tmp_dict["pv"] = self.txtPrice.text().strip() 
-            
+                tmp_dict["pv"] = self.txtPrice.text().strip()
+
             if bool(len(tmp_dict)):
                 self.returnedVal = (True, tmp_dict)
             else:
                 QMessageBox.information(self, 'Mensaje', "No se efectuaron cambios o campos vacios.\n>Presione Ok, luego Cancelar", QMessageBox.Ok, QMessageBox.Ok)
                 self.setDataFields()
                 self.returnedVal = (False, None)
-        
+
         elif btnConfirmation and self.method:
             tmp_dict["cod"] = self.txtId.text().strip()
             if bool(len(self.txtTitle.text().strip())):
@@ -848,14 +897,14 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             if len(tmp_dict) == 5:
                 if bool(len(self.txtISBN.text().strip())): tmp_dict["isbn"] = self.txtISBN.text().strip()
                 if bool(self.spinInitStock.value()): tmp_dict["stock"] = self.spinInitStock.text().strip()
-                self.returnedVal = (True, tmp_dict)                     
+                self.returnedVal = (True, tmp_dict)
             else:
                 QMessageBox.information(self, 'Mensaje', "Llenar los campos obligatorios (*)", QMessageBox.Ok, QMessageBox.Ok)
                 self.returnedVal = (False, None)
 
         else:
-            self.returnedVal = (False, None)   
-        
+            self.returnedVal = (False, None)
+
         self.submitclose() if self.returnedVal[0] else False
 
     def cleanInputFields(self):
@@ -880,10 +929,10 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.txtPrice.setText(self.innerEditData["price"])
         elif bool(self.prevData) and self.method:
             self.txtId.setText(data)
-    
+
     def submitclose(self):
         self.accept()
-    
+
     def deactivateLineEdit(self, widget: str = ""):
         if bool(widget):
             if widget == "ISBN":
@@ -984,14 +1033,14 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblWarning.setStyleSheet("background-color: red")
 
-        
+
         self.lblWarning = QLabel(">(*): Campos obligatorios",self) if self.method else False
         if bool(self.lblWarning):
             self.lblWarning.adjustSize()
             self.lblWarning.move(60, 20)
             self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.lblWarning.setStyleSheet("background-color: red")
-        
+
         self.lblId = QLabel("CÓDIGO:",self) if not(self.method) else QLabel("CÓDIGO(*):",self)
         self.lblId.adjustSize()
         self.lblId.move(43, 40) if not(self.method) else self.lblId.move(33, 40)
@@ -1003,7 +1052,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.txtId.move(95,37)
         self.txtId.setEnabled(False)
         self.defaultPalette = self.txtId.palette()
-        
+
         self.color = QColor(230,230,230)
         self.lblISBN = QLabel("ISBN:",self)
         self.lblISBN.adjustSize()
@@ -1093,12 +1142,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.spinInitStock.setPalette(self.darkPalette)
         self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
         self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
-        
+
         self.btnCancel = QPushButton('Cancelar', self)
         self.btnCancel.adjustSize()
         self.btnCancel.move(190, 185)
         self.btnCancel.clicked.connect(lambda: self.submitclose())
-        
+
         self.btnOk = QPushButton(self)
         self.btnOk.setText("Editar") if not(self.method) else self.btnOk.setText("Registrar")
         self.btnOk.adjustSize()
@@ -1121,12 +1170,12 @@ class MyLineEdit(QLineEdit):
         self.clicked.emit()
         QLineEdit.mousePressEvent(self, event)
         self.textChanged.connect(self.text_changed)
-    
-    
+
+
     def removeAccents(self, txt: str = ""):
         return ''.join(c for c in unicodedata.normalize('NFD', txt)
                   if unicodedata.category(c) != 'Mn')
-    
+
     def text_changed(self):
         if self.text().isupper():
             # cursor = self.cursorPosition()
@@ -1145,7 +1194,7 @@ class ui_CustomChangeLocation(QtWidgets.QDialog):
         self.code = ""
         self.title = ""
         self.setupUi()
-        
+
     def returnValues(self, textButton: str = ""):
         self.returnedVal = (textButton, self.txtUbic.text())
         self.submitclose()
@@ -1167,7 +1216,7 @@ class ui_CustomChangeLocation(QtWidgets.QDialog):
         self.txtUbic.setFixedWidth(self.textWidth)
         self.btnCancel.move(self.textWidth - self.btnCancel.frameGeometry().width() , 110)
         self.btnOk.move(self.textWidth - self.btnCancel.frameGeometry().width() - self.btnOk.frameGeometry().width() , 110)
-    
+
     def submitclose(self):
         self.accept()
 
@@ -1180,7 +1229,7 @@ class ui_CustomChangeLocation(QtWidgets.QDialog):
         self.label1.move(6, 15)
         self.label1.setStyleSheet("background-color: lightgreen")
         self.label1.adjustSize()
-        
+
         self.label2 = QLabel(self)
         self.label2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.label2.move(6, 32)
@@ -1190,7 +1239,7 @@ class ui_CustomChangeLocation(QtWidgets.QDialog):
         self.label3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.label3.move(6, 49)
         self.label3.setStyleSheet("background-color: lightblue")
-        
+
 
         self.label4 = QLabel("FORMATO: Mueble (Letra), Fila (Numero)",self)
         self.label4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -1216,7 +1265,7 @@ class ui_OperationDialog(QtWidgets.QDialog):
         self.code = ""
         self.title = ""
         self.setupUi()
-        
+
     def returnValues(self, textButton: str = ""):
         self.returnedVal = textButton
         self.submitclose()
@@ -1240,7 +1289,7 @@ class ui_OperationDialog(QtWidgets.QDialog):
         self.btnLocation.move(self.btnDeactivate.frameGeometry().width() + 5, 70)
         self.btnEdit.move(self.btnDeactivate.frameGeometry().width() + self.btnLocation.frameGeometry().width() + 5, 70)
         self.btnCancel.move(5, 95)
-    
+
     def submitclose(self):
         self.accept()
 
@@ -1253,7 +1302,7 @@ class ui_OperationDialog(QtWidgets.QDialog):
         self.label1.move(6, 15)
         self.label1.setStyleSheet("background-color: lightgreen")
         self.label1.adjustSize()
-        
+
         self.label2 = QLabel(self)
         self.label2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.label2.move(6, 32)
@@ -1263,7 +1312,7 @@ class ui_OperationDialog(QtWidgets.QDialog):
         self.label3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.label3.move(6, 49)
         self.label3.setStyleSheet("background-color: lightblue")
-        
+
         self.btnEdit = QPushButton('Editar', self)
         self.btnEdit.adjustSize()
         self.btnEdit.clicked.connect(lambda: self.returnValues("Editar"))
@@ -1275,11 +1324,11 @@ class ui_OperationDialog(QtWidgets.QDialog):
         self.btnDeactivate = QPushButton('Desactivar', self)
         self.btnDeactivate.adjustSize()
         self.btnDeactivate.clicked.connect(lambda: self.returnValues('Desactivar'))
-        
+
         self.btnCancel = QPushButton('Cancelar', self)
         self.btnCancel.adjustSize()
         self.btnCancel.clicked.connect(lambda: self.returnValues("Cancelar"))
-    
+
     def show_window(self):
         self.show()
 
@@ -1295,14 +1344,15 @@ if __name__ == '__main__':
         "autor": "INCA GARCILASO DE VEGA",
         "publisher": "EL LECTOR",
         "price": "65.0"}
-    ui = ui_EditNewItemDialog(True)
+    # ui = ui_EditNewItemDialog(True)
+    ui = Ui_Dialog()
     # ui.setDataFields(data)
-    ui.setDataFields("GN_2025")
-    ui.cleanInputFields()
+    # ui.setDataFields("GN_2025")
+    # ui.cleanInputFields()
     # ui = ui_OperationDialog(Dialog)
     # ui.setItemData("", "")
     # ui.init_condition()
-    ui.show_window()
+    ui.showWindow()
     # ui.exec_()
     sys.exit(app.exec_())
 

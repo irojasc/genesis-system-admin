@@ -125,10 +125,10 @@ class ware_product:
 
 class ware:
 	def __repr__(self):
-		return "ware()"
+		return "{{id: {0}, cod: {1}, auth: {2}}}".format(self.id, self.cod, self.auth)
 	
 	def __str__(self):
-		return str(self.auth)
+		return "{{id: {0}, cod: {1}, auth: {2}}}".format(self.id, self.cod, self.auth)
 
 	def __init__(self, id: int = None, cod = "", auth: dict = None):
 		self.id = id
