@@ -1,10 +1,22 @@
 
 class user:
 	def __repr__(self):
-		return "user()"
+		return "{{user: {0}, pwd: {1}, name: {2}, doc: {3}, phone: {4}, auth: {5}, level: {6}}}".format(self.user, 
+																								  self.pwd, 
+																								  self.name, 
+																								  self.doc, 
+																								  self.phone,
+																								  self.auth,
+																								  self.level)
 	
 	def __str__(self):
-		return str(self.auth)
+		return "{{user: {0}, pwd: {1}, name: {2}, doc: {3}, phone: {4}, auth: {5}, level: {6}}}".format(self.user, 
+																								  self.pwd, 
+																								  self.name, 
+																								  self.doc, 
+																								  self.phone,
+																								  self.auth,
+																								  self.level) 
 	
 	def __init__(self, user: str = None, pwd: str = None, name: str = None, doc: str = None, phone: str = None, auth: dict = None, level: int = None):
 		self.user = user
