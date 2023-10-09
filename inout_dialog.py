@@ -150,22 +150,10 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
         tmp_len = 0
 
-        if self.cmbBusqueda.currentText() == "cod" and self.txtBusqueda.text() != "":
+        if bool(len(self.cmbBusqueda.currentText())) and self.txtBusqueda.text() != "":
             self.searchList.clear()
-            tmp_len = self.buscar("cod", self.txtBusqueda.text())
-
-        elif self.cmbBusqueda.currentText() == "isbn" and self.txtBusqueda.text() != "":
-            self.searchList.clear()
-            tmp_len = self.buscar("isbn", self.txtBusqueda.text())
-
-        elif self.cmbBusqueda.currentText() == "titulo" and self.txtBusqueda.text() != "":
-            self.searchList.clear()
-            tmp_len = self.buscar("titulo", self.txtBusqueda.text())
-
-        elif self.cmbBusqueda.currentText() == "autor" and self.txtBusqueda.text() != "":
-            self.searchList.clear()
-            tmp_len = self.buscar("autor", self.txtBusqueda.text())
-
+            # tmp_len es la cantidad de items encontrados
+            tmp_len = self.buscar(self.cmbBusqueda.currentText() if self.cmbBusqueda.currentText() != "titulo" else "title", self.txtBusqueda.text())
         elif self.txtBusqueda.text() == "":
             self.searchList.clear()
 
@@ -194,57 +182,23 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
         if criterio == "cod":
             itemsFound = list(filter(lambda x: x.product.prdCode == str.upper(patron), self.mainList))
-            print(itemsFound)
-            # k = 0
-            # for i in self.mainList:
-                # if i.objBook.cod == str.upper(patron):
-            # if bool(len(itemFound[0].product.isbn)):
-            #     self.searchList.insertItem(0, itemFound.product.prdCode + " | " + itemFound.product.isbn + " | " + 
-            #                                 itemFound.product.title[:27] + " | " + itemFound.product.autor[:15] + " | " + itemFound.product.publisher[:8])
-            #     # k += 1
-            # else:
-            #     self.searchList.insertItem(0, itemFound.product.prdCode + " | " + itemFound.product.isbn + " | " +
-            #                                 itemFound.product.title[:28] + " | " + itemFound.product.autor[:12] + " | " + itemFound.product.publisher[:12])
-            #     # k += 1
 
+            if bool(len(itemsFound)):    
+                if bool(len(itemsFound[0].product.isbn)):
+                    self.searchList.insertItem(0, itemsFound[0].product.prdCode + " | " + itemsFound[0].product.isbn + " | " + 
+                                                itemsFound[0].product.title[:27] + " | " + itemsFound[0].product.autor[:15] + " | " + itemsFound[0].product.publisher[:8])
+                else:
+                    self.searchList.insertItem(0, itemsFound[0].product.prdCode + " | " + itemsFound[0].product.isbn + " | " +
+                                                itemsFound[0].product.title[:28] + " | " + itemsFound[0].product.autor[:12] + " | " + itemsFound[0].product.publisher[:12])
+        else:
+            itemsFound = list(filter(lambda x: getattr(x.product, criterio).find(str.upper(patron)) >= 0, self.mainList))
+            listLabels = list(map(lambda i: i.product.prdCode + " | " + i.product.isbn + " | " +
+                                                   i.product.title[:27] + " | " + i.product.autor[:15] + " | " + i.product.publisher[:8]
+                                                   if bool(len(i.product.isbn)) else i.product.prdCode + " | " + i.product.isbn + " | " +
+                                                   i.product.title[:28] + " | " + i.product.autor[:12] + " | " + i.product.publisher[:12], itemsFound))
+            if bool(len(listLabels)):
+                self.searchList.addItems(listLabels)
 
-        elif criterio == "isbn":
-            k = 0
-            for i in self.mainList:
-                if i.objBook.isbn.find(str.upper(patron)) >= 0:
-                    if len(i.objBook.isbn) > 0:
-                        self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " +
-                                                   i.objBook.name[:27] + " | " + i.objBook.autor[:15] + " | " + i.objBook.editorial[:8])
-                        k += 1
-                    else:
-                        self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " +
-                                                   i.objBook.name[:28] + " | " + i.objBook.autor[:12] + " | " + i.objBook.editorial[:12])
-                        k += 1
-        elif criterio == "titulo":
-            k = 0
-            for i in self.mainList:
-                if i.objBook.name.find(str.upper(patron)) >= 0:
-                    if len(i.objBook.isbn) > 0:
-                        self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " +
-                                                   i.objBook.name[:27] + " | " + i.objBook.autor[:15] + " | " + i.objBook.editorial[:8])
-                        k += 1
-                    else:
-                        self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " +
-                                                   i.objBook.name[:28] + " | " + i.objBook.autor[:12] + " | " + i.objBook.editorial[:12])
-                        k += 1
-
-        elif criterio == "autor":
-            k = 0
-            for i in self.mainList:
-                if i.objBook.autor.find(str.upper(patron)) >= 0:
-                    if len(i.objBook.isbn) > 0:
-                        self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " +
-                                                   i.objBook.name[:27] + " | " + i.objBook.autor[:15] + " | " + i.objBook.editorial[:8])
-                        k += 1
-                    else:
-                        self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " +
-                                                   i.objBook.name[:28] + " | " + i.objBook.autor[:12] + " | " + i.objBook.editorial[:12])
-                        k += 1
         return len(itemsFound)
 
     def changeIcon(self, item):
