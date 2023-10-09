@@ -43,13 +43,15 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     def init_condition(self):
         # -----------  set item conditions  -----------
-        self.lineLocation.setEnabled(False)
-        self.lineLocation.clear()
+        # ----------- condiciones inicales para ubicacion -----------
+        self.txtProductLocation.setEnabled(False)
+        self.txtProductLocation.clear()
         self.checkBox.setChecked(False)
+
         self.main_table.clear()
         self.cantItems = 0
         self.generalFlag = False
-        item_all = ['cod','isbn','nombre','autor']
+        item_all = ['cod','isbn','titulo','autor']
         items_operacion = ['ingreso', 'salida']
         self.cmbBusqueda.clear()
         self.cmbOperacion.clear()
@@ -156,9 +158,9 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             self.searchList.clear()
             tmp_len = self.buscar("isbn", self.txtBusqueda.text())
 
-        elif self.cmbBusqueda.currentText() == "nombre" and self.txtBusqueda.text() != "":
+        elif self.cmbBusqueda.currentText() == "titulo" and self.txtBusqueda.text() != "":
             self.searchList.clear()
-            tmp_len = self.buscar("nombre", self.txtBusqueda.text())
+            tmp_len = self.buscar("titulo", self.txtBusqueda.text())
 
         elif self.cmbBusqueda.currentText() == "autor" and self.txtBusqueda.text() != "":
             self.searchList.clear()
@@ -191,17 +193,21 @@ class Ui_inoutDialog(QtWidgets.QDialog):
     def buscar(self, criterio, patron):
 
         if criterio == "cod":
-            k = 0
-            for i in self.mainList:
-                if i.objBook.cod == str.upper(patron):
-                    if len(i.objBook.isbn) > 0:
-                        self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " + 
-                                                   i.objBook.name[:27] + " | " + i.objBook.autor[:15] + " | " + i.objBook.editorial[:8])
-                        k += 1
-                    else:
-                        self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " +
-                                                   i.objBook.name[:28] + " | " + i.objBook.autor[:12] + " | " + i.objBook.editorial[:12])
-                        k += 1
+            itemsFound = list(filter(lambda x: x.product.prdCode == str.upper(patron), self.mainList))
+            print(itemsFound)
+            # k = 0
+            # for i in self.mainList:
+                # if i.objBook.cod == str.upper(patron):
+            # if bool(len(itemFound[0].product.isbn)):
+            #     self.searchList.insertItem(0, itemFound.product.prdCode + " | " + itemFound.product.isbn + " | " + 
+            #                                 itemFound.product.title[:27] + " | " + itemFound.product.autor[:15] + " | " + itemFound.product.publisher[:8])
+            #     # k += 1
+            # else:
+            #     self.searchList.insertItem(0, itemFound.product.prdCode + " | " + itemFound.product.isbn + " | " +
+            #                                 itemFound.product.title[:28] + " | " + itemFound.product.autor[:12] + " | " + itemFound.product.publisher[:12])
+            #     # k += 1
+
+
         elif criterio == "isbn":
             k = 0
             for i in self.mainList:
@@ -214,7 +220,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                         self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " +
                                                    i.objBook.name[:28] + " | " + i.objBook.autor[:12] + " | " + i.objBook.editorial[:12])
                         k += 1
-        elif criterio == "nombre":
+        elif criterio == "titulo":
             k = 0
             for i in self.mainList:
                 if i.objBook.name.find(str.upper(patron)) >= 0:
@@ -239,8 +245,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                         self.searchList.insertItem(k, i.objBook.cod + " | " + i.objBook.isbn + " | " +
                                                    i.objBook.name[:28] + " | " + i.objBook.autor[:12] + " | " + i.objBook.editorial[:12])
                         k += 1
-        return k
-
+        return len(itemsFound)
 
     def changeIcon(self, item):
         if self.in_tableWidget.item(item.row(), 3) != None and not self.loadFlag:
@@ -285,7 +290,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                 reply = QMessageBox.question(self, 'Window Close', 'Esta seguro de efectuar los cambios?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     if self.ware_in.update_quantity(self.main_table, self.cmbOperacion.currentText(), self.ownWares[0],
-                                                    self.lineLocation.text()):
+                                                    self.txtProductLocation.text()):
                         ret = QMessageBox.question(self, 'Alerta', "Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                         self.generalFlag = True
                         self.accept()
@@ -312,11 +317,10 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     def checkBoxChangedAction(self):
         if self.checkBox.isChecked():
-            self.lineLocation.setEnabled(True)
+            self.txtProductLocation.setEnabled(True)
         else:
-            self.lineLocation.setEnabled(False)
-            self.lineLocation.clear()
-
+            self.txtProductLocation.setEnabled(False)
+            self.txtProductLocation.clear()
 
     @property
     def return_val(self):
@@ -511,17 +515,17 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.checkBox.toggled.connect(self.checkBoxChangedAction)
 
         # -----------  lineEdit_1  -----------
-        self.lineLocation = QtWidgets.QLineEdit(self.gbLocation)
-        self.lineLocation.setGeometry(QtCore.QRect(35, 5, 175, 30))
+        self.txtProductLocation = QtWidgets.QLineEdit(self.gbLocation)
+        self.txtProductLocation.setGeometry(QtCore.QRect(35, 5, 175, 30))
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
         font.setPointSize(10)
         font.setWeight(75)
-        self.lineLocation.setFont(font)
-        self.lineLocation.setStyleSheet("background-color: rgb(248, 248, 248);")
-        self.lineLocation.setClearButtonEnabled(True)
-        self.lineLocation.setPlaceholderText("Ingrese Ubicación")
-        self.lineLocation.setObjectName("lineLocation")
+        self.txtProductLocation.setFont(font)
+        self.txtProductLocation.setStyleSheet("background-color: rgb(248, 248, 248);")
+        self.txtProductLocation.setClearButtonEnabled(True)
+        self.txtProductLocation.setPlaceholderText("Ingrese Ubicación")
+        self.txtProductLocation.setObjectName("txtProductLocation")
 
 
 
@@ -553,7 +557,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
         item = self.in_tableWidget.horizontalHeaderItem(2)
-        item.setText(_translate("inoutDialog", "nombre"))
+        item.setText(_translate("inoutDialog", "titulo"))
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
         item = self.in_tableWidget.horizontalHeaderItem(3)

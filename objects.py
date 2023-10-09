@@ -113,9 +113,15 @@ class product:
 		self.Pv = float(pv)
 
 class ware_product:
+	def __repr__(self):
+		return "{{product: {0}, wareData: {1}}}".format(self.product,
+												  self.wareData,
+												  )
 
 	def __str__(self):
-		return self.wareData
+		return "{{product: {0}, wareData: {1}}}".format(self.product,
+												  self.wareData,
+												  )
 	
 	def __init__(self, item: product = None, wareData: dict = {}):
 		self.product = item

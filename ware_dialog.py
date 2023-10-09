@@ -42,8 +42,8 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.gestWareProduct.loadInnerTable() ##para cargar la tabla principal del gestor
             self.loadData("main")
             # -----------  QDialog para ventana in/out  -----------
-            # self.dialog = QDialog()
-            # self.ui_dialog = Ui_inoutDialog(data_users, data_wares, self.dialog)
+            self.dialog = QDialog()
+            self.ui_dialog = Ui_inoutDialog(self.ownUsers, self.currWare, self.dialog)
             self.init = 0
             # print(self.currWare, self.restWares)
             # print(currentUser)
@@ -62,7 +62,6 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.cmbSearch.setEnabled(True)
         self.txtSearch.setEnabled(True)
         self.txtSearch.clear()
-        self.lblInOut.setEnabled(False)  # label in/out
         self.lblNewItem.setEnabled(False) # label new product
         item_all = ['cod','isbn','titulo','autor','editorial']
         self.cmbSearch.clear()
@@ -380,27 +379,35 @@ class Ui_Dialog(QtWidgets.QDialog):
             return False
 
     def change_state(self, state): #cambia el estado de self. state y color de los frames
-        if state == "ventas":
+        if state == "ware":
             self.top_frame.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0.298507 rgba(83, 97, 142, 255), stop:1 rgba(97, 69, 128, 255));")
             self.frame_2.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0.298507 rgba(83, 97, 142, 255), stop:1 rgba(97, 69, 128, 255));")
         elif state == "in/out":
             self.top_frame.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0.298507 rgba(22, 136, 126, 255), stop:1 rgba(56, 110, 142, 255));")
             self.frame_2.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0.298507 rgba(22, 136, 126, 255), stop:1 rgba(56, 110, 142, 255));")
 
-    def inout_operation(self,event):
-        self.change_state("in/out")
+    def inout_operation(self,event): # funcion para abrir el dialog in/out
+        if self.ownUsers.auth["InOutProduct"]:
+            self.change_state("in/out") # lo que hace esto es cambiar el color de waredialog cuando pasa a ingreso/salida
+             
+            # separar solo items activos y enviar a in/out form
+            result_books = list(filter(lambda x: (self.currWare.cod in x.wareData) and (x.wareData[self.currWare.cod]["isEnabled"]), self.gestWareProduct.innerWareList.copy()))
+            
+            self.ui_dialog.mainList = result_books.copy()
 
-        # separar solo items activos y enviar a in/out form
-        result_books = list(filter(lambda x: x.objBook.active, self.gestWareProduct.ware_list.copy()))
-        self.ui_dialog.mainList = result_books.copy()
+            self.ui_dialog.init_condition()
 
-        self.ui_dialog.init_condition()
-        if self.ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
-            self.change_state("ventas")
-            if self.ui_dialog.return_val[2]:
-                self.gestWareProduct.update_backtablequantity(self.ui_dialog.return_val[0], self.ui_dialog.return_val[1], self.currWare[0])
-                self.updateRealTable()
-        # self.ui_dialog.show_window()
+            if self.ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                print("Salimos del estado in/out")
+                self.change_state("ware")
+
+                # if self.ui_dialog.return_val[2]:
+                #     self.gestWareProduct.update_backtablequantity(self.ui_dialog.return_val[0], self.ui_dialog.return_val[1], self.currWare[0])
+                #     self.updateRealTable()
+            # self.ui_dialog.show_window()
+        else:
+            QMessageBox.warning(self, 'Mensaje', "No tiene permisos para entrada/salida de productos", QMessageBox.Ok, QMessageBox.Ok)
+
 
     def onCurrentIndexChanged(self):
         if self.cmbWares.currentIndex() == -1:
@@ -453,7 +460,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             return len(self.real_table)
         return 0
 
-    # -----------  obtiene lista de wares que son virtuales y estan activos si virtual es True  -----------
+    # -----------  obtiene lista de wares que son virtuales y estan activos si virtual es True, caso contrario todos mas los virtuales  -----------
     def getRestWare(self, virtual: bool = False) -> list:
         try:
             if not(virtual):
