@@ -14,18 +14,21 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtCore import Qt, QThread, QObject, pyqtSignal
 from PyQt5.QtWidgets import *
 from gestor import WareProduct
+from objects import ware
+
+from functools import reduce
 import time
 import copy
 
 
 
 class Ui_inoutDialog(QtWidgets.QDialog):
-    def __init__(self, data_users = None, data_wares = None, parent=None):
+    def __init__(self, data_users = None, data_wares: ware = None, parent=None):
         super(Ui_inoutDialog, self).__init__(parent)
         self.ownUsers = data_users
         self.ownWares = data_wares
         self.mainList = []
-        self.main_table = []
+        self.newItems_table = []
         self.cantItems = 0
         self.valCell = ""
         self.operacion = None #define estado neutro para el closeevent
@@ -36,7 +39,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
     #def show_window(self):
         #self.thread_.myValue = True
         #self.startProgressBar()
-        #self.main_table.clear()
+        #self.newItems_table.clear()
         #self.update_table()
         #self.cmbCriterio.setCurrentIndex(-1)
         #self.show()
@@ -48,7 +51,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.txtProductLocation.clear()
         self.checkBox.setChecked(False)
 
-        self.main_table.clear()
+        self.newItems_table.clear()
         self.cantItems = 0
         self.generalFlag = False
         item_all = ['cod','isbn','titulo','autor']
@@ -65,33 +68,37 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.txtBusqueda.clear()
         self.searchList.clear()
 
-    def add_item(self, cod = ""):
-        highlightRow = 0
+    def add_item(self, cod: str = ""): #Se envia el codigo del item que se quiere agregar a lista nuevos
+        highlightedRow = 0
+        #mainList es la lista de items original
         #main_table es lista para manejar los datos qtablewidget
         #index_ igual a None si no ecuentra coincidcnias
-        index_ = next((index for (index, d) in enumerate(self.mainList) if d.objBook.cod == cod), None)
+        itemSelected = list(filter(lambda x: x.product.prdCode == cod, self.mainList))
+        itemSelected = itemSelected[0] if bool(len(itemSelected)) else None
+        # index_ = next((index for (index, d) in enumerate(self.mainList) if d.objBook.cod == cod), None)
         flag = False
-        if len(self.main_table) == 0:
+        if len(self.newItems_table) == 0 and bool(itemSelected):
             #_tmpObject = copy.copy(object_)
-            data = {"cod": self.mainList[index_].objBook.cod, "isbn": self.mainList[index_].objBook.isbn, "name": self.mainList[index_].objBook.name, "cantidad": 1}
-            self.main_table.append(data)
-            highlightRow = 0
-        else:
+            data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qty": 1}
+            self.newItems_table.append(data)
+            highlightedRow = 0
+
+        elif len(self.newItems_table) > 0 and bool(itemSelected):
             #_tmpObject = copy.copy(object_)
-            #data = {"cod": _tmpObject.book.cod, "isbn": _tmpObject.book.isbn, "name": _tmpObject.book.name, "cantidad": _tmpObject.almacen_quantity[0]}
-            for pos, item in enumerate(self.main_table):
+            #data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": _tmpObject.book.cod, "isbn": _tmpObject.book.isbn, "title": _tmpObject.book.title, "qty": _tmpObject.almacen_quantity[0]}
+            for pos, item in enumerate(self.newItems_table):
                 if item["cod"] == cod:
                     flag = True
-                    item["cantidad"] += 1 
-                    highlightRow = pos
+                    item["qty"] += 1 
+                    highlightedRow = pos
 
             if flag == False:
-                data = {"cod": self.mainList[index_].objBook.cod, "isbn": self.mainList[index_].objBook.isbn, "name": self.mainList[index_].objBook.name, "cantidad": 1}
-                self.main_table.append(data)
-                highlightRow = len(self.main_table) - 1
+                data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qty": 1}
+                self.newItems_table.append(data)
+                highlightedRow = len(self.newItems_table) - 1
 
         self.update_table()
-        self.in_tableWidget.setCurrentCell(highlightRow, 0)
+        self.in_tableWidget.setCurrentCell(highlightedRow, 0)
         self.updateTotalItems()
 
     def update_table(self):
@@ -100,32 +107,39 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         flag1 = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable
         
         # -----------  esta parte para llenar la tabla  -----------
-        row = 0
-        self.in_tableWidget.setRowCount(len(self.main_table))
+        # row = 0
+        self.in_tableWidget.setRowCount(len(self.newItems_table))
 
-        for ware_li in self.main_table:
+        for row, ware_li in enumerate(self.newItems_table):
             item = QtWidgets.QTableWidgetItem(ware_li["cod"])
             item.setFlags(flag)
             self.in_tableWidget.setItem(row, 0, item)
+        
+            # Self.currWare.auth["locTooltip"]: este permiso es propio del almacen actual
+            # Esta parte agrega la ubicacion del producto en la primera columna
+            if self.ownWares.auth["locTooltip"]:
+                self.in_tableWidget.item(row, 0).setToolTip(ware_li['loc'])
+
             item = QtWidgets.QTableWidgetItem(ware_li["isbn"])
             item.setFlags(flag)
             self.in_tableWidget.setItem(row, 1, item)
-            item = QtWidgets.QTableWidgetItem(ware_li["name"])
+            item = QtWidgets.QTableWidgetItem(ware_li["title"])
             item.setFlags(flag)
             self.in_tableWidget.setItem(row, 2, item)
-            item = QtWidgets.QTableWidgetItem(str(ware_li["cantidad"]))
+            item = QtWidgets.QTableWidgetItem(str(ware_li["qty"]))
             item.setFlags(flag1)
             self.in_tableWidget.setItem(row, 3, item)
-            row += 1
+            # row += 1
         self.loadFlag = False
 
     def txtbusquedaAcept(self, event):
-        if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() == "isbn":
+        if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() == "isbn" and self.cmbBusqueda.currentIndex() != -1:
             if self.searchList.count() == 1:
                 self.add_item(self.searchList.item(0).text().split(" ")[0].strip())
                 self.txtBusqueda.clear()
+
             elif self.searchList.count() > 1:
-                self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
+                ret = QMessageBox.information(self, 'Aviso', "Elija item haciendo doble click sobre fila")
 
         if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() != "isbn" and self.cmbBusqueda.currentIndex() != -1:
             if self.searchList.count() > 0:
@@ -134,18 +148,26 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         return QtWidgets.QLineEdit.keyPressEvent(self.txtBusqueda, event)
 
     def listSearchKey(self, event):
-        if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() == "isbn":
-            if self.searchList.count() == 1:
-                self.add_item(self.searchList.item(0).text().split(" ")[0].strip())
-                self.txtBusqueda.clear()
-            elif self.searchList.count() > 1:
-                self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
+        try:
+            if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() == "isbn" and self.cmbBusqueda.currentIndex() != -1:
+                if self.searchList.count() >= 1:
+                    self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
 
-        if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() != "isbn" and self.cmbBusqueda.currentIndex() != -1:
-            if self.searchList.count() > 0:
-                self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
+            if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() != "isbn" and self.cmbBusqueda.currentIndex() != -1:
+                if self.searchList.count() > 0:
+                    self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
+        
+        except Exception as inst:
+            print(type(inst))
+            print(inst.args)
+            print(inst)
+        
         return QtWidgets.QListWidget.keyPressEvent(self.searchList, event)
 
+    def clickEventInSrchList(self, QModel_):
+        if self.cmbBusqueda.currentText() == "isbn" and self.cmbBusqueda.currentIndex() != -1:
+            self.add_item(self.searchList.item(QModel_.row()).text().split(" ")[0].strip())
+    
     def txtBusquedaChanged(self):
 
         tmp_len = 0
@@ -166,11 +188,11 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         if not event.key() == QtCore.Qt.Key_Escape:
             super(Ui_inoutDialog, self).keyPressEvent(event)
 
-    def KeyPressed(self,event):
+    def DeleteKeyPressed(self,event):
         if self.in_tableWidget.selectedIndexes() != []:
             if event.key() == QtCore.Qt.Key_Delete:
-                temp = self.in_tableWidget.currentRow()
-                self.main_table.pop(temp)
+                index = self.in_tableWidget.currentRow()
+                self.newItems_table.pop(index)
                 self.updateTotalItems()
                 self.update_table()
         return QtWidgets.QTableWidget.keyPressEvent(self.in_tableWidget, event)
@@ -207,27 +229,29 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             try:
                 cellValue = int(self.in_tableWidget.item(row, 3).text())
                 if cellValue > 0:
-                    self.main_table[row]["cantidad"] = cellValue
+                    self.newItems_table[row]["cantidad"] = cellValue
                 elif cellValue == 0:
-                    self.in_tableWidget.item(row, 3).setText(str(self.main_table[row]["cantidad"]))
+                    self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["cantidad"]))
                 elif cellValue < 0:
-                    self.in_tableWidget.item(row, 3).setText(str(self.main_table[row]["cantidad"]))
+                    self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["cantidad"]))
             except:
                 ret = QMessageBox.information(self, 'Aviso', "Debe ingresar un numero entero")
-                self.in_tableWidget.item(row, 3).setText(str(self.main_table[row]["cantidad"]))
+                self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["cantidad"]))
             self.updateTotalItems()
 
-    def doubleClickItem(self, item):
-        pass
+    # def doubleClickItem(self, item):
+    #     pass
 
-    def updateTotalItems(self):
+    def updateTotalItems(self): #actualiza la cantidad de items en tabla de items nuevos
+
         self.cantItems = 0
-        if len(self.main_table) == 0:
-            self.cantItems == 0
-        elif len(self.main_table) > 0:
-            for i in self.main_table:
-                self.cantItems += i["cantidad"]
-        self.lblTitle_cant.setText("Items: " + str(self.cantItems))
+        if not(bool(len(self.newItems_table))):
+            self.cantItems = 0
+        else:
+            qtyMap = list(map(lambda x: x["qty"], self.newItems_table))
+            self.cantItems = reduce(lambda a, b: a + b, qtyMap)
+            
+        self.lblTitle_cant.setText("Items: %d" % self.cantItems)
 
     def aceptarEvent(self,event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -243,7 +267,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             if self.in_tableWidget.rowCount() > 0:
                 reply = QMessageBox.question(self, 'Window Close', 'Esta seguro de efectuar los cambios?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if reply == QMessageBox.Yes:
-                    if self.ware_in.update_quantity(self.main_table, self.cmbOperacion.currentText(), self.ownWares[0],
+                    if self.ware_in.update_quantity(self.newItems_table, self.cmbOperacion.currentText(), self.ownWares[0],
                                                     self.txtProductLocation.text()):
                         ret = QMessageBox.question(self, 'Alerta', "Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                         self.generalFlag = True
@@ -278,7 +302,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     @property
     def return_val(self):
-        return (self.main_table, self.cmbOperacion.currentText(), self.generalFlag)
+        return (self.newItems_table, self.cmbOperacion.currentText(), self.generalFlag)
 
     def setupUi(self):
         self.setObjectName("inoutDialog")
@@ -367,6 +391,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.searchList.setObjectName("searchList")
         self.searchList.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.searchList.keyPressEvent = self.listSearchKey
+        self.searchList.doubleClicked.connect(self.clickEventInSrchList)
+
         # -----------  mid-frame configuration  -----------
         self.mid_frame = QtWidgets.QFrame(self)
         self.mid_frame.setGeometry(QtCore.QRect(0, 130, 640, 5)) #width 640, height 65
@@ -401,9 +427,9 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.in_tableWidget.setSelectionBehavior(1)
         self.in_tableWidget.setStyleSheet("selection-background-color: rgb(0, 120, 255);selection-color: rgb(255, 255, 255);")
         self.in_tableWidget.verticalHeader().hide()
-        self.in_tableWidget.keyPressEvent = self.KeyPressed
+        self.in_tableWidget.keyPressEvent = self.DeleteKeyPressed
         self.in_tableWidget.itemChanged.connect(self.changeIcon)
-        self.in_tableWidget.itemDoubleClicked.connect(self.doubleClickItem)
+        # self.in_tableWidget.itemDoubleClicked.connect(self.doubleClickItem)
 
         # -----------  bottom frame configuration  -----------
         self.frame = QtWidgets.QFrame(self)
