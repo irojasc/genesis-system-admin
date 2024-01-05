@@ -61,6 +61,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.cmbBusqueda.addItems(item_all)
         self.in_tableWidget.clearContents()
         self.in_tableWidget.setRowCount(0)
+        self.lblCantidadTitulos.setText("Titulos: 0")
         self.lblTitle_cant.setText("Items: 0")
         self.cmbOperacion.addItems(items_operacion)
         self.cmbBusqueda.setCurrentIndex(-1)
@@ -223,35 +224,39 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
         return len(itemsFound)
 
+    #evento cuando se cambia el valor de la celda
     def changeIcon(self, item):
+        #in_tablewidget es el widget de la tabla
+        #newItems es el inner table de tipo List
         if self.in_tableWidget.item(item.row(), 3) != None and not self.loadFlag:
             row = item.row()
             try:
                 cellValue = int(self.in_tableWidget.item(row, 3).text())
                 if cellValue > 0:
-                    self.newItems_table[row]["cantidad"] = cellValue
-                elif cellValue == 0:
-                    self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["cantidad"]))
-                elif cellValue < 0:
-                    self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["cantidad"]))
+                    self.newItems_table[row]["qty"] = cellValue
+                elif cellValue <= 0:
+                    self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qty"]))
             except:
                 ret = QMessageBox.information(self, 'Aviso', "Debe ingresar un numero entero")
-                self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["cantidad"]))
+                self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qty"]))
             self.updateTotalItems()
-
+            
     # def doubleClickItem(self, item):
     #     pass
 
-    def updateTotalItems(self): #actualiza la cantidad de items en tabla de items nuevos
-
+    def updateTotalItems(self): #actualiza la cantidad de items y la cantidad de titulos en label
         self.cantItems = 0
+        self.cantTitles = 0
         if not(bool(len(self.newItems_table))):
             self.cantItems = 0
+            self.cantTitles = 0
         else:
             qtyMap = list(map(lambda x: x["qty"], self.newItems_table))
             self.cantItems = reduce(lambda a, b: a + b, qtyMap)
+            self.cantTitles = len(self.newItems_table)
             
         self.lblTitle_cant.setText("Items: %d" % self.cantItems)
+        self.lblCantidadTitulos.setText("Titulos: %d" % self.cantTitles)
 
     def aceptarEvent(self,event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -442,10 +447,16 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
         # -----------  lblCantidad Configuration  -----------
         self.lblTitle_cant = QtWidgets.QLabel(self.frame)
-        self.lblTitle_cant.setGeometry(QtCore.QRect(520, 12, 391, 31))
-        self.change_color_lbltitle()
+        self.lblTitle_cant.setGeometry(QtCore.QRect(510, 22, 391, 31))
         self.lblTitle_cant.setWordWrap(False)
         self.lblTitle_cant.setObjectName("lblTitle_cant")
+
+        # -----------  lblCantidadTitulos Configuration  -----------
+        self.lblCantidadTitulos = QtWidgets.QLabel(self.frame)
+        self.lblCantidadTitulos.setGeometry(QtCore.QRect(501, -4, 391, 31))
+        self.change_color_lbltitle()
+        self.lblCantidadTitulos.setWordWrap(False)
+        self.lblCantidadTitulos.setObjectName("lblCantidadTitulos")
 
         # -----------  groupBoxBottom configuration  -----------
         self.gbBottom = QtWidgets.QGroupBox(self.frame)
@@ -519,6 +530,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.gbCriterio.setTitle(_translate("inoutDialog", "Cuadro de busqueda"))
         self.btnAceptar.setText(_translate("inoutDialog", "Aceptar"))
         #self.btnCancelar.setText(_translate("inoutDialog", "Cancelar"))
+        self.lblCantidadTitulos.setText(_translate("inoutDialog", "Titulos: 0"))
         self.lblTitle_cant.setText(_translate("inoutDialog", "Items: 0"))
         #self.btnBuscar.setText(_translate("Dialog", "Buscar"))
         
@@ -590,6 +602,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         font.setWeight(75)
         self.lblTitle_cant.setPalette(palette)
         self.lblTitle_cant.setFont(font)
+        self.lblCantidadTitulos.setPalette(palette)
+        self.lblCantidadTitulos.setFont(font)
 
     def change_color_criterio(self):
         palette = QtGui.QPalette()
