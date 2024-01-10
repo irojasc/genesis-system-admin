@@ -55,7 +55,6 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.setupUi()
             self.init = 0
 
-
     # -----------  condiciones iniciales al abrir ventana  -----------
     def init_condition(self):
         # -----------  set item conditions  -----------
@@ -279,6 +278,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 self.lblValuePrice.move(238,34)
                 self.lblValuePrice.setText("S/." + str(self.real_table[tmp].wareData[self.currWare.cod]["pvNew"]))
             else:
+                self.cmbWarePrice.setCurrentIndex(0)
                 self.lblValuePrice.setFont(getFontxUnAvailable())
                 self.lblValuePrice.move(238, 38)
                 self.lblValuePrice.setText("*********")
