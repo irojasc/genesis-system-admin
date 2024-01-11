@@ -29,6 +29,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.ownWares = data_wares
         self.mainList = []
         self.newItems_table = []
+        self.OldItems_table = []
         self.cantItems = 0
         self.valCell = ""
         self.operacion = None #define estado neutro para el closeevent
@@ -40,7 +41,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         #self.thread_.myValue = True
         #self.startProgressBar()
         #self.newItems_table.clear()
-        #self.update_table()
+        #self.update_table()qtablewidget
         #self.cmbCriterio.setCurrentIndex(-1)
         #self.show()
 
@@ -52,6 +53,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.checkBox.setChecked(False)
 
         self.newItems_table.clear()
+        self.OldItems_table.clear()
         self.cantItems = 0
         self.generalFlag = False
         item_all = ['cod','isbn','titulo','autor']
@@ -59,8 +61,10 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.cmbBusqueda.clear()
         self.cmbOperacion.clear()
         self.cmbBusqueda.addItems(item_all)
-        self.in_tableWidget.clearContents()
-        self.in_tableWidget.setRowCount(0)
+        self.New_tableWidget.clearContents()
+        self.New_tableWidget.setRowCount(0)
+        self.Old_tableWidget.clearContents()
+        self.Old_tableWidget.setRowCount(0)
         self.lblCantidadTitulos.setText("Titulos: 0")
         self.lblTitle_cant.setText("Items: 0")
         self.cmbOperacion.addItems(items_operacion)
@@ -68,6 +72,11 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.cmbOperacion.setCurrentIndex(-1)
         self.txtBusqueda.clear()
         self.searchList.clear()
+        self.tabWidget.setTabText(0, "NUEVO (0)")
+        self.tabWidget.setTabText(1, "ANTIGUO (0)")
+        self.tabWidget.blockSignals(True)
+        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.blockSignals(False)
 
     def add_item(self, cod: str = ""): #Se envia el codigo del item que se quiere agregar a lista nuevos
         highlightedRow = 0
@@ -99,44 +108,81 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                 highlightedRow = len(self.newItems_table) - 1
 
         self.update_table()
-        self.in_tableWidget.setCurrentCell(highlightedRow, 0)
+        self.New_tableWidget.setCurrentCell(highlightedRow, 0)
         self.updateTotalItems()
 
+    def add_OldItem(self, cod: str = ""): #Se envia el codigo del item que se quiere agregar a list que antiguos
+        highlightedRow = 0
+        #mainList es la lista de items original
+        #main_table es lista para manejar los datos qtablewidget
+        #index_ igual a None si no ecuentra coincidcnias
+        itemSelected = list(filter(lambda x: x.product.prdCode == cod, self.mainList))
+        itemSelected = itemSelected[0] if bool(len(itemSelected)) else None
+        # index_ = next((index for (index, d) in enumerate(self.mainList) if d.objBook.cod == cod), None)
+        flag = False
+        if len(self.OldItems_table) == 0 and bool(itemSelected):
+            #_tmpObject = copy.copy(object_)
+            data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qty": 1}
+            self.OldItems_table.append(data)
+            highlightedRow = 0
+
+        elif len(self.OldItems_table) > 0 and bool(itemSelected):
+            #_tmpObject = copy.copy(object_)
+            #data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": _tmpObject.book.cod, "isbn": _tmpObject.book.isbn, "title": _tmpObject.book.title, "qty": _tmpObject.almacen_quantity[0]}
+            for pos, item in enumerate(self.OldItems_table):
+                if item["cod"] == cod:
+                    flag = True
+                    item["qty"] += 1 
+                    highlightedRow = pos
+
+            if flag == False:
+                data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qty": 1}
+                self.OldItems_table.append(data)
+                highlightedRow = len(self.OldItems_table) - 1
+
+        self.update_table()
+        self.Old_tableWidget.setCurrentCell(highlightedRow, 0)
+        self.updateTotalItems()
+    
     def update_table(self):
         self.loadFlag = True
+        tabIndex = not(self.tabWidget.currentIndex())
         flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
         flag1 = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable
         
         # -----------  esta parte para llenar la tabla  -----------
         # row = 0
-        self.in_tableWidget.setRowCount(len(self.newItems_table))
+        self.New_tableWidget.setRowCount(len(self.newItems_table)) if  tabIndex else self.Old_tableWidget.setRowCount(len(self.OldItems_table))
 
-        for row, ware_li in enumerate(self.newItems_table):
+        for row, ware_li in enumerate(self.newItems_table if tabIndex else self.OldItems_table):
             item = QtWidgets.QTableWidgetItem(ware_li["cod"])
             item.setFlags(flag)
-            self.in_tableWidget.setItem(row, 0, item)
+            self.New_tableWidget.setItem(row, 0, item) if tabIndex else self.Old_tableWidget.setItem(row, 0, item)
         
             # Self.currWare.auth["locTooltip"]: este permiso es propio del almacen actual
             # Esta parte agrega la ubicacion del producto en la primera columna
             if self.ownWares.auth["locTooltip"]:
-                self.in_tableWidget.item(row, 0).setToolTip(ware_li['loc'])
+                self.New_tableWidget.item(row, 0).setToolTip(ware_li['loc']) if tabIndex else self.Old_tableWidget.item(row, 0).setToolTip(ware_li['loc'])
 
             item = QtWidgets.QTableWidgetItem(ware_li["isbn"])
             item.setFlags(flag)
-            self.in_tableWidget.setItem(row, 1, item)
+            self.New_tableWidget.setItem(row, 1, item) if tabIndex else self.Old_tableWidget.setItem(row, 1, item)
             item = QtWidgets.QTableWidgetItem(ware_li["title"])
             item.setFlags(flag)
-            self.in_tableWidget.setItem(row, 2, item)
+            self.New_tableWidget.setItem(row, 2, item) if tabIndex else self.Old_tableWidget.setItem(row, 2, item)
             item = QtWidgets.QTableWidgetItem(str(ware_li["qty"]))
             item.setFlags(flag1)
-            self.in_tableWidget.setItem(row, 3, item)
+            self.New_tableWidget.setItem(row, 3, item) if tabIndex else self.Old_tableWidget.setItem(row, 3, item)
             # row += 1
         self.loadFlag = False
 
+    # txtbusqueda agrega valores desde field busqueda, el segundo de listsearch y el tercero con click
     def txtbusquedaAcept(self, event):
+        tabIndex = not(self.tabWidget.currentIndex())
+        
         if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() == "isbn" and self.cmbBusqueda.currentIndex() != -1:
             if self.searchList.count() == 1:
-                self.add_item(self.searchList.item(0).text().split(" ")[0].strip())
+                self.add_item(self.searchList.item(0).text().split(" ")[0].strip()) if tabIndex else self.add_OldItem(self.searchList.item(0).text().split(" ")[0].strip())
                 self.txtBusqueda.clear()
 
             elif self.searchList.count() > 1:
@@ -144,19 +190,20 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
         if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() != "isbn" and self.cmbBusqueda.currentIndex() != -1:
             if self.searchList.count() > 0:
-                self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
+                self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip()) if tabIndex else self.add_OldItem(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
 
         return QtWidgets.QLineEdit.keyPressEvent(self.txtBusqueda, event)
 
     def listSearchKey(self, event):
+        tabIndex = not (self.tabWidget.currentIndex())
         try:
             if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() == "isbn" and self.cmbBusqueda.currentIndex() != -1:
                 if self.searchList.count() >= 1:
-                    self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
+                    self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip()) if tabIndex else self.add_OldItem(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
 
             if (event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter) and self.cmbBusqueda.currentText() != "isbn" and self.cmbBusqueda.currentIndex() != -1:
                 if self.searchList.count() > 0:
-                    self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
+                    self.add_item(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip()) if tabIndex else self.add_OldItem(self.searchList.item(self.searchList.currentRow()).text().split(" ")[0].strip())
         
         except Exception as inst:
             print(type(inst))
@@ -167,7 +214,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     def clickEventInSrchList(self, QModel_):
         if self.cmbBusqueda.currentText() == "isbn" and self.cmbBusqueda.currentIndex() != -1:
-            self.add_item(self.searchList.item(QModel_.row()).text().split(" ")[0].strip())
+            self.add_item(self.searchList.item(QModel_.row()).text().split(" ")[0].strip()) if not (self.tabWidget.currentIndex()) else self.add_OldItem(self.searchList.item(QModel_.row()).text().split(" ")[0].strip())
     
     def txtBusquedaChanged(self):
 
@@ -190,13 +237,22 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             super(Ui_inoutDialog, self).keyPressEvent(event)
 
     def DeleteKeyPressed(self,event):
-        if self.in_tableWidget.selectedIndexes() != []:
+        if self.New_tableWidget.selectedIndexes() != []:
             if event.key() == QtCore.Qt.Key_Delete:
-                index = self.in_tableWidget.currentRow()
+                index = self.New_tableWidget.currentRow()
                 self.newItems_table.pop(index)
                 self.updateTotalItems()
                 self.update_table()
-        return QtWidgets.QTableWidget.keyPressEvent(self.in_tableWidget, event)
+        return QtWidgets.QTableWidget.keyPressEvent(self.New_tableWidget, event)
+    
+    def DeleteOldKeyPressed(self,event):
+        if self.Old_tableWidget.selectedIndexes() != []:
+            if event.key() == QtCore.Qt.Key_Delete:
+                index = self.Old_tableWidget.currentRow()
+                self.OldItems_table.pop(index)
+                self.updateTotalItems()
+                self.update_table()
+        return QtWidgets.QTableWidget.keyPressEvent(self.Old_tableWidget, event)
 
     def onCmbIndexChanged(self):
         self.txtBusqueda.setText("")
@@ -226,36 +282,61 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     #evento cuando se cambia el valor de la celda
     def changeIcon(self, item):
-        #in_tablewidget es el widget de la tabla
+        #New_tablewidget es el widget de la tabla
         #newItems es el inner table de tipo List
-        if self.in_tableWidget.item(item.row(), 3) != None and not self.loadFlag:
+        if self.New_tableWidget.item(item.row(), 3) != None and not self.loadFlag:
             row = item.row()
             try:
-                cellValue = int(self.in_tableWidget.item(row, 3).text())
+                cellValue = int(self.New_tableWidget.item(row, 3).text())
                 if cellValue > 0:
                     self.newItems_table[row]["qty"] = cellValue
                 elif cellValue <= 0:
-                    self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qty"]))
+                    self.New_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qty"]))
             except:
                 ret = QMessageBox.information(self, 'Aviso', "Debe ingresar un numero entero")
-                self.in_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qty"]))
+                self.New_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qty"]))
             self.updateTotalItems()
             
+    def changeOldIcon(self, item):
+        #Old_tablewidget es el widget de la tabla
+        #newItems es el inner table de tipo List
+        if self.Old_tableWidget.item(item.row(), 3) != None and not self.loadFlag:
+            row = item.row()
+            try:
+                cellValue = int(self.Old_tableWidget.item(row, 3).text())
+                if cellValue > 0:
+                    self.OldItems_table[row]["qty"] = cellValue
+                elif cellValue <= 0:
+                    self.Old_tableWidget.item(row, 3).setText(str(self.OldItems_table[row]["qty"]))
+            except:
+                ret = QMessageBox.information(self, 'Aviso', "Debe ingresar un numero entero")
+                self.Old_tableWidget.item(row, 3).setText(str(self.OldItems_table[row]["qty"]))
+            self.updateTotalItems()
+    
     # def doubleClickItem(self, item):
     #     pass
 
     def updateTotalItems(self): #actualiza la cantidad de items y la cantidad de titulos en label
         self.cantItems = 0
         self.cantTitles = 0
-        if not(bool(len(self.newItems_table))):
+
+        if not(self.tabWidget.currentIndex()) and not(bool(len(self.newItems_table))):
             self.cantItems = 0
             self.cantTitles = 0
-        else:
+        elif not(self.tabWidget.currentIndex()) and bool(len(self.newItems_table)):
             qtyMap = list(map(lambda x: x["qty"], self.newItems_table))
             self.cantItems = reduce(lambda a, b: a + b, qtyMap)
             self.cantTitles = len(self.newItems_table)
+        elif bool(self.tabWidget.currentIndex()) and not(bool(len(self.OldItems_table))):
+            self.cantItems = 0
+            self.cantTitles = 0
+        elif bool(self.tabWidget.currentIndex()) and bool(len(self.OldItems_table)):
+            qtyMap = list(map(lambda x: x["qty"], self.OldItems_table))
+            self.cantItems = reduce(lambda a, b: a + b, qtyMap)
+            self.cantTitles = len(self.OldItems_table)
             
         self.lblTitle_cant.setText("Items: %d" % self.cantItems)
+        self.tabWidget.setTabText(0, "NUEVO (%d)" % self.cantItems) if not(self.tabWidget.currentIndex()) else self.tabWidget.setTabText(1, "ANTIGUO (%d)" % self.cantItems)
         self.lblCantidadTitulos.setText("Titulos: %d" % self.cantTitles)
 
     def aceptarEvent(self,event):
@@ -269,7 +350,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
     def closeEvent(self, event):
         if self.operacion == "aceptar":
             event.ignore()
-            if self.in_tableWidget.rowCount() > 0:
+            if self.New_tableWidget.rowCount() > 0:
                 reply = QMessageBox.question(self, 'Window Close', 'Esta seguro de efectuar los cambios?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     if self.ware_in.update_quantity(self.newItems_table, self.cmbOperacion.currentText(), self.ownWares[0],
@@ -290,8 +371,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         else:
             reply = QMessageBox.question(self, 'Window Close', 'al cerrar la ventana, se borraran los datos de la tabla', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
-                self.in_tableWidget.clearContents()
-                self.in_tableWidget.setRowCount(0)
+                self.New_tableWidget.clearContents()
+                self.New_tableWidget.setRowCount(0)
                 self.generalFlag = False
                 self.accept()
                 event.accept()
@@ -304,6 +385,9 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         else:
             self.txtProductLocation.setEnabled(False)
             self.txtProductLocation.clear()
+
+    def onTabChanged(self, index):
+        self.updateTotalItems()
 
     @property
     def return_val(self):
@@ -400,42 +484,83 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
         # -----------  mid-frame configuration  -----------
         self.mid_frame = QtWidgets.QFrame(self)
-        self.mid_frame.setGeometry(QtCore.QRect(0, 130, 640, 5)) #width 640, height 65
+        self.mid_frame.setGeometry(QtCore.QRect(0, 130, 640, 30)) #width 640, height 65
         self.mid_frame.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0.298507 rgba(22, 136, 126, 255), stop:1 rgba(56, 110, 142, 255));")
         self.mid_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.mid_frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.mid_frame.setObjectName("mid_frame")
 
 
-        # -----------  in_tableWidget  -----------
-        self.in_tableWidget = QtWidgets.QTableWidget(self)
-        self.in_tableWidget.setGeometry(QtCore.QRect(0, 135, 640, 175))
-        self.in_tableWidget.setObjectName("in_tableWidget")
-        self.in_tableWidget.setColumnCount(4)
-        self.in_tableWidget.setRowCount(0)
-        item = QtWidgets.QTableWidgetItem()
-        self.in_tableWidget.setHorizontalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.in_tableWidget.setHorizontalHeaderItem(1, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.in_tableWidget.setHorizontalHeaderItem(2, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.in_tableWidget.setHorizontalHeaderItem(3, item)
+        # -----------  tabWdiget  -----------
+        self.tabWidget = QtWidgets.QTabWidget(self, movable=False)
+        self.tabWidget.setGeometry(QtCore.QRect(0, 135, 640, 175))
+        self.tabWidget.setTabShape(QTabWidget.TabShape.Triangular)
+        self.tabWidget.setStyleSheet("QTabBar{font-weight:bold;}")
+        self.tabWidget.blockSignals(True)
+        self.tabWidget.currentChanged.connect(self.onTabChanged)
 
-        self.in_tableWidget.setColumnWidth(0,80)
-        self.in_tableWidget.setColumnWidth(1,120)
-        self.in_tableWidget.setColumnWidth(2,365)
-        self.in_tableWidget.setColumnWidth(3,75)
-        self.in_tableWidget.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
-        self.in_tableWidget.horizontalHeader().setEnabled(False)
-        self.in_tableWidget.setSelectionMode(1)
-        self.in_tableWidget.setSelectionBehavior(1)
-        self.in_tableWidget.setStyleSheet("selection-background-color: rgb(0, 120, 255);selection-color: rgb(255, 255, 255);")
-        self.in_tableWidget.verticalHeader().hide()
-        self.in_tableWidget.keyPressEvent = self.DeleteKeyPressed
-        self.in_tableWidget.itemChanged.connect(self.changeIcon)
-        # self.in_tableWidget.itemDoubleClicked.connect(self.doubleClickItem)
 
+        # -----------  New_tableWidget  -----------
+        self.New_tableWidget = QtWidgets.QTableWidget(self)
+        self.tabWidget.addTab(self.New_tableWidget, "NUEVO (0)")
+        self.New_tableWidget.setGeometry(QtCore.QRect(0, 0, 640, 175))
+        self.New_tableWidget.setObjectName("New_tableWidget")
+        self.New_tableWidget.setColumnCount(4)
+        self.New_tableWidget.setRowCount(0)
+        item = QtWidgets.QTableWidgetItem()
+        self.New_tableWidget.setHorizontalHeaderItem(0, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.New_tableWidget.setHorizontalHeaderItem(1, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.New_tableWidget.setHorizontalHeaderItem(2, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.New_tableWidget.setHorizontalHeaderItem(3, item)
+
+        self.New_tableWidget.setColumnWidth(0,80)
+        self.New_tableWidget.setColumnWidth(1,120)
+        self.New_tableWidget.setColumnWidth(2,365)
+        self.New_tableWidget.setColumnWidth(3,75)
+        self.New_tableWidget.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
+        self.New_tableWidget.horizontalHeader().setEnabled(False)
+        self.New_tableWidget.setSelectionMode(1)
+        self.New_tableWidget.setSelectionBehavior(1)
+        self.New_tableWidget.setStyleSheet("selection-background-color: rgb(0, 120, 255);selection-color: rgb(255, 255, 255);")
+        self.New_tableWidget.verticalHeader().hide()
+        self.New_tableWidget.keyPressEvent = self.DeleteKeyPressed
+        self.New_tableWidget.itemChanged.connect(self.changeIcon)
+        # self.New_tableWidget.itemDoubleClicked.connect(self.doubleClickItem)
+        
+        # -----------  Old_tableWidget  -----------
+        self.Old_tableWidget = QtWidgets.QTableWidget(self)
+        self.tabWidget.addTab(self.Old_tableWidget, "ANTIGUO (0)")
+        self.tabWidget.blockSignals(False)
+        self.Old_tableWidget.setGeometry(QtCore.QRect(0, 135, 640, 175))
+        self.Old_tableWidget.setObjectName("Old_tableWidget")
+        self.Old_tableWidget.setColumnCount(4)
+        self.Old_tableWidget.setRowCount(0)
+        item = QtWidgets.QTableWidgetItem()
+        self.Old_tableWidget.setHorizontalHeaderItem(0, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.Old_tableWidget.setHorizontalHeaderItem(1, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.Old_tableWidget.setHorizontalHeaderItem(2, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.Old_tableWidget.setHorizontalHeaderItem(3, item)
+
+        self.Old_tableWidget.setColumnWidth(0,80)
+        self.Old_tableWidget.setColumnWidth(1,120)
+        self.Old_tableWidget.setColumnWidth(2,365)
+        self.Old_tableWidget.setColumnWidth(3,75)
+        self.Old_tableWidget.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
+        self.Old_tableWidget.horizontalHeader().setEnabled(False)
+        self.Old_tableWidget.setSelectionMode(1)
+        self.Old_tableWidget.setSelectionBehavior(1)
+        self.Old_tableWidget.setStyleSheet("selection-background-color: rgb(0, 120, 255);selection-color: rgb(255, 255, 255);")
+        self.Old_tableWidget.verticalHeader().hide()
+        self.Old_tableWidget.keyPressEvent = self.DeleteOldKeyPressed
+        self.Old_tableWidget.itemChanged.connect(self.changeOldIcon)
+        # self.New_tableWidget.itemDoubleClicked.connect(self.doubleClickItem)
+        
         # -----------  bottom frame configuration  -----------
         self.frame = QtWidgets.QFrame(self)
         self.frame.setGeometry(QtCore.QRect(0, 310, 640, 50))
@@ -518,8 +643,6 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.txtProductLocation.setPlaceholderText("Ingrese Ubicación")
         self.txtProductLocation.setObjectName("txtProductLocation")
 
-
-
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -540,19 +663,36 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         font.setWeight(85)
         font.setBold(True)
 
-        item = self.in_tableWidget.horizontalHeaderItem(0)
+        item = self.New_tableWidget.horizontalHeaderItem(0)
         item.setText(_translate("inoutDialog", "cod"))
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
-        item = self.in_tableWidget.horizontalHeaderItem(1)
+        item = self.New_tableWidget.horizontalHeaderItem(1)
         item.setText(_translate("inoutDialog", "isbn"))
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
-        item = self.in_tableWidget.horizontalHeaderItem(2)
+        item = self.New_tableWidget.horizontalHeaderItem(2)
         item.setText(_translate("inoutDialog", "titulo"))
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
-        item = self.in_tableWidget.horizontalHeaderItem(3)
+        item = self.New_tableWidget.horizontalHeaderItem(3)
+        item.setText(_translate("inoutDialog", "cant."))
+        item.setFont(font)
+        item.setForeground(QBrush(QColor(0,0,0)))
+
+        item = self.Old_tableWidget.horizontalHeaderItem(0)
+        item.setText(_translate("inoutDialog", "cod"))
+        item.setFont(font)
+        item.setForeground(QBrush(QColor(0,0,0)))
+        item = self.Old_tableWidget.horizontalHeaderItem(1)
+        item.setText(_translate("inoutDialog", "isbn"))
+        item.setFont(font)
+        item.setForeground(QBrush(QColor(0,0,0)))
+        item = self.Old_tableWidget.horizontalHeaderItem(2)
+        item.setText(_translate("inoutDialog", "titulo"))
+        item.setFont(font)
+        item.setForeground(QBrush(QColor(0,0,0)))
+        item = self.Old_tableWidget.horizontalHeaderItem(3)
         item.setText(_translate("inoutDialog", "cant."))
         item.setFont(font)
         item.setForeground(QBrush(QColor(0,0,0)))
