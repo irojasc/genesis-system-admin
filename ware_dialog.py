@@ -138,8 +138,10 @@ class Ui_Dialog(QtWidgets.QDialog):
         row = 0
         self.ware_table.setRowCount(len(self.real_table))
         for ware_li in self.real_table:
-            # isExistActive: primero comprueba que el item exista en el almacen, luego recien verifica que el item este habilitado en el almacen
+            # isExistActive: primero comprueba que el item exista en el presente almacen, luego recien verifica que el item este habilitado en el almacen
             isExistActive = (self.currWare.cod in ware_li.wareData) and ware_li.wareData[self.currWare.cod]["isEnabled"]
+            # isOldExist: primero verifica que existe algun almancen activo para el item y luego que no exista algun precio OLD en 0.0
+            isOldExist = not(None in ware_li.wareData) and not(0.0 in [i['pvOld'] for i in ware_li.wareData.values()])
 
             item = QtWidgets.QTableWidgetItem(ware_li.product.prdCode)
             backgrounditem(item, isExistActive)
@@ -175,7 +177,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             backgrounditem(item, isExistActive)
             item.setFlags(flag)
             self.ware_table.setItem(row, 5, item)
-            if isExistActive: self.ware_table.item(row, 5).setToolTip("-->[%s]"%str(ware_li.wareData[self.currWare.cod]["qtyOld"]))
+            if isExistActive and isOldExist: self.ware_table.item(row, 5).setToolTip("-->[%s]"%str(ware_li.wareData[self.currWare.cod]["qtyOld"]))
 
             if self.cmbWares.currentIndex() != -1:
                 currTextCmbWare = self.cmbWares.currentText()
@@ -185,7 +187,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 backgrounditem(item, isWareEnEx)
                 item.setFlags(flag)
                 self.ware_table.setItem(row, 6, item)
-                if isWareEnEx: self.ware_table.item(row, 6).setToolTip("-->[%s]"%str(ware_li.wareData[currTextCmbWare]["qtyOld"]))
+                if isWareEnEx and isOldExist: self.ware_table.item(row, 6).setToolTip("-->[%s]"%str(ware_li.wareData[currTextCmbWare]["qtyOld"]))
             row += 1
 
     def txtBusChanged(self):
