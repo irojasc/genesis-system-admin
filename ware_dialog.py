@@ -290,10 +290,11 @@ class Ui_Dialog(QtWidgets.QDialog):
             counter = 0
             pv = 0
 
-            for key in self.real_table[tmp].wareData:
-                if self.real_table[tmp].wareData[key]["isEnabled"]:
-                    counter += int(self.real_table[tmp].wareData[key]["qtyOld"])
-                    pv = self.real_table[tmp].wareData[key]["pvOld"]
+            if not(None in self.real_table[tmp].wareData) and all(i["pvOld"] == list(self.real_table[tmp].wareData.values())[0]["pvOld"] for i in self.real_table[tmp].wareData.values()):
+                for key in self.real_table[tmp].wareData:
+                    if self.real_table[tmp].wareData[key]["isEnabled"]:
+                        counter += int(self.real_table[tmp].wareData[key]["qtyOld"])
+                        pv = self.real_table[tmp].wareData[key]["pvOld"]
 
             if counter > 0 and pv > 0:
                 self.lblValuePVP2.setPalette(getPricePalette2())
