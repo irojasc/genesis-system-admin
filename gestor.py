@@ -5,7 +5,7 @@ import os.path
 import os
 from objects import user, ware, ware_product, product
 from decouple import Config, RepositoryEnv
-from datetime import datetime
+from datetime import datetime, date
 import traceback
 
 
@@ -165,14 +165,23 @@ class WareProduct:
 		self.cursor.close()
 		self.mydb.close()
 
-	def update_backtablequantity(self, list = None, operacion = None, currentWare = None):
-		for i in list:
+	def update_backtablequantity(self, newList: list = None, oldList: list = None, operationType: str = None, currentWare = None):
+		mainList = newList + oldList
+		for i in mainList:
+			# formato de i: {'loc': 'ubic', 'cod': 'gn_x', 'isbn': '13dgs..', 'title': 'title', 'qtyNew': x, 'qtyOld': y}
 			for j in self.innerWareList:
-				if j.objBook.cod == i["cod"]:
-					if operacion == "ingreso":
-						j.almacen_data["cant_" + currentWare] += i["cantidad"]
-					elif operacion == "salida":
-						j.almacen_data["cant_" + currentWare] -= i["cantidad"]
+				if j.product.prdCode == i["cod"] and i["qtyOld"] == None:
+					if operationType == "ingreso":
+						j.wareData[currentWare]["qtyNew"] += i["qtyNew"]
+					elif operationType == "salida":
+						j.wareData[currentWare]["qtyNew"] -= i["qtyNew"]
+
+				elif j.product.prdCode == i["cod"] and i["qtyNew"] == None:
+					if operationType == "ingreso":
+						j.wareData[currentWare]["qtyOld"] += i["qtyOld"]
+					elif operationType == "salida":
+						j.wareData[currentWare]["qtyOld"] -= i["qtyOld"]
+
 	"""def buscar(self, criterio, patron):
 		self.temp_list.clear()
 		if criterio == "cod":
@@ -198,22 +207,29 @@ class WareProduct:
 			return len(self.temp_list)
 		return 0"""
 
-	def update_quantity(self, list_, tipo, currentWare = "", location = ""):
-		dict = { "ingreso": "+",
+	def update_quantity(self, listNew: list[int] = None, listOld: list[int] = None, operationType: str = "", idWare: str = "", location: str = ""):
+		oprDict = { "ingreso": "+",
 		"salida": "-"}
-		temp_list = []
+		tmp_NewList = []
+		tmp_OldList = []
 		self.connect_db()
 		try:
-			for j in list_:
-				temp_list.append((str(j["cantidad"]), j["cod"]))
-			if location == "":
-				query_ = ("update genesisDB.ware_books set cant_" + currentWare + " = cant_" + currentWare + " " + dict[
-					tipo] + " %s where cod_book = %s")
-			else:
-				query_ = ("update genesisDB.ware_books set cant_" + currentWare + " = cant_" + currentWare + " " + dict[
-					tipo] + " %s, ubic_" + currentWare + " = '" + location.upper() + "' where cod_book = %s")
+			# for j in listNew:
+			# 	tmp_NewList.append((str(j["cantidad"]), j["cod"]))
+			tmp_NewList = list(map(lambda x: (str(x["qtyNew"]), str(0), x["cod"].split("_")[1]), listNew))
+			tmp_OldList = list(map(lambda x: (str(0), str(x["qtyOld"]), x["cod"].split("_")[1]), listOld))
+			tmp_MainList = tmp_NewList + tmp_OldList
 
-			self.cursor.executemany(query_, temp_list)
+			if location == "":
+				query_ = ("update genesisdb.ware_product set qtyNew = qtyNew " + oprDict[
+					operationType] + " %s, qtyOld = qtyOld " + oprDict[
+					operationType] + " %s, editDate = '" + str(date.today()) + "' where idProduct = %s and idWare = " + idWare)
+			else:
+				query_ = ("update genesisdb.ware_product set qtyNew = qtyNew " + oprDict[
+					operationType] + " %s, qtyOld = qtyOld " + oprDict[
+					operationType] + " %s, editDate = '" + str(date.today()) + "', loc = '" + location.upper() + "' where idProduct = %s and idWare = " + idWare)
+
+			self.cursor.executemany(query_, tmp_MainList)
 			self.mydb.commit()
 			self.disconnect_db()
 			return True

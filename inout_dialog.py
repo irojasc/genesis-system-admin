@@ -29,7 +29,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.ownWares = data_wares
         self.mainList = []
         self.newItems_table = []
-        self.OldItems_table = []
+        self.oldItems_table = []
         self.cantItems = 0
         self.valCell = ""
         self.operacion = None #define estado neutro para el closeevent
@@ -53,7 +53,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.checkBox.setChecked(False)
 
         self.newItems_table.clear()
-        self.OldItems_table.clear()
+        self.oldItems_table.clear()
         self.cantItems = 0
         self.generalFlag = False
         item_all = ['cod','isbn','titulo','autor']
@@ -89,7 +89,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         flag = False
         if len(self.newItems_table) == 0 and bool(itemSelected):
             #_tmpObject = copy.copy(object_)
-            data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qty": 1}
+            data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, 
+                    "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qtyNew": 1, "qtyOld": None}
             self.newItems_table.append(data)
             highlightedRow = 0
 
@@ -99,11 +100,11 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             for pos, item in enumerate(self.newItems_table):
                 if item["cod"] == cod:
                     flag = True
-                    item["qty"] += 1 
+                    item["qtyNew"] += 1 
                     highlightedRow = pos
 
             if flag == False:
-                data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qty": 1}
+                data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qtyNew": 1, "qtyOld": None}
                 self.newItems_table.append(data)
                 highlightedRow = len(self.newItems_table) - 1
 
@@ -120,25 +121,25 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         itemSelected = itemSelected[0] if bool(len(itemSelected)) else None
         # index_ = next((index for (index, d) in enumerate(self.mainList) if d.objBook.cod == cod), None)
         flag = False
-        if len(self.OldItems_table) == 0 and bool(itemSelected):
+        if len(self.oldItems_table) == 0 and bool(itemSelected):
             #_tmpObject = copy.copy(object_)
-            data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qty": 1}
-            self.OldItems_table.append(data)
+            data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qtyOld": 1, "qtyNew": None}
+            self.oldItems_table.append(data)
             highlightedRow = 0
 
-        elif len(self.OldItems_table) > 0 and bool(itemSelected):
+        elif len(self.oldItems_table) > 0 and bool(itemSelected):
             #_tmpObject = copy.copy(object_)
             #data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": _tmpObject.book.cod, "isbn": _tmpObject.book.isbn, "title": _tmpObject.book.title, "qty": _tmpObject.almacen_quantity[0]}
-            for pos, item in enumerate(self.OldItems_table):
+            for pos, item in enumerate(self.oldItems_table):
                 if item["cod"] == cod:
                     flag = True
-                    item["qty"] += 1 
+                    item["qtyOld"] += 1 
                     highlightedRow = pos
 
             if flag == False:
-                data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qty": 1}
-                self.OldItems_table.append(data)
-                highlightedRow = len(self.OldItems_table) - 1
+                data = {"loc": itemSelected.wareData[self.ownWares.cod]["loc"] ,"cod": itemSelected.product.prdCode, "isbn": itemSelected.product.isbn, "title": itemSelected.product.title, "qtyOld": 1, "qtyNew": None}
+                self.oldItems_table.append(data)
+                highlightedRow = len(self.oldItems_table) - 1
 
         self.update_table()
         self.Old_tableWidget.setCurrentCell(highlightedRow, 0)
@@ -152,9 +153,9 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         
         # -----------  esta parte para llenar la tabla  -----------
         # row = 0
-        self.New_tableWidget.setRowCount(len(self.newItems_table)) if  tabIndex else self.Old_tableWidget.setRowCount(len(self.OldItems_table))
+        self.New_tableWidget.setRowCount(len(self.newItems_table)) if  tabIndex else self.Old_tableWidget.setRowCount(len(self.oldItems_table))
 
-        for row, ware_li in enumerate(self.newItems_table if tabIndex else self.OldItems_table):
+        for row, ware_li in enumerate(self.newItems_table if tabIndex else self.oldItems_table):
             item = QtWidgets.QTableWidgetItem(ware_li["cod"])
             item.setFlags(flag)
             self.New_tableWidget.setItem(row, 0, item) if tabIndex else self.Old_tableWidget.setItem(row, 0, item)
@@ -170,7 +171,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             item = QtWidgets.QTableWidgetItem(ware_li["title"])
             item.setFlags(flag)
             self.New_tableWidget.setItem(row, 2, item) if tabIndex else self.Old_tableWidget.setItem(row, 2, item)
-            item = QtWidgets.QTableWidgetItem(str(ware_li["qty"]))
+            item = QtWidgets.QTableWidgetItem(str(ware_li["qtyNew"]) if tabIndex else str(ware_li["qtyOld"]))
             item.setFlags(flag1)
             self.New_tableWidget.setItem(row, 3, item) if tabIndex else self.Old_tableWidget.setItem(row, 3, item)
             # row += 1
@@ -249,7 +250,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         if self.Old_tableWidget.selectedIndexes() != []:
             if event.key() == QtCore.Qt.Key_Delete:
                 index = self.Old_tableWidget.currentRow()
-                self.OldItems_table.pop(index)
+                self.oldItems_table.pop(index)
                 self.updateTotalItems()
                 self.update_table()
         return QtWidgets.QTableWidget.keyPressEvent(self.Old_tableWidget, event)
@@ -289,12 +290,12 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             try:
                 cellValue = int(self.New_tableWidget.item(row, 3).text())
                 if cellValue > 0:
-                    self.newItems_table[row]["qty"] = cellValue
+                    self.newItems_table[row]["qtyNew"] = cellValue
                 elif cellValue <= 0:
-                    self.New_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qty"]))
+                    self.New_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qtyNew"]))
             except:
                 ret = QMessageBox.information(self, 'Aviso', "Debe ingresar un numero entero")
-                self.New_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qty"]))
+                self.New_tableWidget.item(row, 3).setText(str(self.newItems_table[row]["qtyNew"]))
             self.updateTotalItems()
             
     def changeOldIcon(self, item):
@@ -305,12 +306,12 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             try:
                 cellValue = int(self.Old_tableWidget.item(row, 3).text())
                 if cellValue > 0:
-                    self.OldItems_table[row]["qty"] = cellValue
+                    self.oldItems_table[row]["qtyOld"] = cellValue
                 elif cellValue <= 0:
-                    self.Old_tableWidget.item(row, 3).setText(str(self.OldItems_table[row]["qty"]))
+                    self.Old_tableWidget.item(row, 3).setText(str(self.oldItems_table[row]["qtyOld"]))
             except:
                 ret = QMessageBox.information(self, 'Aviso', "Debe ingresar un numero entero")
-                self.Old_tableWidget.item(row, 3).setText(str(self.OldItems_table[row]["qty"]))
+                self.Old_tableWidget.item(row, 3).setText(str(self.oldItems_table[row]["qtyOld"]))
             self.updateTotalItems()
     
     # def doubleClickItem(self, item):
@@ -324,16 +325,16 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             self.cantItems = 0
             self.cantTitles = 0
         elif not(self.tabWidget.currentIndex()) and bool(len(self.newItems_table)):
-            qtyMap = list(map(lambda x: x["qty"], self.newItems_table))
+            qtyMap = list(map(lambda x: x["qtyNew"], self.newItems_table))
             self.cantItems = reduce(lambda a, b: a + b, qtyMap)
             self.cantTitles = len(self.newItems_table)
-        elif bool(self.tabWidget.currentIndex()) and not(bool(len(self.OldItems_table))):
+        elif bool(self.tabWidget.currentIndex()) and not(bool(len(self.oldItems_table))):
             self.cantItems = 0
             self.cantTitles = 0
-        elif bool(self.tabWidget.currentIndex()) and bool(len(self.OldItems_table)):
-            qtyMap = list(map(lambda x: x["qty"], self.OldItems_table))
+        elif bool(self.tabWidget.currentIndex()) and bool(len(self.oldItems_table)):
+            qtyMap = list(map(lambda x: x["qtyOld"], self.oldItems_table))
             self.cantItems = reduce(lambda a, b: a + b, qtyMap)
-            self.cantTitles = len(self.OldItems_table)
+            self.cantTitles = len(self.oldItems_table)
             
         self.lblTitle_cant.setText("Items: %d" % self.cantItems)
         self.tabWidget.setTabText(0, "NUEVO (%d)" % self.cantItems) if not(self.tabWidget.currentIndex()) else self.tabWidget.setTabText(1, "ANTIGUO (%d)" % self.cantItems)
@@ -343,17 +344,18 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         if event.button() == QtCore.Qt.LeftButton:
             if self.cmbOperacion.currentIndex() != -1:
                 self.operacion = "aceptar"
-                self.close()
+                #este metodo close envia la operacion al metodo closeEvent
+                self.close() 
             else:
                 ret = QMessageBox.information(self, 'Aviso', "Debe ingresar criterio de operación")
 
     def closeEvent(self, event):
         if self.operacion == "aceptar":
             event.ignore()
-            if self.New_tableWidget.rowCount() > 0:
+            if self.New_tableWidget.rowCount() > 0 or self.Old_tableWidget.rowCount() > 0:
                 reply = QMessageBox.question(self, 'Window Close', 'Esta seguro de efectuar los cambios?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if reply == QMessageBox.Yes:
-                    if self.ware_in.update_quantity(self.newItems_table, self.cmbOperacion.currentText(), self.ownWares[0],
+                    if self.ware_in.update_quantity(self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), str(self.ownWares.id),
                                                     self.txtProductLocation.text()):
                         ret = QMessageBox.question(self, 'Alerta', "Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                         self.generalFlag = True
@@ -373,6 +375,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             if reply == QMessageBox.Yes:
                 self.New_tableWidget.clearContents()
                 self.New_tableWidget.setRowCount(0)
+                self.Old_tableWidget.clearContents()
+                self.Old_tableWidget.setRowCount(0)
                 self.generalFlag = False
                 self.accept()
                 event.accept()
@@ -390,8 +394,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.updateTotalItems()
 
     @property
-    def return_val(self):
-        return (self.newItems_table, self.cmbOperacion.currentText(), self.generalFlag)
+    def returned_val(self):
+        return (self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), self.generalFlag)
 
     def setupUi(self):
         self.setObjectName("inoutDialog")
@@ -495,10 +499,10 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.tabWidget = QtWidgets.QTabWidget(self, movable=False)
         self.tabWidget.setGeometry(QtCore.QRect(0, 135, 640, 175))
         self.tabWidget.setTabShape(QTabWidget.TabShape.Triangular)
-        self.tabWidget.setStyleSheet("QTabBar{font-weight:bold;}")
+        stylesheet = "QTabBar::tab:selected{background: rgb(170,255,0);}QTabBar{font-weight:bold;}"
+        self.tabWidget.setStyleSheet(stylesheet)
         self.tabWidget.blockSignals(True)
         self.tabWidget.currentChanged.connect(self.onTabChanged)
-
 
         # -----------  New_tableWidget  -----------
         self.New_tableWidget = QtWidgets.QTableWidget(self)
@@ -571,17 +575,30 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.frame.setObjectName("frame")
 
         # -----------  lblCantidad Configuration  -----------
-        self.lblTitle_cant = QtWidgets.QLabel(self.frame)
-        self.lblTitle_cant.setGeometry(QtCore.QRect(510, 22, 391, 31))
+        self.lblTitle_cant = QtWidgets.QLabel(self.frame_2)
+        self.lblTitle_cant.setGeometry(QtCore.QRect(510, 32, 391, 31))
         self.lblTitle_cant.setWordWrap(False)
         self.lblTitle_cant.setObjectName("lblTitle_cant")
 
         # -----------  lblCantidadTitulos Configuration  -----------
-        self.lblCantidadTitulos = QtWidgets.QLabel(self.frame)
-        self.lblCantidadTitulos.setGeometry(QtCore.QRect(501, -4, 391, 31))
+        self.lblCantidadTitulos = QtWidgets.QLabel(self.frame_2)
+        self.lblCantidadTitulos.setGeometry(QtCore.QRect(501, 6, 391, 31))
         self.change_color_lbltitle()
         self.lblCantidadTitulos.setWordWrap(False)
         self.lblCantidadTitulos.setObjectName("lblCantidadTitulos")
+
+        # -----------  lvlWarning location advice  -----------
+        font = QFont("Calibri")
+        font.setPointSize(9)
+        font.setBold(True)
+        self.lblLocationAdvice = QtWidgets.QLabel("!Advertencia¡\nAl cambiar ubicación de item Antiguo, afecta tambien al Nuevo", self.frame)
+        self.lblLocationAdvice.setGeometry(QtCore.QRect(470, 4, 185, 41))
+        # self.change_color_lbltitle()
+        self.lblLocationAdvice.setFont(font)
+        self.lblLocationAdvice.setStyleSheet("QLabel{background-color: red; color: rgb(255,255,255);}")
+        self.lblLocationAdvice.setWordWrap(True)
+        self.lblLocationAdvice.setObjectName("lblLocationAdvice")
+
 
         # -----------  groupBoxBottom configuration  -----------
         self.gbBottom = QtWidgets.QGroupBox(self.frame)
@@ -640,7 +657,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.txtProductLocation.setFont(font)
         self.txtProductLocation.setStyleSheet("background-color: rgb(248, 248, 248);")
         self.txtProductLocation.setClearButtonEnabled(True)
-        self.txtProductLocation.setPlaceholderText("Ingrese Ubicación")
+        self.txtProductLocation.setPlaceholderText("Nueva Ubicación de Todo")
         self.txtProductLocation.setObjectName("txtProductLocation")
 
         self.retranslateUi()

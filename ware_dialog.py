@@ -17,6 +17,7 @@ from objects import ware, user
 from inout_dialog import Ui_inoutDialog
 from uiConfigurations import *
 from datetime import datetime
+from functools import reduce
 ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 
 
@@ -119,12 +120,14 @@ class Ui_Dialog(QtWidgets.QDialog):
         #     self.accept()
         #     event.accept()
 
-    def updateRealTable(self): #se actualiza la tabla actual con los datos del back
-        for i in self.real_table:
-            for j in self.gestWareProduct.ware_list:
-                if i.objBook.cod == j.objBook.cod:
-                    i.almacen_data["cant_" + self.currWare[0]] = j.almacen_data["cant_"+ self.currWare[0]]
-        self.loadData()
+    # def updateRealTable(self): #se actualiza la tabla actual con los datos del back
+    #     # for i in self.real_table:
+    #     #     for j in self.gestWareProduct.innerWareList:
+    #     #         if i.product.prdCode == j.product.prdCode and (self.currWare in i.wareData) and (self.currWare in j.wareData):
+    #     #             print(i)
+    #     #             # i.wareData[self.currWare.cod]["qtyNew"] = j.wareData[self.currWare.cod]["qtyNew"]
+    #     #             # print(i.wareData[self.currWare.cod]["qtyNew"])
+    #     self.loadData()
 
     # -----------  carga tabla qtableWidget  -----------
     def loadData(self, condition = "search"):
@@ -140,8 +143,8 @@ class Ui_Dialog(QtWidgets.QDialog):
         for ware_li in self.real_table:
             # isExistActive: primero comprueba que el item exista en el presente almacen, luego recien verifica que el item este habilitado en el almacen
             isExistActive = (self.currWare.cod in ware_li.wareData) and ware_li.wareData[self.currWare.cod]["isEnabled"]
-            # isOldExist: primero verifica que existe algun almancen activo para el item y luego que no exista algun precio OLD en 0.0
-            isOldExist = not(None in ware_li.wareData) and not(0.0 in [i['pvOld'] for i in ware_li.wareData.values()])
+            # isOldExist: primero verifica que existe algun almancen activo para el item y luego que todos los valoes de PVOLD sean iguales
+            isOldExist = not(None in ware_li.wareData) and all(i["pvOld"] == list(ware_li.wareData.values())[0]["pvOld"] for i in ware_li.wareData.values())
 
             item = QtWidgets.QTableWidgetItem(ware_li.product.prdCode)
             backgrounditem(item, isExistActive)
@@ -155,7 +158,6 @@ class Ui_Dialog(QtWidgets.QDialog):
             backgrounditem(item, isExistActive)
             item.setFlags(flag)
             self.ware_table.setItem(row, 1, item)
-
 
             item = QtWidgets.QTableWidgetItem(ware_li.product.title)
             backgrounditem(item, isExistActive)
@@ -400,16 +402,15 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.ui_dialog.init_condition()
 
             if self.ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
-                print("Salimos del estado in/out")
                 self.change_state("ware")
-
-                # if self.ui_dialog.return_val[2]:
-                #     self.gestWareProduct.update_backtablequantity(self.ui_dialog.return_val[0], self.ui_dialog.return_val[1], self.currWare[0])
-                #     self.updateRealTable()
+                #returned_val[3]: generalFlag -> True cuando se tiene la intencion de agregar o quitar cantidades
+                if self.ui_dialog.returned_val[3]:
+                    self.gestWareProduct.update_backtablequantity(self.ui_dialog.returned_val[0], self.ui_dialog.returned_val[1], self.ui_dialog.returned_val[2], self.currWare.cod)
+                    # self.updateRealTable()
+                    self.loadData()
             # self.ui_dialog.show_window()
         else:
             QMessageBox.warning(self, 'Mensaje', "No tiene permisos para entrada/salida de productos", QMessageBox.Ok, QMessageBox.Ok)
-
 
     def onCurrentIndexChanged(self):
         if self.cmbWares.currentIndex() == -1:
