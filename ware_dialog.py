@@ -409,6 +409,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                     self.gestWareProduct.update_backtablequantity(self.ui_dialog.returned_val[0], self.ui_dialog.returned_val[1], self.ui_dialog.returned_val[2], self.currWare.cod)
                     # self.updateRealTable()
                     self.loadData()
+                    self.actualizar_img(self.ware_table.currentIndex().row())
             # self.ui_dialog.show_window()
         else:
             QMessageBox.warning(self, 'Mensaje', "No tiene permisos para entrada/salida de productos", QMessageBox.Ok, QMessageBox.Ok)
@@ -935,7 +936,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
     def setDataFields(self, data: str = None, items: list = []):
         if bool(data): self.prevData = data
+        
         if bool(len(items)): 
+            #considerando que x[1] es items LIBROS
             self.cmbItem.addItems(list(map( lambda x: x[1], items)))
             self.cmbItem.setCurrentIndex(1)
             self.cmbItem.setEnabled(False)
@@ -1042,63 +1045,68 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
     def setupUi(self):
         self.resize(340, 220)
-        self.setFixedSize(340, 220)
+        self.setFixedSize(380, 260)
         self.setObjectName("ui_EditNewItemDialog")
         self.setWindowTitle("Editar producto") if not(self.method) else self.setWindowTitle("Registrar nuevo producto")
 
-        # # -----------  tabWdigedOperations  -----------
-        # self.tabWidget = QtWidgets.QTabWidget(self, movable=False)
-        # self.tabWidget.setGeometry(QtCore.QRect(0, 135, 640, 175))
-        # self.tabWidget.setTabShape(QTabWidget.TabShape.Triangular)
-        # stylesheet = "QTabBar::tab:selected{background: rgb(170,255,0);}QTabBar{font-weight:bold;}"
-        # self.tabWidget.setStyleSheet(stylesheet)
-        # self.tabWidget.blockSignals(True)
-        # self.tabWidget.currentChanged.connect(self.onTabChanged)
-        
+        self.main_layout = QGridLayout(self)
+        self.setLayout(self.main_layout)
+
+        self.tab_mainItemData = QWidget(self)
+        self.tab_mainItemData.setFixedSize(360, 180)
+
+        #create a tabWidget
+        self.tabItem = QTabWidget(self)
+        self.tabItem.addTab(self.tab_mainItemData, "Información principal")
+
+        self.main_layout.addWidget(self.tabItem, 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.main_layout.addWidget(QPushButton('Guardar'), 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.main_layout.addWidget(QPushButton('Cancel'),2, 0, alignment=Qt.AlignmentFlag.AlignJustify)
+
         
         warning_text = ">¡No ingresar tildes ni caracteres especiales (,', \", ´,)!"
 
-        self.lblWarning = QLabel(warning_text,self)
+        self.lblWarning = QLabel(warning_text,self.tab_mainItemData)
         self.lblWarning.adjustSize()
         self.lblWarning.move(55, 15) if not(self.method) else self.lblWarning.move(60, 5)
         self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblWarning.setStyleSheet("background-color: red")
 
-        self.lblWarning = QLabel(">(*): Campos obligatorios",self) if self.method else False
+        self.lblWarning = QLabel(">(*): Campos obligatorios",self.tab_mainItemData) if self.method else False
         if bool(self.lblWarning):
             self.lblWarning.adjustSize()
             self.lblWarning.move(60, 20)
             self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.lblWarning.setStyleSheet("background-color: red")
 
-        self.lblId = QLabel("CÓDIGO:",self) if not(self.method) else QLabel("CÓDIGO(*):",self)
+        self.lblId = QLabel("CÓDIGO:",self.tab_mainItemData) if not(self.method) else QLabel("CÓDIGO(*):",self.tab_mainItemData)
         self.lblId.adjustSize()
         self.lblId.move(43, 40) if not(self.method) else self.lblId.move(33, 40)
         self.lblId.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblId.setStyleSheet("background-color: lightgreen")
-        self.txtId = MyLineEdit(self)
+        self.txtId = MyLineEdit(self.tab_mainItemData)
         self.txtId.setFixedHeight(18)
         self.txtId.setFixedWidth(70)
         self.txtId.move(95,37)
         self.txtId.setEnabled(False)
-        self.defaultPalette = self.txtId.palette()
+        self.defaultPalette = self.txtId.palette()  
 
-        self.lblItem = QLabel("ITEM:",self)
+        self.lblItem = QLabel("ITEM:",self.tab_mainItemData)
         self.lblItem.adjustSize()
         self.lblItem.move(175, 40)
         self.lblItem.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblItem.setStyleSheet("background-color: lightgreen")
 
-        self.cmbItem = QComboBox(self)
+        self.cmbItem = QComboBox(self.tab_mainItemData)
         self.cmbItem.setGeometry(210, 37, 115 , 18)
 
         self.color = QColor(230,230,230)
-        self.lblISBN = QLabel("ISBN:",self)
+        self.lblISBN = QLabel("ISBN:",self.tab_mainItemData)
         self.lblISBN.adjustSize()
         self.lblISBN.move(61, 60)
         self.lblISBN.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblISBN.setStyleSheet("background-color: lightblue")
-        self.txtISBN = MyLineEdit(self)
+        self.txtISBN = MyLineEdit(self.tab_mainItemData)
         self.txtISBN.setFixedHeight(18)
         self.txtISBN.setFixedWidth(230)
         self.txtISBN.move(95,58)
@@ -1109,12 +1117,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.txtISBN.clicked.connect(lambda: self.deactivateLineEdit("ISBN"))
         self.txtISBN.setMaxLength(15)
 
-        self.lblTitle = QLabel("TÍTULO:",self) if not(self.method) else QLabel("TÍTULO(*):",self)
+        self.lblTitle = QLabel("TÍTULO:",self.tab_mainItemData) if not(self.method) else QLabel("TÍTULO(*):",self.tab_mainItemData)
         self.lblTitle.adjustSize()
         self.lblTitle.move(48, 80) if not(self.method) else self.lblTitle.move(38, 80)
         self.lblTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblTitle.setStyleSheet("background-color: lightblue")
-        self.txtTitle = MyLineEdit(self)
+        self.txtTitle = MyLineEdit(self.tab_mainItemData)
         self.txtTitle.setFixedHeight(18)
         self.txtTitle.setFixedWidth(230)
         self.txtTitle.move(95,78)
@@ -1126,12 +1134,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.txtTitle.clicked.connect(lambda: self.deactivateLineEdit("Title"))
         self.txtTitle.setMaxLength(90)
 
-        self.lblAutor = QLabel("AUTOR:",self) if not(self.method) else QLabel("AUTOR(*):",self)
+        self.lblAutor = QLabel("AUTOR:",self.tab_mainItemData) if not(self.method) else QLabel("AUTOR(*):",self.tab_mainItemData)
         self.lblAutor.adjustSize()
         self.lblAutor.move(49, 100) if not(self.method) else self.lblAutor.move(39, 100)
         self.lblAutor.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblAutor.setStyleSheet("background-color: lightblue")
-        self.txtAutor = MyLineEdit(self)
+        self.txtAutor = MyLineEdit(self.tab_mainItemData)
         self.txtAutor.setFixedHeight(18)
         self.txtAutor.setFixedWidth(230)
         self.txtAutor.move(95,98)
@@ -1140,12 +1148,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.txtAutor.clicked.connect(lambda: self.deactivateLineEdit("Autor"))
         self.txtAutor.setMaxLength(45)
 
-        self.lblPublisher = QLabel("EDITORIAL:",self) if not(self.method) else QLabel("EDITORIAL(*):",self)
+        self.lblPublisher = QLabel("EDITORIAL:",self.tab_mainItemData) if not(self.method) else QLabel("EDITORIAL(*):",self.tab_mainItemData)
         self.lblPublisher.adjustSize()
         self.lblPublisher.move(31, 120) if not(self.method) else self.lblPublisher.move(21, 120)
         self.lblPublisher.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblPublisher.setStyleSheet("background-color: lightblue")
-        self.txtPublisher = MyLineEdit(self)
+        self.txtPublisher = MyLineEdit(self.tab_mainItemData)
         self.txtPublisher.setFixedHeight(18)
         self.txtPublisher.setFixedWidth(230)
         self.txtPublisher.move(95,118)
@@ -1154,12 +1162,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.txtPublisher.clicked.connect(lambda: self.deactivateLineEdit("Publisher"))
         self.txtPublisher.setMaxLength(45)
 
-        self.lblPrice = QLabel("PRECIO:",self) if not(self.method) else QLabel("PRECIO(*):",self)
+        self.lblPrice = QLabel("PRECIO:",self.tab_mainItemData) if not(self.method) else QLabel("PRECIO(*):",self.tab_mainItemData)
         self.lblPrice.adjustSize()
         self.lblPrice.move(47, 140) if not(self.method) else self.lblPrice.move(37, 140)
         self.lblPrice.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblPrice.setStyleSheet("background-color: lightblue")
-        self.txtPrice = MyLineEdit(self)
+        self.txtPrice = MyLineEdit(self.tab_mainItemData)
         self.txtPrice.setPlaceholderText("Ingresar solo numeros")
         self.txtPrice.setFixedHeight(18)
         self.txtPrice.setFixedWidth(230)
@@ -1169,12 +1177,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.txtPrice.clicked.connect(lambda: self.deactivateLineEdit("Price"))
         self.txtPrice.setMaxLength(30)
 
-        self.lblInitStock = QLabel("STOCK INGRESO:",self)
+        self.lblInitStock = QLabel("STOCK INGRESO:",self.tab_mainItemData)
         self.lblInitStock.adjustSize()
         self.lblInitStock.move(5, 163)
         self.lblInitStock.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblInitStock.setStyleSheet("background-color: lightblue")
-        self.spinInitStock = MySpinBox(self)
+        self.spinInitStock = MySpinBox(self.tab_mainItemData)
         self.spinInitStock.setGeometry(100, 100, 50, 20)
         self.spinInitStock.move(95,159)
         self.spinInitStock.setReadOnly(True)
@@ -1182,16 +1190,16 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
         self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
 
-        self.btnCancel = QPushButton('Cancelar', self)
-        self.btnCancel.adjustSize()
-        self.btnCancel.move(190, 185)
-        self.btnCancel.clicked.connect(lambda: self.submitclose())
+        # self.btnCancel = QPushButton('Cancelar', self)
+        # self.btnCancel.adjustSize()
+        # self.btnCancel.move(190, 185)
+        # self.btnCancel.clicked.connect(lambda: self.submitclose())
 
-        self.btnOk = QPushButton(self)
-        self.btnOk.setText("Editar") if not(self.method) else self.btnOk.setText("Registrar")
-        self.btnOk.adjustSize()
-        self.btnOk.move(80, 185)
-        self.btnOk.clicked.connect(lambda: self.returnValues(True))
+        # self.btnOk = QPushButton(self)
+        # self.btnOk.setText("Editar") if not(self.method) else self.btnOk.setText("Registrar")
+        # self.btnOk.adjustSize()
+        # self.btnOk.move(80, 185)
+        # self.btnOk.clicked.connect(lambda: self.returnValues(True))
 
     def show_window(self):
        self.show()
@@ -1209,7 +1217,6 @@ class MyLineEdit(QLineEdit):
         self.clicked.emit()
         QLineEdit.mousePressEvent(self, event)
         self.textChanged.connect(self.text_changed)
-
 
     def removeAccents(self, txt: str = ""):
         return ''.join(c for c in unicodedata.normalize('NFD', txt)
