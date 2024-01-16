@@ -494,7 +494,6 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.mid_frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.mid_frame.setObjectName("mid_frame")
 
-
         # -----------  tabWdiget  -----------
         self.tabWidget = QtWidgets.QTabWidget(self, movable=False)
         self.tabWidget.setGeometry(QtCore.QRect(0, 135, 640, 175))

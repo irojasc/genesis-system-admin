@@ -121,17 +121,21 @@ class wares_gestor:
 			return False
 
 	def getNextCodDB(self):
-		query = "select max(cast(substring(cod,4) as signed)) + 1 as next from genesisDB.books where cod like '%GN_%';"
+		query = "SELECT max(cast(p.id as signed)) + 1 as next, null FROM genesisdb.product p UNION SELECT i.id, i.item FROM genesisdb.item i;"
 		try:
 			self.connectDB()
 			self.cursor.execute(query)
-			nextCod = "GN_%s" % (str(self.cursor.fetchall()[0][0]))
+			# nextCod = "GN_%s" % (str(self.cursor.fetchall()[0][0]))
+			data = self.cursor.fetchall()
+			nextCod = str(data[0][0])
+			items = data[1:]
 			self.disconnectDB()
-			return True, nextCod
+			# return True, nextCod
+			return True, nextCod, items
 		except Exception as error:
 			print("Something wrong happen: ", error)
 			self.disconnectDB()
-			return False, "CODIGO NO ENCONTRADO"
+			return False, "CODIGO NO ENCONTRADO", None
 
 	def insertNewItemDB(self, data: dict = None, currentWare: str = None):
 		if bool(len(data)) and bool(currentWare):

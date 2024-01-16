@@ -62,7 +62,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.cmbSearch.setEnabled(True)
         self.txtSearch.setEnabled(True)
         self.txtSearch.clear()
-        self.lblNewItem.setEnabled(False) # label new product
+        self.lblNewItem.setEnabled(True) # label new product
         item_all = ['cod','isbn','titulo','autor','editorial']
         self.cmbSearch.clear()
         self.cmbSearch.addItems(item_all)
@@ -529,11 +529,13 @@ class Ui_Dialog(QtWidgets.QDialog):
                 QMessageBox.information(self, 'Mensaje', "Error para cargar la imagen", QMessageBox.Ok, QMessageBox.Ok)
 
     def createNewItem(self, event = None):
-        isAllowed, data = self.ware_gest.getNextCodDB()
+        # isAllowed: bool
+        # data: str
+        isAllowed, data, items = self.ware_gest.getNextCodDB()
         if isAllowed:
             ui_NewItemDialog = ui_EditNewItemDialog(True)
             ui_NewItemDialog.cleanInputFields()
-            ui_NewItemDialog.setDataFields(data)
+            ui_NewItemDialog.setDataFields(data, items)
             if ui_NewItemDialog.exec_() == QDialog.Accepted:
                 validator, data = ui_NewItemDialog.returnedVal
                 if validator:
@@ -931,8 +933,13 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def closeEvent(self, event):
         self.returnValues(False)
 
-    def setDataFields(self, data = None):
+    def setDataFields(self, data: str = None, items: list = []):
         if bool(data): self.prevData = data
+        if bool(len(items)): 
+            self.cmbItem.addItems(list(map( lambda x: x[1], items)))
+            self.cmbItem.setCurrentIndex(1)
+            self.cmbItem.setEnabled(False)
+            
         if bool(self.prevData) and not(self.method):
             self.innerEditData = self.prevData.copy()
             self.txtId.setText(self.innerEditData["cod"])
@@ -1039,6 +1046,16 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.setObjectName("ui_EditNewItemDialog")
         self.setWindowTitle("Editar producto") if not(self.method) else self.setWindowTitle("Registrar nuevo producto")
 
+        # # -----------  tabWdigedOperations  -----------
+        # self.tabWidget = QtWidgets.QTabWidget(self, movable=False)
+        # self.tabWidget.setGeometry(QtCore.QRect(0, 135, 640, 175))
+        # self.tabWidget.setTabShape(QTabWidget.TabShape.Triangular)
+        # stylesheet = "QTabBar::tab:selected{background: rgb(170,255,0);}QTabBar{font-weight:bold;}"
+        # self.tabWidget.setStyleSheet(stylesheet)
+        # self.tabWidget.blockSignals(True)
+        # self.tabWidget.currentChanged.connect(self.onTabChanged)
+        
+        
         warning_text = ">¡No ingresar tildes ni caracteres especiales (,', \", ´,)!"
 
         self.lblWarning = QLabel(warning_text,self)
@@ -1046,7 +1063,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.lblWarning.move(55, 15) if not(self.method) else self.lblWarning.move(60, 5)
         self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblWarning.setStyleSheet("background-color: red")
-
 
         self.lblWarning = QLabel(">(*): Campos obligatorios",self) if self.method else False
         if bool(self.lblWarning):
@@ -1062,10 +1078,19 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.lblId.setStyleSheet("background-color: lightgreen")
         self.txtId = MyLineEdit(self)
         self.txtId.setFixedHeight(18)
-        self.txtId.setFixedWidth(230)
+        self.txtId.setFixedWidth(70)
         self.txtId.move(95,37)
         self.txtId.setEnabled(False)
         self.defaultPalette = self.txtId.palette()
+
+        self.lblItem = QLabel("ITEM:",self)
+        self.lblItem.adjustSize()
+        self.lblItem.move(175, 40)
+        self.lblItem.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblItem.setStyleSheet("background-color: lightgreen")
+
+        self.cmbItem = QComboBox(self)
+        self.cmbItem.setGeometry(210, 37, 115 , 18)
 
         self.color = QColor(230,230,230)
         self.lblISBN = QLabel("ISBN:",self)
@@ -1349,24 +1374,25 @@ class ui_OperationDialog(QtWidgets.QDialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    Dialog = QDialog()
+    # Dialog = QDialog()
     # ui = Ui_Dialog(Dialog)
     # ui = ui_CustomChangeLocation()
-    data = {"cod": "GN_2524",
-        "isbn": "97845562314",
-        "title": "COMENTARIOS REALES DE LOS INCAS",
-        "autor": "INCA GARCILASO DE VEGA",
-        "publisher": "EL LECTOR",
-        "price": "65.0"}
-    # ui = ui_EditNewItemDialog(True)
-    ui = Ui_Dialog()
+    # data = {"cod": "GN_2524",
+    #     "isbn": "97845562314",
+    #     "title": "COMENTARIOS REALES DE LOS INCAS",
+    #     "autor": "INCA GARCILASO DE VEGA",
+    #     "publisher": "EL LECTOR",
+    #     "price": "65.0"}
+    ui = ui_EditNewItemDialog(True)
+    # ui = Ui_Dialog()
     # ui.setDataFields(data)
     # ui.setDataFields("GN_2025")
     # ui.cleanInputFields()
     # ui = ui_OperationDialog(Dialog)
     # ui.setItemData("", "")
     # ui.init_condition()
-    ui.showWindow()
+    # ui.showWindow()
+    ui.show_window()
     # ui.exec_()
     sys.exit(app.exec_())
 
