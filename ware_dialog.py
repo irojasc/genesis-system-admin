@@ -11,7 +11,7 @@ import unicodedata
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QFont, QBrush, QColor
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel
 from gestor import WareProduct, wares_gestor, aws_s3
 from objects import ware, user
 from inout_dialog import Ui_inoutDialog
@@ -1043,9 +1043,133 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtPublisher.setReadOnly(True)
                 self.spinInitStock.setReadOnly(True)
 
+
+    def setupComplementary(self):
+        x_offset = -35
+        y_offset = -25
+
+        # DATEOUT PART
+        self.lblDateOut = QLabel("PUBLICACIÓN (AÑO): ",self.tab_compItemData)
+        self.lblDateOut.adjustSize()
+        self.lblDateOut.move(x_offset + 43, y_offset + 40)
+        self.lblDateOut.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblDateOut.setStyleSheet("background-color: lightblue")
+
+        self.dateOutWidget = QDateEdit(QDate.currentDate(),self.tab_compItemData)
+        self.dateOutWidget.move(x_offset + 155, y_offset + 36)
+        self.dateOutWidget.setDisplayFormat("yyyy")
+        self.dateOutWidget.setFixedWidth(240)
+        #aqui facta el activador del qdateedit
+        
+        #PAGES PART
+        self.lblPages = QLabel("N. PÁGINAS: ",self.tab_compItemData)
+        self.lblPages.adjustSize()
+        self.lblPages.move(x_offset + 86, y_offset + 62)
+        self.lblPages.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblPages.setStyleSheet("background-color: lightblue")
+        self.pagesSpinBox = QSpinBox(self.tab_compItemData, minimum=0, maximum=9999, value=0)
+        self.pagesSpinBox.move(x_offset + 155, y_offset + 59)
+        self.pagesSpinBox.setFixedWidth(240)
+
+        # IDIOM PART
+        self.lblIdiom = QLabel("IDIOMA: ",self.tab_compItemData)
+        self.lblIdiom.adjustSize()
+        self.lblIdiom.move(x_offset + 106, y_offset + 86)
+        self.lblIdiom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblIdiom.setStyleSheet("background-color: lightblue")
+        self.cmbIdiom = QComboBox(self.tab_compItemData)
+        self.cmbIdiom.move(x_offset + 155, y_offset + 82)
+        self.cmbIdiom.setFixedWidth(240)
+        self.cmbIdiom.addItem("ITALIANO")
+        self.cmbIdiom.addItem("QUECHUA")
+
+        # COVER PART
+        self.lblCover = QLabel("CUBIERTA: ",self.tab_compItemData)
+        self.lblCover.adjustSize()
+        self.lblCover.move(x_offset + 94, y_offset + 109)
+        self.lblCover.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblCover.setStyleSheet("background-color: lightblue")
+        self.cmbCover = QComboBox(self.tab_compItemData)
+        self.cmbCover.setFixedWidth(240)
+        self.cmbCover.move(x_offset + 155, y_offset + 105)
+        self.cmbCover.addItem("BLANDA")
+        self.cmbCover.addItem("DURA")
+
+        # DIMENTIONS PART
+        self.lblWidth = QLabel("ANCHO:", self.tab_compItemData)
+        self.lblWidth.move(x_offset + 111, y_offset + 132)
+        self.lblWidth.setStyleSheet("background-color: lightblue")
+        self.widthSpinBox = QSpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
+        self.widthSpinBox.move(x_offset + 155, y_offset + 128)
+        self.widthSpinBox.setFixedWidth(99)
+
+        self.lblHeight = QLabel("ALTO:", self.tab_compItemData)
+        self.lblHeight.move(x_offset + 262, y_offset + 132)
+        self.lblHeight.setStyleSheet("background-color: lightblue")
+        self.heightSpinBox = QSpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
+        self.heightSpinBox.move(x_offset + 296, y_offset + 128)
+        self.heightSpinBox.setFixedWidth(99)
+        
+        # CATEGORY PART
+        self.lblCategory = QLabel("CATEGORÍA:", self.tab_compItemData)
+        self.lblCategory.move(x_offset + 38, y_offset + 155)
+        self.lblCategory.setStyleSheet("background-color: lightblue")
+        self.cmbCategory1 = QComboBox(self.tab_compItemData)
+        self.cmbCategory1.setFixedWidth(95)
+        self.cmbCategory1.setFixedHeight(20)
+        self.cmbCategory1.move(x_offset + 104, y_offset + 151)
+        self.cmbCategory1.setModel(QStringListModel([">SUPERACION PERSONAL", ">GASTRONOMIA", ">EDUCACION", ">LITERATURA"]))
+        font = self.cmbCategory1.font()
+        font.setPointSize(7)
+        self.cmbCategory1.setFont(font)
+        listView = QListView()
+        listView.setWordWrap(True)
+        self.cmbCategory1.setView(listView)
+        self.cmbCategory1.setEditable(True)
+        self.cmbCategory1.setCurrentIndex(-1)
+        self.cmbCategory1.lineEdit().setPlaceholderText("NIVEL 1")
+
+        self.cmbCategory2 = QComboBox(self.tab_compItemData)
+        self.cmbCategory2.setFixedWidth(95)
+        self.cmbCategory2.setFixedHeight(20)
+        self.cmbCategory2.move(x_offset + 202, y_offset + 151)
+        self.cmbCategory2.setModel(QStringListModel([">SUPERACION PERSONAL", ">GASTRONOMIA", ">EDUCACION", ">LITERATURA"]))
+        font = self.cmbCategory2.font()
+        font.setPointSize(7)
+        self.cmbCategory2.setFont(font)
+        listView = QListView()
+        listView.setWordWrap(True)
+        self.cmbCategory2.setView(listView)
+        self.cmbCategory2.setEditable(True)
+        self.cmbCategory2.setCurrentIndex(-1)
+        self.cmbCategory2.lineEdit().setPlaceholderText("NIVEL 2")
+
+        self.cmbCategory3 = QComboBox(self.tab_compItemData)
+        self.cmbCategory3.setFixedWidth(95)
+        self.cmbCategory3.setFixedHeight(20)
+        self.cmbCategory3.move(x_offset + 300, y_offset + 151)
+        self.cmbCategory3.setModel(QStringListModel([">SUPERACION PERSONAL", ">GASTRONOMIA", ">EDUCACION", ">LITERATURA"]))
+        font = self.cmbCategory3.font()
+        font.setPointSize(7)
+        self.cmbCategory3.setFont(font)
+        listView = QListView()
+        listView.setWordWrap(True)
+        self.cmbCategory3.setView(listView)
+        self.cmbCategory3.setEditable(True)
+        self.cmbCategory3.setCurrentIndex(-1)
+        self.cmbCategory3.lineEdit().setPlaceholderText("NIVEL 3")
+
+        # CATEGORY PART
+        self.lblContent = QLabel("RESUMEN:", self.tab_compItemData)
+        self.lblContent.move(x_offset + 100, y_offset + 180)
+        self.lblContent.setStyleSheet("background-color: lightblue")
+        self.contentTxtEdit = QTextEdit(self.tab_compItemData)
+        self.contentTxtEdit.move(x_offset + 155, y_offset + 180)
+        self.contentTxtEdit.setFixedSize(240,50)
+    
     def setupUi(self):
         self.resize(340, 220)
-        self.setFixedSize(380, 260)
+        self.setFixedSize(400, 260)
         self.setObjectName("ui_EditNewItemDialog")
         self.setWindowTitle("Editar producto") if not(self.method) else self.setWindowTitle("Registrar nuevo producto")
 
@@ -1054,16 +1178,19 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
         self.tab_mainItemData = QWidget(self)
         self.tab_mainItemData.setFixedSize(360, 180)
+        self.tab_compItemData = QWidget(self)
+        self.tab_compItemData.setFixedSize(370, 180)
 
         #create a tabWidget
         self.tabItem = QTabWidget(self)
         self.tabItem.addTab(self.tab_mainItemData, "Información principal")
+        self.tabItem.addTab(self.tab_compItemData, "Información secundaria")
 
         self.main_layout.addWidget(self.tabItem, 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
         self.main_layout.addWidget(QPushButton('Guardar'), 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
         self.main_layout.addWidget(QPushButton('Cancel'),2, 0, alignment=Qt.AlignmentFlag.AlignJustify)
+        self.setupComplementary()
 
-        
         warning_text = ">¡No ingresar tildes ni caracteres especiales (,', \", ´,)!"
 
         self.lblWarning = QLabel(warning_text,self.tab_mainItemData)
