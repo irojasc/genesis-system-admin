@@ -1087,7 +1087,6 @@ class MyLineEdit(QLineEdit):
             self.setText(self.text().upper())
             self.setCursorPosition(cursor)
 
-
 class ui_CustomChangeLocation(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(ui_CustomChangeLocation, self).__init__(parent)
