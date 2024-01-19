@@ -9,9 +9,10 @@
 import sys
 import unicodedata
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QFont, QBrush, QColor, QTextCursor
+from PyQt5.QtGui import QFont, QBrush, QColor, QKeyEvent, QMouseEvent, QTextCursor
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel
+from PyQt5.QtWidgets import QWidget
 from gestor import WareProduct, wares_gestor, aws_s3
 from objects import ware, user
 from inout_dialog import Ui_inoutDialog
@@ -1068,6 +1069,80 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtPublisher.setReadOnly(True)
                 self.spinInitStock.setReadOnly(True)
 
+
+            elif widget == "DateOut":
+                self.dateOutWidget.setReadOnly(False)
+                self.dateOutWidget.setPalette(self.defaultPalette)
+                self.pagesSpinBox.setPalette(self.darkPalette)
+                self.cmbIdiom.setPalette(self.darkPalette)
+                # self.cmbCover.setPalette(self.darkPalette)
+                # self.widthSpinBox.setPalette(self.darkPalette)
+                # self.heightSpinBox.setPalette(self.darkPalette)
+                self.pagesSpinBox.setReadOnly(True)
+                self.cmbIdiom.readonly = True
+                # self.cmbIdiom.setEditable(True)
+                # self.cmbCover.setEditable(True)
+                # self.widthSpinBox.setReadOnly(True)
+                # self.heightSpinBox.setReadOnly(True)
+
+            elif widget == "Pages":
+                self.pagesSpinBox.setReadOnly(False)
+                self.pagesSpinBox.setPalette(self.defaultPalette)
+
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(225,225,255);}")
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(225,255,255);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(225,255,255);}")
+                # self.cmbCover.setPalette(self.darkPalette)
+                # self.widthSpinBox.setPalette(self.darkPalette)
+                # self.heightSpinBox.setPalette(self.darkPalette)
+                self.dateOutWidget.setReadOnly(True)
+                self.cmbIdiom.readonly = True
+                self.cmbCover.readonly = True
+                # self.cmbIdiom.setEditable(True)
+                # self.cmbCover.setEditable(True)
+                # self.widthSpinBox.setReadOnly(True)
+                # self.heightSpinBox.setReadOnly(True)
+
+            elif widget == "CmbIdiom":
+                self.cmbIdiom.readonly = False
+                self.cmbIdiom.setPalette(self.defaultPalette)
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: white;}")
+
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(225,225,255);}")
+                self.pagesSpinBox.setPalette(self.darkPalette)
+                self.cmbCover.setPalette(self.darkPalette)
+                # self.cmbIdiom.setPalette(self.darkPalette)
+                # self.cmbCover.setPalette(self.darkPalette)
+                # self.widthSpinBox.setPalette(self.darkPalette)
+                # self.heightSpinBox.setPalette(self.darkPalette)
+                self.dateOutWidget.setReadOnly(True)
+                self.pagesSpinBox.setReadOnly(True)
+                self.cmbCover.readonly = True
+                # self.cmbIdiom.setEditable(True)
+                # self.cmbCover.setEditable(True)
+                # self.widthSpinBox.setReadOnly(True)
+                # self.heightSpinBox.setReadOnly(True)
+            
+            elif widget == "CmbCover":
+                self.cmbCover.readonly = False
+                self.cmbCover.setStyleSheet("QComboBox{background-color: white;}")
+
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(225,225,255);}")
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(225, 225, 225);}")
+                self.pagesSpinBox.setPalette(self.darkPalette)
+                # self.cmbIdiom.setPalette(self.darkPalette)
+                # self.cmbCover.setPalette(self.darkPalette)
+                # self.widthSpinBox.setPalette(self.darkPalette)
+                # self.heightSpinBox.setPalette(self.darkPalette)
+                self.dateOutWidget.setReadOnly(True)
+                self.pagesSpinBox.setReadOnly(True)
+                self.cmbIdiom.readonly = True
+                # self.cmbIdiom.setEditable(True)
+                # self.cmbCover.setEditable(True)
+                # self.widthSpinBox.setReadOnly(True)
+                # self.heightSpinBox.setReadOnly(True)
+    
+
     def txtEditSignal(self):
         cursor = self.contentTxtEdit.textCursor()
         length_ = len(self.contentTxtEdit.toPlainText())
@@ -1102,9 +1177,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         #se puede guardar la position antigua de cursor y asignar a la nueva cuando el cursor esta menos de 600
         #cantidad de caracteres igual a 600 o 601
 
-        
-
-    
     def setupComplementary(self):
         x_offset = -35
         y_offset = 0
@@ -1129,7 +1201,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         
 
         # self.dateOutWidget = QDateEdit(QDate.currentDate(),self.tab_compItemData)
-        self.dateOutWidget = QDateEdit(self.tab_compItemData)
+        self.dateOutWidget = MyDateEdit(self.tab_compItemData)
         self.dateOutWidget.setMaximumDate(QDate.currentDate().addYears(1))
         self.dateOutWidget.setDate(QDate(-2,1,1))
         self.dateOutWidget.move(x_offset + 155, y_offset + 36)
@@ -1139,6 +1211,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         font.setBold(True)
         self.dateOutWidget.setFont(font)
         self.dateOutWidget.dateChanged.connect(lambda x: self.dateOutWidget.setStyleSheet("QDateEdit{background-color: red; color:white}") if x.year() == 1752 else self.dateOutWidget.setStyleSheet("QDateEdit{background-color: white; color:default}"))
+        self.dateOutWidget.clicked.connect(lambda: self.deactivateLineEdit("DateOut"))
         #aqui falta el activador del qdateedit
         
         #PAGES PART
@@ -1147,9 +1220,10 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.lblPages.move(x_offset + 86, y_offset + 62)
         self.lblPages.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblPages.setStyleSheet("background-color: lightblue")
-        self.pagesSpinBox = QSpinBox(self.tab_compItemData, minimum=0, maximum=9999, value=0)
+        self.pagesSpinBox = MySpinBox(self.tab_compItemData, minimum=0, maximum=9999, value=0)
         self.pagesSpinBox.move(x_offset + 155, y_offset + 59)
         self.pagesSpinBox.setFixedWidth(240)
+        self.pagesSpinBox.clicked.connect(lambda: self.deactivateLineEdit("Pages"))
 
         # IDIOM PART
         self.lblIdiom = QLabel("IDIOMA: ",self.tab_compItemData)
@@ -1157,9 +1231,10 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.lblIdiom.move(x_offset + 106, y_offset + 86)
         self.lblIdiom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblIdiom.setStyleSheet("background-color: lightblue")
-        self.cmbIdiom = QComboBox(self.tab_compItemData)
+        self.cmbIdiom = MyComboBox_Pop(self.tab_compItemData)
         self.cmbIdiom.move(x_offset + 155, y_offset + 82)
         self.cmbIdiom.setFixedWidth(240)
+        self.cmbIdiom.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("CmbIdiom"))
         self.cmbIdiom.addItem("ITALIANO")
         self.cmbIdiom.addItem("QUECHUA")
 
@@ -1169,8 +1244,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.lblCover.move(x_offset + 94, y_offset + 109)
         self.lblCover.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblCover.setStyleSheet("background-color: lightblue")
-        self.cmbCover = QComboBox(self.tab_compItemData)
+        self.cmbCover = MyComboBox_Pop(self.tab_compItemData)
         self.cmbCover.setFixedWidth(240)
+        self.cmbCover.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("CmbCover"))
         self.cmbCover.move(x_offset + 155, y_offset + 105)
         self.cmbCover.addItem("BLANDA")
         self.cmbCover.addItem("DURA")
@@ -1272,10 +1348,10 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
     def setupUi(self):
         x_offset = 10
-        y_offset = 10
+        y_offset = 0
 
         self.resize(340, 300)
-        self.setFixedSize(400, 350)
+        self.setFixedSize(400, 338)
         self.setObjectName("ui_EditNewItemDialog")
         self.setWindowTitle("Editar producto") if not(self.method) else self.setWindowTitle("Registrar nuevo producto")
 
@@ -1283,7 +1359,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.setLayout(self.main_layout)
 
         self.tab_mainItemData = QWidget(self)
-        self.tab_mainItemData.setFixedSize(360, 200)
+        self.tab_mainItemData.setFixedSize(360, 285)
         self.tab_compItemData = QWidget(self)
         self.tab_compItemData.setFixedSize(370, 260)
 
@@ -1423,6 +1499,16 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
         self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
 
+        # LABEL BOTTOM IMAGE
+        self.lblImage_ = QLabel(self.tab_mainItemData)
+        self.lblImage_.setGeometry(QtCore.QRect(105, 185, 165, 86))
+        self.lblImage_.setText("")
+        # self.lblImage_.setStyleSheet("QLabel{background-color: red;}")
+        pixMap = QtGui.QPixmap("C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/imgs/newBook.png")
+        # pixMap = pixMap.scaled(600, 600, QtCore.Qt.IgnoreAspectRatio)
+        self.lblImage_.setPixmap(pixMap)
+        self.lblImage_.setScaledContents(True)
+
         # self.btnCancel = QPushButton('Cancelar', self)
         # self.btnCancel.adjustSize()
         # self.btnCancel.move(190, 185)
@@ -1442,6 +1528,39 @@ class MySpinBox(QSpinBox):
     def mousePressEvent(self, event):
         self.clicked.emit()
         QSpinBox.mousePressEvent(self, event)
+
+class MyDateEdit(QDateEdit):
+    clicked = pyqtSignal()
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+        QDateEdit.mousePressEvent(self, event)
+
+class MyComboBox(QComboBox):
+    clicked = QtCore.pyqtSignal()
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+        MyComboBox.mousePressEvent(self, event)
+
+    
+class MyComboBox_Pop(QComboBox):
+    popupAboutToBeShown  = QtCore.pyqtSignal()
+
+    def __init__(self, parent) -> None:
+        QComboBox.__init__(self, parent)
+        self.readonly = False
+
+    def showPopup(self) -> None:
+        self.popupAboutToBeShown.emit()
+        return super(MyComboBox_Pop, self).showPopup()
+    
+    def mousePressEvent(self, e: QMouseEvent) -> None:
+        self.readonly = False
+        if not self.readonly:
+            QComboBox.mousePressEvent(self, e)
+
+    def keyPressEvent(self, e: QKeyEvent) -> None:
+        if not self.readonly:
+            QComboBox.mousePressEvent(self, e)
 
 class MyLineEdit(QLineEdit):
     clicked = pyqtSignal()
