@@ -96,6 +96,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.label_3.setPixmap(QtGui.QPixmap(env_config.get('ROOT') + "imgs/main_window_button.png"))
         self.label_3.setScaledContents(True)
         self.label_3.setObjectName("label_3")
+        
         self.notification_table = QtWidgets.QTableWidget(self.centralwidget)
         self.notification_table.setEnabled(False)
         self.notification_table.setGeometry(QtCore.QRect(0, 120, 1280, 617))
