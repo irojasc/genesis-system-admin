@@ -9,7 +9,7 @@
 import sys
 import unicodedata
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QFont, QBrush, QColor, QKeyEvent, QMouseEvent, QTextCursor
+from PyQt5.QtGui import QFont, QBrush, QColor, QKeyEvent, QMouseEvent, QTextCursor, QWheelEvent
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel
 from PyQt5.QtWidgets import QWidget
@@ -1073,75 +1073,264 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             elif widget == "DateOut":
                 self.dateOutWidget.setReadOnly(False)
                 self.dateOutWidget.setPalette(self.defaultPalette)
+                #style
                 self.pagesSpinBox.setPalette(self.darkPalette)
-                self.cmbIdiom.setPalette(self.darkPalette)
-                # self.cmbCover.setPalette(self.darkPalette)
-                # self.widthSpinBox.setPalette(self.darkPalette)
-                # self.heightSpinBox.setPalette(self.darkPalette)
+                self.widthSpinBox.setPalette(self.darkPalette)
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.heightSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.contentTxtEdit.setPalette(self.darkPalette)
+
+                #readonly
                 self.pagesSpinBox.setReadOnly(True)
+                self.widthSpinBox.setReadOnly(True)
                 self.cmbIdiom.readonly = True
-                # self.cmbIdiom.setEditable(True)
-                # self.cmbCover.setEditable(True)
-                # self.widthSpinBox.setReadOnly(True)
-                # self.heightSpinBox.setReadOnly(True)
+                self.cmbCover.readonly = True
+                self.heightSpinBox.setReadOnly(True)
+                self.cmbCategory1.readonly = True
+                self.cmbCategory2.readonly = True
+                self.cmbCategory3.readonly = True
+                self.contentTxtEdit.setReadOnly(True)
+                
+
 
             elif widget == "Pages":
                 self.pagesSpinBox.setReadOnly(False)
                 self.pagesSpinBox.setPalette(self.defaultPalette)
+                #style
+                self.widthSpinBox.setPalette(self.darkPalette)
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.heightSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.contentTxtEdit.setPalette(self.darkPalette)
 
-                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(225,225,255);}")
-                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(225,255,255);}")
-                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(225,255,255);}")
-                # self.cmbCover.setPalette(self.darkPalette)
-                # self.widthSpinBox.setPalette(self.darkPalette)
-                # self.heightSpinBox.setPalette(self.darkPalette)
+                #readonly
                 self.dateOutWidget.setReadOnly(True)
+                self.widthSpinBox.setReadOnly(True)
                 self.cmbIdiom.readonly = True
                 self.cmbCover.readonly = True
-                # self.cmbIdiom.setEditable(True)
-                # self.cmbCover.setEditable(True)
-                # self.widthSpinBox.setReadOnly(True)
-                # self.heightSpinBox.setReadOnly(True)
+                self.heightSpinBox.setReadOnly(True)
+                self.cmbCategory1.readonly = True
+                self.cmbCategory2.readonly = True
+                self.cmbCategory3.readonly = True
+                self.contentTxtEdit.setReadOnly(True)
 
             elif widget == "CmbIdiom":
                 self.cmbIdiom.readonly = False
-                self.cmbIdiom.setPalette(self.defaultPalette)
                 self.cmbIdiom.setStyleSheet("QComboBox{background-color: white;}")
 
-                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(225,225,255);}")
+                #style
                 self.pagesSpinBox.setPalette(self.darkPalette)
-                self.cmbCover.setPalette(self.darkPalette)
-                # self.cmbIdiom.setPalette(self.darkPalette)
-                # self.cmbCover.setPalette(self.darkPalette)
-                # self.widthSpinBox.setPalette(self.darkPalette)
-                # self.heightSpinBox.setPalette(self.darkPalette)
+                self.widthSpinBox.setPalette(self.darkPalette)
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.heightSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.contentTxtEdit.setPalette(self.darkPalette)
+                
+                #readonly
                 self.dateOutWidget.setReadOnly(True)
                 self.pagesSpinBox.setReadOnly(True)
+                self.widthSpinBox.setReadOnly(True)
                 self.cmbCover.readonly = True
-                # self.cmbIdiom.setEditable(True)
-                # self.cmbCover.setEditable(True)
-                # self.widthSpinBox.setReadOnly(True)
-                # self.heightSpinBox.setReadOnly(True)
+                self.heightSpinBox.setReadOnly(True)
+                self.cmbCategory1.readonly = True
+                self.cmbCategory2.readonly = True
+                self.cmbCategory3.readonly = True
+                self.contentTxtEdit.setReadOnly(True)
+                
             
             elif widget == "CmbCover":
                 self.cmbCover.readonly = False
                 self.cmbCover.setStyleSheet("QComboBox{background-color: white;}")
-
-                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(225,225,255);}")
-                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(225, 225, 225);}")
+                
+                #style
                 self.pagesSpinBox.setPalette(self.darkPalette)
-                # self.cmbIdiom.setPalette(self.darkPalette)
-                # self.cmbCover.setPalette(self.darkPalette)
-                # self.widthSpinBox.setPalette(self.darkPalette)
-                # self.heightSpinBox.setPalette(self.darkPalette)
+                self.widthSpinBox.setPalette(self.darkPalette)
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230, 230, 230);}")
+                self.heightSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.contentTxtEdit.setPalette(self.darkPalette)
+                
+                #readonly                
+                self.dateOutWidget.setReadOnly(True)
+                self.pagesSpinBox.setReadOnly(True)
+                self.widthSpinBox.setReadOnly(True)
+                self.cmbIdiom.readonly = True
+                self.heightSpinBox.setReadOnly(True)
+                self.cmbCategory1.readonly = True
+                self.cmbCategory2.readonly = True
+                self.cmbCategory3.readonly = True
+                self.contentTxtEdit.setReadOnly(True)
+            
+            elif widget == "Width":
+                self.widthSpinBox.setReadOnly(False)
+                self.widthSpinBox.setPalette(self.defaultPalette)
+
+                #style
+                self.pagesSpinBox.setPalette(self.darkPalette)
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.heightSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.contentTxtEdit.setPalette(self.darkPalette)
+
+                #readonly
                 self.dateOutWidget.setReadOnly(True)
                 self.pagesSpinBox.setReadOnly(True)
                 self.cmbIdiom.readonly = True
-                # self.cmbIdiom.setEditable(True)
-                # self.cmbCover.setEditable(True)
-                # self.widthSpinBox.setReadOnly(True)
-                # self.heightSpinBox.setReadOnly(True)
-    
+                self.cmbCover.readonly = True
+                self.heightSpinBox.setReadOnly(True)
+                self.cmbCategory1.readonly = True
+                self.cmbCategory2.readonly = True
+                self.cmbCategory3.readonly = True
+                self.contentTxtEdit.setReadOnly(True)
+
+
+            elif widget == "Height":
+                self.heightSpinBox.setReadOnly(False)
+                self.heightSpinBox.setPalette(self.defaultPalette)
+
+                #style
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                self.pagesSpinBox.setPalette(self.darkPalette)
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.widthSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.contentTxtEdit.setPalette(self.darkPalette)
+
+                #readonly
+                self.dateOutWidget.setReadOnly(True)
+                self.pagesSpinBox.setReadOnly(True)
+                self.cmbIdiom.readonly = True
+                self.cmbCover.readonly = True
+                self.widthSpinBox.setReadOnly(True)
+                self.cmbCategory1.readonly = True
+                self.cmbCategory2.readonly = True
+                self.cmbCategory3.readonly = True
+                self.contentTxtEdit.setReadOnly(True)
+
+            elif widget == "Category1":
+                self.cmbCategory1.readonly = False
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: white;}")
+
+                #style
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                self.pagesSpinBox.setPalette(self.darkPalette)
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.widthSpinBox.setPalette(self.darkPalette)
+                self.heightSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.contentTxtEdit.setPalette(self.darkPalette)
+
+                #readonly
+                self.dateOutWidget.setReadOnly(True)
+                self.pagesSpinBox.setReadOnly(True)
+                self.cmbIdiom.readonly = True
+                self.cmbCover.readonly = True
+                self.widthSpinBox.setReadOnly(True)
+                self.heightSpinBox.setReadOnly(True)
+                self.cmbCategory2.readonly = True
+                self.cmbCategory3.readonly = True
+                self.contentTxtEdit.setReadOnly(True)
+            
+            elif widget == "Category2":
+                self.cmbCategory2.readonly = False
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: white;}")
+
+                #style
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                self.pagesSpinBox.setPalette(self.darkPalette)
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.widthSpinBox.setPalette(self.darkPalette)
+                self.heightSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.contentTxtEdit.setPalette(self.darkPalette)
+
+                #readonly
+                self.dateOutWidget.setReadOnly(True)
+                self.pagesSpinBox.setReadOnly(True)
+                self.cmbIdiom.readonly = True
+                self.cmbCover.readonly = True
+                self.widthSpinBox.setReadOnly(True)
+                self.heightSpinBox.setReadOnly(True)
+                self.cmbCategory1.readonly = True
+                self.cmbCategory3.readonly = True
+                self.contentTxtEdit.setReadOnly(True)
+            
+            elif widget == "Category3":
+                self.cmbCategory3.readonly = False
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: white;}")
+
+                #style
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                self.pagesSpinBox.setPalette(self.darkPalette)
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.widthSpinBox.setPalette(self.darkPalette)
+                self.heightSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.contentTxtEdit.setPalette(self.darkPalette)
+
+                #readonly
+                self.dateOutWidget.setReadOnly(True)
+                self.pagesSpinBox.setReadOnly(True)
+                self.cmbIdiom.readonly = True
+                self.cmbCover.readonly = True
+                self.widthSpinBox.setReadOnly(True)
+                self.heightSpinBox.setReadOnly(True)
+                self.cmbCategory1.readonly = True
+                self.cmbCategory2.readonly = True
+                self.contentTxtEdit.setReadOnly(True)
+
+            elif widget == "TextEdit":
+                self.contentTxtEdit.setReadOnly(False)
+                self.contentTxtEdit.setPalette(self.defaultPalette)
+
+                # style
+                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                self.pagesSpinBox.setPalette(self.darkPalette)
+                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.widthSpinBox.setPalette(self.darkPalette)
+                self.heightSpinBox.setPalette(self.darkPalette)
+                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+
+                #readonly
+                self.dateOutWidget.setReadOnly(True)
+                self.pagesSpinBox.setReadOnly(True)
+                self.cmbIdiom.readonly = True
+                self.cmbCover.readonly = True
+                self.widthSpinBox.setReadOnly(True)
+                self.heightSpinBox.setReadOnly(True)
+                self.cmbCategory1.readonly = True
+                self.cmbCategory2.readonly = True
+                self.cmbCategory3.readonly = True
 
     def txtEditSignal(self):
         cursor = self.contentTxtEdit.textCursor()
@@ -1255,14 +1444,16 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.lblWidth = QLabel("ANCHO:", self.tab_compItemData)
         self.lblWidth.move(x_offset + 111, y_offset + 132)
         self.lblWidth.setStyleSheet("background-color: lightblue")
-        self.widthSpinBox = QSpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
+        self.widthSpinBox = MySpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
+        self.widthSpinBox.clicked.connect(lambda: self.deactivateLineEdit("Width"))
         self.widthSpinBox.move(x_offset + 155, y_offset + 128)
         self.widthSpinBox.setFixedWidth(99)
 
         self.lblHeight = QLabel("ALTO:", self.tab_compItemData)
         self.lblHeight.move(x_offset + 262, y_offset + 132)
         self.lblHeight.setStyleSheet("background-color: lightblue")
-        self.heightSpinBox = QSpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
+        self.heightSpinBox = MySpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
+        self.heightSpinBox.clicked.connect(lambda: self.deactivateLineEdit("Height"))
         self.heightSpinBox.move(x_offset + 296, y_offset + 128)
         self.heightSpinBox.setFixedWidth(99)
         
@@ -1270,7 +1461,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.lblCategory = QLabel("CATEGORÍA:", self.tab_compItemData)
         self.lblCategory.move(x_offset + 38, y_offset + 155)
         self.lblCategory.setStyleSheet("background-color: lightblue")
-        self.cmbCategory1 = QComboBox(self.tab_compItemData)
+        self.cmbCategory1 = MyComboBox_Pop(self.tab_compItemData)
         self.cmbCategory1.setFixedWidth(95)
         self.cmbCategory1.setFixedHeight(20)
         self.cmbCategory1.move(x_offset + 104, y_offset + 151)
@@ -1285,8 +1476,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.cmbCategory1.setCurrentIndex(-1)
         self.cmbCategory1.lineEdit().setPlaceholderText("NIVEL 1")
         self.cmbCategory1.currentIndexChanged.connect(lambda x: self.cmbCategory1.setEditable(False))
+        self.cmbCategory1.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("Category1"))
 
-        self.cmbCategory2 = QComboBox(self.tab_compItemData)
+        self.cmbCategory2 = MyComboBox_Pop(self.tab_compItemData)
         self.cmbCategory2.setFixedWidth(95)
         self.cmbCategory2.setFixedHeight(20)
         self.cmbCategory2.move(x_offset + 202, y_offset + 151)
@@ -1301,8 +1493,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.cmbCategory2.setCurrentIndex(-1)
         self.cmbCategory2.lineEdit().setPlaceholderText("NIVEL 2")
         self.cmbCategory2.currentIndexChanged.connect(lambda x: self.cmbCategory2.setEditable(False))
+        self.cmbCategory2.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("Category2"))
 
-        self.cmbCategory3 = QComboBox(self.tab_compItemData)
+        self.cmbCategory3 = MyComboBox_Pop(self.tab_compItemData)
         self.cmbCategory3.setFixedWidth(95)
         self.cmbCategory3.setFixedHeight(20)
         self.cmbCategory3.move(x_offset + 300, y_offset + 151)
@@ -1317,12 +1510,13 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.cmbCategory3.setCurrentIndex(-1)
         self.cmbCategory3.lineEdit().setPlaceholderText("NIVEL 3")
         self.cmbCategory3.currentIndexChanged.connect(lambda x: self.cmbCategory3.setEditable(False))
+        self.cmbCategory3.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("Category3"))
 
         # CONTENT PART
         self.lblContent = QLabel("RESUMEN:", self.tab_compItemData)
         self.lblContent.move(x_offset + 50, y_offset + 180)
         self.lblContent.setStyleSheet("background-color: lightblue")
-        self.contentTxtEdit = QTextEdit(self.tab_compItemData)
+        self.contentTxtEdit = MyQTextEdit(self.tab_compItemData)
         self.contentTxtEdit.move(x_offset + 105, y_offset + 180)
         self.contentTxtEdit.setFixedSize(290,65)
         self.contentTxtEdit.setAcceptRichText(False)
@@ -1331,6 +1525,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         font.setPointSize(8)
         self.contentTxtEdit.setFont(font)
         self.contentTxtEdit.textChanged.connect(self.txtEditSignal)
+        self.contentTxtEdit.clicked.connect(lambda: self.deactivateLineEdit("TextEdit"))
 
         # LABEL CARACTER
         self.lblCaracterCount = QLabel("CHARACTERS: 0", self.tab_compItemData)
@@ -1560,7 +1755,11 @@ class MyComboBox_Pop(QComboBox):
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
         if not self.readonly:
-            QComboBox.mousePressEvent(self, e)
+            QComboBox.keyPressEvent(self, e)
+    
+    def wheelEvent(self, e: QWheelEvent) -> None:
+        if not self.readonly:
+            QComboBox.wheelEvent(self,e)
 
 class MyLineEdit(QLineEdit):
     clicked = pyqtSignal()
@@ -1583,6 +1782,13 @@ class MyLineEdit(QLineEdit):
             cursor = self.cursorPosition()
             self.setText(self.text().upper())
             self.setCursorPosition(cursor)
+
+class MyQTextEdit(QTextEdit):
+    clicked = pyqtSignal()
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+        QTextEdit.mousePressEvent(self, event)
+        # self.textChanged.connect(self.text_changed)
 
 class ui_CustomChangeLocation(QtWidgets.QDialog):
     def __init__(self, parent=None):
