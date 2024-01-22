@@ -536,7 +536,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         isAllowed, data, items = self.ware_gest.getNextCodDB()
         if isAllowed:
             ui_NewItemDialog = ui_EditNewItemDialog(True)
-            ui_NewItemDialog.cleanInputFields()
+            ui_NewItemDialog.cleanInputFields(True)
             ui_NewItemDialog.setDataFields(data, items)
             if ui_NewItemDialog.exec_() == QDialog.Accepted:
                 validator, data = ui_NewItemDialog.returnedVal
@@ -925,12 +925,27 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.returnedVal = (False, None)
         self.submitclose() if self.returnedVal[0] else False
 
-    def cleanInputFields(self):
+    def cleanInputFields(self, isInit: str = None):
+        self.txtISBN.setReadOnly(True)
+        self.txtTitle.setReadOnly(True)
+        self.txtAutor.setReadOnly(True)
+        self.txtPublisher.setReadOnly(True)
+        self.spinInitStock.setReadOnly(True)
+        self.dateOutWidget.setReadOnly(True)
+        self.pagesSpinBox.setReadOnly(True)
+        self.widthSpinBox.setReadOnly(True)
+        self.cmbIdiom.readonly = True
+        self.cmbCover.readonly = True
+        self.heightSpinBox.setReadOnly(True)
+        self.cmbCategory1.readonly = True
+        self.cmbCategory2.readonly = True
+        self.cmbCategory3.readonly = True
+        self.contentTxtEdit.setReadOnly(True)
+
         self.txtISBN.setPalette(self.darkPalette)
         self.txtTitle.setPalette(self.darkPalette)
         self.txtAutor.setPalette(self.darkPalette)
         self.txtPublisher.setPalette(self.darkPalette)
-        # self.txtPrice.setPalette(self.darkPalette)
 
         self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
         self.pagesSpinBox.setPalette(self.darkPalette)
@@ -942,7 +957,11 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
         self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
         self.contentTxtEdit.setPalette(self.darkPalette)
-        self.setInitDefaultValues()
+
+        self.tab_compItemData.setEnabled(False)
+        self.tab_compItemData.setEnabled(True)
+
+        self.setInitDefaultValues() if bool(isInit) else False
     
     def setInitDefaultValues(self):
         self.cmbIdiom.setCurrentIndex(-1)
@@ -988,38 +1007,36 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtISBN.setPalette(self.defaultPalette)
 
                 #palette_
-                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
-                self.pagesSpinBox.setPalette(self.darkPalette)
-                self.widthSpinBox.setPalette(self.darkPalette)
-                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.heightSpinBox.setPalette(self.darkPalette)
-                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.contentTxtEdit.setPalette(self.darkPalette)
+                # self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                # self.pagesSpinBox.setPalette(self.darkPalette)
+                # self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.widthSpinBox.setPalette(self.darkPalette)
+                # self.heightSpinBox.setPalette(self.darkPalette)
+                # self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.contentTxtEdit.setPalette(self.darkPalette)
 
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtAutor.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
                 self.spinInitStock.setPalette(self.darkPalette)
 
                 #readonly_
-                self.dateOutWidget.setReadOnly(True)
-                self.pagesSpinBox.setReadOnly(True)
-                self.widthSpinBox.setReadOnly(True)
-                self.cmbIdiom.readonly = True
-                self.cmbCover.readonly = True
-                self.heightSpinBox.setReadOnly(True)
-                self.cmbCategory1.readonly = True
-                self.cmbCategory2.readonly = True
-                self.cmbCategory3.readonly = True
-                self.contentTxtEdit.setReadOnly(True)
+                # self.dateOutWidget.setReadOnly(True)
+                # self.pagesSpinBox.setReadOnly(True)
+                # self.widthSpinBox.setReadOnly(True)
+                # self.cmbIdiom.readonly = True
+                # self.cmbCover.readonly = True
+                # self.heightSpinBox.setReadOnly(True)
+                # self.cmbCategory1.readonly = True
+                # self.cmbCategory2.readonly = True
+                # self.cmbCategory3.readonly = True
+                # self.contentTxtEdit.setReadOnly(True)
                 self.txtTitle.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
                 self.spinInitStock.setReadOnly(True)
 
             elif widget == "Title":
@@ -1027,37 +1044,35 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtTitle.setPalette(self.defaultPalette)
 
                 #palette_
-                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
-                self.pagesSpinBox.setPalette(self.darkPalette)
-                self.widthSpinBox.setPalette(self.darkPalette)
-                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.heightSpinBox.setPalette(self.darkPalette)
-                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.contentTxtEdit.setPalette(self.darkPalette)
+                # self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                # self.pagesSpinBox.setPalette(self.darkPalette)
+                # self.widthSpinBox.setPalette(self.darkPalette)
+                # self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.heightSpinBox.setPalette(self.darkPalette)
+                # self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.contentTxtEdit.setPalette(self.darkPalette)
                 self.txtISBN.setPalette(self.darkPalette)
                 self.txtAutor.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
                 self.spinInitStock.setPalette(self.darkPalette)
 
                 #readonly_
-                self.dateOutWidget.setReadOnly(True)
-                self.pagesSpinBox.setReadOnly(True)
-                self.widthSpinBox.setReadOnly(True)
-                self.cmbIdiom.readonly = True
-                self.cmbCover.readonly = True
-                self.heightSpinBox.setReadOnly(True)
-                self.cmbCategory1.readonly = True
-                self.cmbCategory2.readonly = True
-                self.cmbCategory3.readonly = True
-                self.contentTxtEdit.setReadOnly(True)
+                # self.dateOutWidget.setReadOnly(True)
+                # self.pagesSpinBox.setReadOnly(True)
+                # self.widthSpinBox.setReadOnly(True)
+                # self.cmbIdiom.readonly = True
+                # self.cmbCover.readonly = True
+                # self.heightSpinBox.setReadOnly(True)
+                # self.cmbCategory1.readonly = True
+                # self.cmbCategory2.readonly = True
+                # self.cmbCategory3.readonly = True
+                # self.contentTxtEdit.setReadOnly(True)
                 self.txtISBN.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
                 self.spinInitStock.setReadOnly(True)
 
             elif widget == "Autor":
@@ -1065,36 +1080,34 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtAutor.setPalette(self.defaultPalette)
 
                 #palette_
-                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
-                self.pagesSpinBox.setPalette(self.darkPalette)
-                self.widthSpinBox.setPalette(self.darkPalette)
-                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.heightSpinBox.setPalette(self.darkPalette)
-                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.contentTxtEdit.setPalette(self.darkPalette)
+                # self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                # self.pagesSpinBox.setPalette(self.darkPalette)
+                # self.widthSpinBox.setPalette(self.darkPalette)
+                # self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.heightSpinBox.setPalette(self.darkPalette)
+                # self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.contentTxtEdit.setPalette(self.darkPalette)
                 self.txtISBN.setPalette(self.darkPalette)
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
                 self.spinInitStock.setPalette(self.darkPalette)
 
                 #readonly_
-                self.dateOutWidget.setReadOnly(True)
-                self.pagesSpinBox.setReadOnly(True)
-                self.widthSpinBox.setReadOnly(True)
-                self.cmbIdiom.readonly = True
-                self.cmbCover.readonly = True
-                self.heightSpinBox.setReadOnly(True)
-                self.cmbCategory1.readonly = True
-                self.cmbCategory2.readonly = True
-                self.cmbCategory3.readonly = True
-                self.contentTxtEdit.setReadOnly(True)
+                # self.dateOutWidget.setReadOnly(True)
+                # self.pagesSpinBox.setReadOnly(True)
+                # self.widthSpinBox.setReadOnly(True)
+                # self.cmbIdiom.readonly = True
+                # self.cmbCover.readonly = True
+                # self.heightSpinBox.setReadOnly(True)
+                # self.cmbCategory1.readonly = True
+                # self.cmbCategory2.readonly = True
+                # self.cmbCategory3.readonly = True
+                # self.contentTxtEdit.setReadOnly(True)
                 self.txtISBN.setReadOnly(True)
                 self.txtTitle.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
                 self.spinInitStock.setReadOnly(True)
 
@@ -1103,38 +1116,36 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtPublisher.setPalette(self.defaultPalette)
 
                 #palette_
-                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
-                self.pagesSpinBox.setPalette(self.darkPalette)
-                self.widthSpinBox.setPalette(self.darkPalette)
-                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.heightSpinBox.setPalette(self.darkPalette)
-                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.contentTxtEdit.setPalette(self.darkPalette)
+                # self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                # self.pagesSpinBox.setPalette(self.darkPalette)
+                # self.widthSpinBox.setPalette(self.darkPalette)
+                # self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.heightSpinBox.setPalette(self.darkPalette)
+                # self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.contentTxtEdit.setPalette(self.darkPalette)
                 self.txtISBN.setPalette(self.darkPalette)
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
                 self.spinInitStock.setPalette(self.darkPalette)
                 
 
                 #readonly_
-                self.dateOutWidget.setReadOnly(True)
-                self.pagesSpinBox.setReadOnly(True)
-                self.widthSpinBox.setReadOnly(True)
-                self.cmbIdiom.readonly = True
-                self.cmbCover.readonly = True
-                self.heightSpinBox.setReadOnly(True)
-                self.cmbCategory1.readonly = True
-                self.cmbCategory2.readonly = True
-                self.cmbCategory3.readonly = True
-                self.contentTxtEdit.setReadOnly(True)
+                # self.dateOutWidget.setReadOnly(True)
+                # self.pagesSpinBox.setReadOnly(True)
+                # self.widthSpinBox.setReadOnly(True)
+                # self.cmbIdiom.readonly = True
+                # self.cmbCover.readonly = True
+                # self.heightSpinBox.setReadOnly(True)
+                # self.cmbCategory1.readonly = True
+                # self.cmbCategory2.readonly = True
+                # self.cmbCategory3.readonly = True
+                # self.contentTxtEdit.setReadOnly(True)
                 self.txtISBN.setReadOnly(True)
                 self.txtTitle.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
                 self.spinInitStock.setReadOnly(True)
 
             elif widget == "Stock":
@@ -1142,52 +1153,37 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.spinInitStock.setPalette(self.defaultPalette)
 
                 #palette_
-                self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
-                self.pagesSpinBox.setPalette(self.darkPalette)
-                self.widthSpinBox.setPalette(self.darkPalette)
-                self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.heightSpinBox.setPalette(self.darkPalette)
-                self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.contentTxtEdit.setPalette(self.darkPalette)
+                # self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
+                # self.pagesSpinBox.setPalette(self.darkPalette)
+                # self.widthSpinBox.setPalette(self.darkPalette)
+                # self.cmbIdiom.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCover.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.heightSpinBox.setPalette(self.darkPalette)
+                # self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
+                # self.contentTxtEdit.setPalette(self.darkPalette)
                 # self.txtPrice.setPalette(self.darkPalette)
                 self.txtISBN.setPalette(self.darkPalette)
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtAutor.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
-                # self.txtPrice.setReadOnly(True)
 
                 #readonly_
-                self.dateOutWidget.setReadOnly(True)
-                self.pagesSpinBox.setReadOnly(True)
-                self.widthSpinBox.setReadOnly(True)
-                self.cmbIdiom.readonly = True
-                self.cmbCover.readonly = True
-                self.heightSpinBox.setReadOnly(True)
-                self.cmbCategory1.readonly = True
-                self.cmbCategory2.readonly = True
-                self.cmbCategory3.readonly = True
-                self.contentTxtEdit.setReadOnly(True)
+                # self.dateOutWidget.setReadOnly(True)
+                # self.pagesSpinBox.setReadOnly(True)
+                # self.widthSpinBox.setReadOnly(True)
+                # self.cmbIdiom.readonly = True
+                # self.cmbCover.readonly = True
+                # self.heightSpinBox.setReadOnly(True)
+                # self.cmbCategory1.readonly = True
+                # self.cmbCategory2.readonly = True
+                # self.cmbCategory3.readonly = True
+                # self.contentTxtEdit.setReadOnly(True)
                 self.txtISBN.setReadOnly(True)
                 self.txtTitle.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
-
-            # elif widget == "Price":
-                # self.txtPrice.setReadOnly(False)
-                # self.txtPrice.setPalette(self.defaultPalette)
-                # self.txtISBN.setPalette(self.darkPalette)
-                # self.txtTitle.setPalette(self.darkPalette)
-                # self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPublisher.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
-                # self.txtISBN.setReadOnly(True)
-                # self.txtTitle.setReadOnly(True)
-                # self.txtAutor.setReadOnly(True)
-                # self.txtPublisher.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
 
             elif widget == "DateOut":
                 self.dateOutWidget.setReadOnly(False)
@@ -1202,12 +1198,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.contentTxtEdit.setPalette(self.darkPalette)
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
                 self.pagesSpinBox.setReadOnly(True)
@@ -1219,15 +1215,13 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.readonly = True
                 self.cmbCategory3.readonly = True
                 self.contentTxtEdit.setReadOnly(True)
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
                 
-
-
             elif widget == "Pages":
                 self.pagesSpinBox.setReadOnly(False)
                 self.pagesSpinBox.setPalette(self.defaultPalette)
@@ -1241,12 +1235,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.contentTxtEdit.setPalette(self.darkPalette)
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
                 self.dateOutWidget.setReadOnly(True)
@@ -1258,12 +1252,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.readonly = True
                 self.cmbCategory3.readonly = True
                 self.contentTxtEdit.setReadOnly(True)
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
 
             elif widget == "CmbIdiom":
                 self.cmbIdiom.readonly = False
@@ -1279,12 +1273,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.contentTxtEdit.setPalette(self.darkPalette)
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
                 
                 #readonly
                 self.dateOutWidget.setReadOnly(True)
@@ -1296,12 +1290,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.readonly = True
                 self.cmbCategory3.readonly = True
                 self.contentTxtEdit.setReadOnly(True)
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
                 
             
             elif widget == "CmbCover":
@@ -1318,12 +1312,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.contentTxtEdit.setPalette(self.darkPalette)
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
                 
                 #readonly                
                 self.dateOutWidget.setReadOnly(True)
@@ -1335,12 +1329,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.readonly = True
                 self.cmbCategory3.readonly = True
                 self.contentTxtEdit.setReadOnly(True)
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
             
             elif widget == "Width":
                 self.widthSpinBox.setReadOnly(False)
@@ -1356,12 +1350,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.contentTxtEdit.setPalette(self.darkPalette)
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
                 self.dateOutWidget.setReadOnly(True)
@@ -1373,12 +1367,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.readonly = True
                 self.cmbCategory3.readonly = True
                 self.contentTxtEdit.setReadOnly(True)
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
 
 
             elif widget == "Height":
@@ -1395,12 +1389,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.contentTxtEdit.setPalette(self.darkPalette)
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
                 self.dateOutWidget.setReadOnly(True)
@@ -1412,12 +1406,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.readonly = True
                 self.cmbCategory3.readonly = True
                 self.contentTxtEdit.setReadOnly(True)
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
 
             elif widget == "Category1":
                 self.cmbCategory1.readonly = False
@@ -1433,12 +1427,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.contentTxtEdit.setPalette(self.darkPalette)
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
                 self.dateOutWidget.setReadOnly(True)
@@ -1450,12 +1444,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory2.readonly = True
                 self.cmbCategory3.readonly = True
                 self.contentTxtEdit.setReadOnly(True)
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
             
             elif widget == "Category2":
                 self.cmbCategory2.readonly = False
@@ -1471,12 +1465,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.contentTxtEdit.setPalette(self.darkPalette)
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
                 self.dateOutWidget.setReadOnly(True)
@@ -1488,12 +1482,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory1.readonly = True
                 self.cmbCategory3.readonly = True
                 self.contentTxtEdit.setReadOnly(True)
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
             
             elif widget == "Category3":
                 self.cmbCategory3.readonly = False
@@ -1509,12 +1503,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.contentTxtEdit.setPalette(self.darkPalette)
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
                 self.dateOutWidget.setReadOnly(True)
@@ -1526,12 +1520,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory1.readonly = True
                 self.cmbCategory2.readonly = True
                 self.contentTxtEdit.setReadOnly(True)
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
 
             elif widget == "TextEdit":
                 self.contentTxtEdit.setReadOnly(False)
@@ -1547,12 +1541,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory1.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory2.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
                 self.cmbCategory3.setStyleSheet("QComboBox{background-color: rgb(230,230,230);}")
-                self.txtISBN.setPalette(self.darkPalette)
-                self.txtTitle.setPalette(self.darkPalette)
-                self.txtAutor.setPalette(self.darkPalette)
-                # self.txtPrice.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
-                self.txtPublisher.setPalette(self.darkPalette)
+                # self.txtISBN.setPalette(self.darkPalette)
+                # self.txtTitle.setPalette(self.darkPalette)
+                # self.txtAutor.setPalette(self.darkPalette)
+                # # self.txtPrice.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
+                # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
                 self.dateOutWidget.setReadOnly(True)
@@ -1564,12 +1558,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.cmbCategory1.readonly = True
                 self.cmbCategory2.readonly = True
                 self.cmbCategory3.readonly = True
-                self.txtISBN.setReadOnly(True)
-                self.txtTitle.setReadOnly(True)
-                self.txtAutor.setReadOnly(True)
-                # self.txtPrice.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
-                self.txtPublisher.setReadOnly(True)
+                # self.txtISBN.setReadOnly(True)
+                # self.txtTitle.setReadOnly(True)
+                # self.txtAutor.setReadOnly(True)
+                # # self.txtPrice.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
+                # self.txtPublisher.setReadOnly(True)
 
     def txtEditSignal(self):
         cursor = self.contentTxtEdit.textCursor()
@@ -1801,6 +1795,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.tabItem = QTabWidget(self)
         self.tabItem.addTab(self.tab_mainItemData, "Información principal")
         self.tabItem.addTab(self.tab_compItemData, "Información secundaria")
+        self.tabItem.currentChanged.connect(lambda x: self.cleanInputFields())
 
         self.main_layout.addWidget(self.tabItem, 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
         self.main_layout.addWidget(QPushButton('Guardar'), 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -2189,7 +2184,7 @@ if __name__ == '__main__':
     # ui = Ui_Dialog()
     # ui.setDataFields(data)
     # ui.setDataFields("GN_2025")
-    ui.cleanInputFields()
+    ui.cleanInputFields(True)
     # ui = ui_OperationDialog(Dialog)
     # ui.setItemData("", "")
     # ui.init_condition()
