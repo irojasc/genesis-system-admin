@@ -121,21 +121,24 @@ class wares_gestor:
 			return False
 
 	def getNextCodDB(self):
-		query = "SELECT max(cast(p.id as signed)) + 1 as next, null FROM genesisdb.product p UNION SELECT i.id, i.item FROM genesisdb.item i;"
+		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, null FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl FROM genesisdb.category c;"
 		try:
 			self.connectDB()
 			self.cursor.execute(query)
-			# nextCod = "GN_%s" % (str(self.cursor.fetchall()[0][0]))
 			data = self.cursor.fetchall()
-			nextCod = str(data[0][0])
-			items = data[1:]
+			nextCode = list(filter(lambda x: True if x[0] == 'next' else False, data))[0][1]
+			items = list(map(lambda x: (x[1], x[2]),list(filter(lambda x: True if x[0] == 'item' else False, data))))
+			languages = list(map(lambda x: (x[1], x[2]),list(filter(lambda x: True if x[0] == 'lang' else False, data))))
+			category1 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 1) else False, data))))
+			category2 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 2) else False, data))))
+			category3 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 3) else False, data))))
+			data_dict = {"next": nextCode, "items": items, "languages": languages,"category1": category1, "category2": category2, "category3": category3}
 			self.disconnectDB()
-			# return True, nextCod
-			return True, nextCod, items
+			return True, data_dict
 		except Exception as error:
 			print("Something wrong happen: ", error)
 			self.disconnectDB()
-			return False, "CODIGO NO ENCONTRADO", None
+			return False, None
 
 	def insertNewItemDB(self, data: dict = None, currentWare: str = None):
 		if bool(len(data)) and bool(currentWare):

@@ -533,11 +533,12 @@ class Ui_Dialog(QtWidgets.QDialog):
     def createNewItem(self, event = None):
         # isAllowed: bool
         # data: str
-        isAllowed, data, items = self.ware_gest.getNextCodDB()
+        isAllowed, data = self.ware_gest.getNextCodDB()
         if isAllowed:
+            #Argumento True en ui_EditNewItemDialog cuando se crea un nuevo producto
             ui_NewItemDialog = ui_EditNewItemDialog(True)
             ui_NewItemDialog.cleanInputFields(True)
-            ui_NewItemDialog.setDataFields(data, items)
+            ui_NewItemDialog.setDataFields(data)
             if ui_NewItemDialog.exec_() == QDialog.Accepted:
                 validator, data = ui_NewItemDialog.returnedVal
                 if validator:
@@ -926,6 +927,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.submitclose() if self.returnedVal[0] else False
 
     def cleanInputFields(self, isInit: str = None):
+        self.cmbItem.setEnabled(False)
         self.txtISBN.setReadOnly(True)
         self.txtTitle.setReadOnly(True)
         self.txtAutor.setReadOnly(True)
@@ -961,9 +963,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.tab_compItemData.setEnabled(False)
         self.tab_compItemData.setEnabled(True)
 
+        #isInit se utiliza cuando se hace cambio de tabs y no se quiere cambiar el index de los combos
         self.setInitDefaultValues() if bool(isInit) else False
     
     def setInitDefaultValues(self):
+        #currentIndex 1 para item de tipo libro
+        self.cmbItem.setCurrentIndex(1)
         self.cmbIdiom.setCurrentIndex(-1)
         self.cmbCover.setCurrentIndex(-1)
         self.cmbCategory1.setCurrentIndex(-1)
@@ -974,31 +979,425 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def closeEvent(self, event):
         self.returnValues(False)
 
-    def setDataFields(self, data: str = None, items: list = []):
-
-        if bool(data): self.prevData = data
+    def setDataFields(self, data: dict = None):
+        #Si self.method : False (Metodo Editar) --- Si self.method : True (Metodo Metodo Nuevo Producto)
+        #aqui es guardar el valor de data a variable prevData
         
-        if bool(len(items)): 
-            #considerando que x[1] es items LIBROS
-            #items es la lista que incluye todos los tipos de items disponibles
-            self.cmbItem.addItems(list(map( lambda x: x[1], items)))
-            self.cmbItem.setCurrentIndex(1)
-            self.cmbItem.setEnabled(False)
-            
-        if bool(self.prevData) and not(self.method):
+        if bool(data): self.prevData = data
+
+        if bool(self.prevData) and self.method:
+            self.txtId.setText(str(data["next"]))
+            self.cmbItem.addItems(list(map(lambda x: x[1], data["items"])))
+            self.cmbIdiom.addItems(list(map(lambda x: x[1], data["languages"])))
+            self.cmbCategory1.setModel(QStringListModel(list(map(lambda x: x[1], data["category1"]))))
+            self.cmbCategory1.setCurrentIndex(-1)
+            self.cmbCategory1.setEditable(True)
+            self.cmbCategory1.lineEdit().setPlaceholderText("NIVEL 1")
+            self.cmbCategory2.setModel(QStringListModel(list(map(lambda x: x[1], data["category2"]))))
+            self.cmbCategory2.setCurrentIndex(-1)
+            self.cmbCategory2.setEditable(True)
+            self.cmbCategory2.lineEdit().setPlaceholderText("NIVEL 2")
+            self.cmbCategory3.setModel(QStringListModel(list(map(lambda x: x[1], data["category3"]))))
+            self.cmbCategory3.setCurrentIndex(-1)
+            self.cmbCategory3.setEditable(True)
+            self.cmbCategory3.lineEdit().setPlaceholderText("NIVEL 3")
+            self.setInitDefaultValues()
+
+        elif bool(self.prevData) and not(self.method):
             self.innerEditData = self.prevData.copy()
             self.txtId.setText(self.innerEditData["cod"])
             self.txtISBN.setText(self.innerEditData["isbn"])
             self.txtTitle.setText(self.innerEditData["title"])
             self.txtAutor.setText(self.innerEditData["autor"])
             self.txtPublisher.setText(self.innerEditData["publisher"])
-            # self.txtPrice.setText(self.innerEditData["price"])
-
-        elif bool(self.prevData) and self.method:
-            self.txtId.setText(data)
-
+            
     def submitclose(self):
         self.accept()
+
+    def txtEditSignal(self):
+        cursor = self.contentTxtEdit.textCursor()
+        length_ = len(self.contentTxtEdit.toPlainText())
+        # print("initial cursor position: " + str(cursor.position()))
+        # print("initial length: " + str(length_))
+        if length_ < 601:
+            self.prevcurrentPlainText_ = self.contentTxtEdit.toPlainText()
+            if (length_ >= 600 and cursor.position() >= 600):
+                self.prevcurrentPlainText_ = self.prevcurrentPlainText_[:600]
+                self.contentTxtEdit.blockSignals(True)
+                self.contentTxtEdit.setText(self.prevcurrentPlainText_)
+                self.contentTxtEdit.blockSignals(False)
+                cursor = self.contentTxtEdit.textCursor()
+                cursor.movePosition(11)
+                self.contentTxtEdit.setTextCursor(cursor)
+                self.lblCaracterCount.setText("CHARACTERS: %d" % len(self.prevcurrentPlainText_))
+                self.lblCaracterCount.adjustSize()
+            else:
+                # self.contentTxtEdit.blockSignals(True)
+                # self.contentTxtEdit.setText(self.prevcurrentPlainText_)
+                # self.contentTxtEdit.blockSignals(False)
+                self.lblCaracterCount.setText("CHARACTERS: %d" % len(self.prevcurrentPlainText_))
+                self.lblCaracterCount.adjustSize()
+
+        elif length_ == 601:
+            self.contentTxtEdit.blockSignals(True)
+            self.contentTxtEdit.setText(self.prevcurrentPlainText_)
+            self.contentTxtEdit.blockSignals(False)
+            cursor = self.contentTxtEdit.textCursor()
+            cursor.movePosition(11)
+            self.contentTxtEdit.setTextCursor(cursor)
+        #se puede guardar la position antigua de cursor y asignar a la nueva cuando el cursor esta menos de 600
+        #cantidad de caracteres igual a 600 o 601
+
+    def setupComplementary(self):
+        x_offset = -35
+        y_offset = 0
+        
+        # WARNING MESSAGE OF DATEOUT
+        msgwrn = ">DEJAR EN 1752 SI NO DESEA AGREGAR FECHA DE PUBLICACIÓN"
+        self.lblWarning_ = QLabel(msgwrn, self.tab_compItemData)
+        self.lblWarning_.setGeometry(155 + x_offset, 10 + y_offset, 240,25)
+        self.lblWarning_.setWordWrap(True)
+        font = self.lblWarning_.font()
+        font.setBold(True)
+        font.setPointSize(7)
+        self.lblWarning_.setFont(font)
+        self.lblWarning_.setStyleSheet("QLabel{background-color: red; color:white}")
+
+        # DATEOUT PART
+        self.lblDateOut = QLabel("PUBLICACIÓN (AÑO): ",self.tab_compItemData)
+        self.lblDateOut.adjustSize()
+        self.lblDateOut.move(x_offset + 43, y_offset + 40)
+        self.lblDateOut.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblDateOut.setStyleSheet("background-color: lightblue")
+        
+
+        # self.dateOutWidget = QDateEdit(QDate.currentDate(),self.tab_compItemData)
+        self.dateOutWidget = MyDateEdit(self.tab_compItemData)
+        self.dateOutWidget.setMaximumDate(QDate.currentDate().addYears(1))
+        self.dateOutWidget.setDate(QDate(-2,1,1))
+        self.dateOutWidget.move(x_offset + 155, y_offset + 36)
+        self.dateOutWidget.setDisplayFormat("yyyy")
+        self.dateOutWidget.setFixedWidth(240)
+        font = self.dateOutWidget.font()
+        font.setBold(True)
+        self.dateOutWidget.setFont(font)
+        self.dateOutWidget.dateChanged.connect(lambda x: self.dateOutWidget.setStyleSheet("QDateEdit{background-color: red; color:white}") if x.year() == 1752 else self.dateOutWidget.setStyleSheet("QDateEdit{background-color: white; color:default}"))
+        self.dateOutWidget.clicked.connect(lambda: self.deactivateLineEdit("DateOut"))
+        #aqui falta el activador del qdateedit
+        
+        #PAGES PART
+        self.lblPages = QLabel("N. PÁGINAS: ",self.tab_compItemData)
+        self.lblPages.adjustSize()
+        self.lblPages.move(x_offset + 86, y_offset + 62)
+        self.lblPages.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblPages.setStyleSheet("background-color: lightblue")
+        self.pagesSpinBox = MySpinBox(self.tab_compItemData, minimum=0, maximum=9999, value=0)
+        self.pagesSpinBox.move(x_offset + 155, y_offset + 59)
+        self.pagesSpinBox.setFixedWidth(240)
+        self.pagesSpinBox.clicked.connect(lambda: self.deactivateLineEdit("Pages"))
+
+        # IDIOM PART
+        self.lblIdiom = QLabel("IDIOMA: ",self.tab_compItemData)
+        self.lblIdiom.adjustSize()
+        self.lblIdiom.move(x_offset + 106, y_offset + 86)
+        self.lblIdiom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblIdiom.setStyleSheet("background-color: lightblue")
+        self.cmbIdiom = MyComboBox_Pop(self.tab_compItemData)
+        self.cmbIdiom.move(x_offset + 155, y_offset + 82)
+        self.cmbIdiom.setFixedWidth(240)
+        self.cmbIdiom.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("CmbIdiom"))
+        self.cmbIdiom.addItem("ITALIANO")
+        self.cmbIdiom.addItem("QUECHUA")
+
+        # COVER PART
+        self.lblCover = QLabel("CUBIERTA: ",self.tab_compItemData)
+        self.lblCover.adjustSize()
+        self.lblCover.move(x_offset + 94, y_offset + 109)
+        self.lblCover.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblCover.setStyleSheet("background-color: lightblue")
+        self.cmbCover = MyComboBox_Pop(self.tab_compItemData)
+        self.cmbCover.setFixedWidth(240)
+        self.cmbCover.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("CmbCover"))
+        self.cmbCover.move(x_offset + 155, y_offset + 105)
+        self.cmbCover.addItem("BLANDA")
+    
+        self.cmbCover.addItem("DURA")
+
+        # DIMENTIONS PART
+        self.lblWidth = QLabel("ANCHO:", self.tab_compItemData)
+        self.lblWidth.move(x_offset + 111, y_offset + 132)
+        self.lblWidth.setStyleSheet("background-color: lightblue")
+        self.widthSpinBox = MySpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
+        self.widthSpinBox.clicked.connect(lambda: self.deactivateLineEdit("Width"))
+        self.widthSpinBox.move(x_offset + 155, y_offset + 128)
+        self.widthSpinBox.setFixedWidth(99)
+
+        self.lblHeight = QLabel("ALTO:", self.tab_compItemData)
+        self.lblHeight.move(x_offset + 262, y_offset + 132)
+        self.lblHeight.setStyleSheet("background-color: lightblue")
+        self.heightSpinBox = MySpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
+        self.heightSpinBox.clicked.connect(lambda: self.deactivateLineEdit("Height"))
+        self.heightSpinBox.move(x_offset + 296, y_offset + 128)
+        self.heightSpinBox.setFixedWidth(99)
+        
+        # CATEGORY PART
+        self.lblCategory = QLabel("CATEGORÍA:", self.tab_compItemData)
+        self.lblCategory.move(x_offset + 38, y_offset + 155)
+        self.lblCategory.setStyleSheet("background-color: lightblue")
+        self.cmbCategory1 = MyComboBox_Pop(self.tab_compItemData)
+        self.cmbCategory1.setFixedWidth(95)
+        self.cmbCategory1.setFixedHeight(20)
+        self.cmbCategory1.move(x_offset + 104, y_offset + 151)
+        # self.cmbCategory1.setModel(QStringListModel([">SUPERACION PERSONAL", ">GASTRONOMIA", ">EDUCACION", ">LITERATURA"]))
+        font = self.cmbCategory1.font()
+        font.setPointSize(7)
+        self.cmbCategory1.setFont(font)
+        listView = QListView()
+        listView.setWordWrap(True)
+        self.cmbCategory1.setView(listView)
+        # self.cmbCategory1.setEditable(True)
+        # self.cmbCategory1.setCurrentIndex(-1)
+        # self.cmbCategory1.lineEdit().setPlaceholderText("NIVEL 1")
+        self.cmbCategory1.currentIndexChanged.connect(lambda x: self.cmbCategory1.setEditable(False))
+        self.cmbCategory1.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("Category1"))
+
+        self.cmbCategory2 = MyComboBox_Pop(self.tab_compItemData)
+        self.cmbCategory2.setFixedWidth(95)
+        self.cmbCategory2.setFixedHeight(20)
+        self.cmbCategory2.move(x_offset + 202, y_offset + 151)
+        # self.cmbCategory2.setModel(QStringListModel([">SUPERACION PERSONAL", ">GASTRONOMIA", ">EDUCACION", ">LITERATURA"]))
+        font = self.cmbCategory2.font()
+        font.setPointSize(7)
+        self.cmbCategory2.setFont(font)
+        listView = QListView()
+        listView.setWordWrap(True)
+        self.cmbCategory2.setView(listView)
+        self.cmbCategory2.setEditable(True)
+        # self.cmbCategory2.setCurrentIndex(-1)
+        # self.cmbCategory2.lineEdit().setPlaceholderText("NIVEL 2")
+        self.cmbCategory2.currentIndexChanged.connect(lambda x: self.cmbCategory2.setEditable(False))
+        self.cmbCategory2.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("Category2"))
+
+        self.cmbCategory3 = MyComboBox_Pop(self.tab_compItemData)
+        self.cmbCategory3.setFixedWidth(95)
+        self.cmbCategory3.setFixedHeight(20)
+        self.cmbCategory3.move(x_offset + 300, y_offset + 151)
+        # self.cmbCategory3.setModel(QStringListModel([">SUPERACION PERSONAL", ">GASTRONOMIA", ">EDUCACION", ">LITERATURA"]))
+        font = self.cmbCategory3.font()
+        font.setPointSize(7)
+        self.cmbCategory3.setFont(font)
+        listView = QListView()
+        listView.setWordWrap(True)
+        self.cmbCategory3.setView(listView)
+        self.cmbCategory3.setEditable(True)
+        # self.cmbCategory3.setCurrentIndex(-1)
+        # self.cmbCategory3.lineEdit().setPlaceholderText("NIVEL 3")
+        self.cmbCategory3.currentIndexChanged.connect(lambda x: self.cmbCategory3.setEditable(False))
+        self.cmbCategory3.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("Category3"))
+
+        # CONTENT PART
+        self.lblContent = QLabel("RESUMEN:", self.tab_compItemData)
+        self.lblContent.move(x_offset + 50, y_offset + 180)
+        self.lblContent.setStyleSheet("background-color: lightblue")
+        self.contentTxtEdit = MyQTextEdit(self.tab_compItemData)
+        self.contentTxtEdit.move(x_offset + 105, y_offset + 180)
+        self.contentTxtEdit.setFixedSize(290,65)
+        self.contentTxtEdit.setAcceptRichText(False)
+        self.contentTxtEdit.setTabChangesFocus(True)
+        font = self.contentTxtEdit.font()
+        font.setPointSize(8)
+        self.contentTxtEdit.setFont(font)
+        self.contentTxtEdit.textChanged.connect(self.txtEditSignal)
+        self.contentTxtEdit.clicked.connect(lambda: self.deactivateLineEdit("TextEdit"))
+
+        # LABEL CARACTER
+        self.lblCaracterCount = QLabel("CHARACTERS: 0", self.tab_compItemData)
+        # self.lblCaracterCount.setFixedWidth(82)
+        self.lblCaracterCount.move(x_offset + 105, y_offset + 245)
+        self.lblCaracterCount.setStyleSheet("QLabel{background-color: lightgreen;}")
+
+        # LABEL MAX CARACTER
+        self.lblMaxCarecter = QLabel("MAX: 600 CHAR", self.tab_compItemData)
+        self.lblMaxCarecter.move(x_offset + 205, y_offset + 245)
+        self.lblMaxCarecter.setStyleSheet("QLabel{background-color: red; color: white;}")
+        font = QFont()
+        font.setBold(True)
+        self.lblMaxCarecter.setFont(font)
+
+    def setupUi(self):
+        x_offset = 10
+        y_offset = 0
+
+        self.resize(340, 300)
+        self.setFixedSize(400, 338)
+        self.setObjectName("ui_EditNewItemDialog")
+        self.setWindowTitle("Editar producto") if not(self.method) else self.setWindowTitle("Registrar nuevo producto")
+
+        self.main_layout = QGridLayout(self)
+        self.setLayout(self.main_layout)
+
+        self.tab_mainItemData = QWidget(self)
+        self.tab_mainItemData.setFixedSize(360, 285)
+        self.tab_compItemData = QWidget(self)
+        self.tab_compItemData.setFixedSize(370, 260)
+
+        #create a tabWidget
+        self.tabItem = QTabWidget(self)
+        self.tabItem.addTab(self.tab_mainItemData, "Información principal")
+        self.tabItem.addTab(self.tab_compItemData, "Información secundaria")
+        self.tabItem.currentChanged.connect(lambda x: self.cleanInputFields())
+
+        self.main_layout.addWidget(self.tabItem, 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.main_layout.addWidget(QPushButton('Guardar'), 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.main_layout.addWidget(QPushButton('Cancelar'),2, 0, alignment=Qt.AlignmentFlag.AlignJustify)
+        self.setupComplementary()
+
+        warning_text = ">¡No ingresar tildes ni caracteres especiales (,', \", ´,)!"
+
+        self.lblWarning = QLabel(warning_text,self.tab_mainItemData)
+        self.lblWarning.adjustSize()
+        self.lblWarning.move(55 + x_offset, 15 + y_offset) if not(self.method) else self.lblWarning.move(60 + x_offset, 5 + y_offset)
+        self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblWarning.setStyleSheet("background-color: red")
+
+        self.lblWarning = QLabel(">(*): Campos obligatorios",self.tab_mainItemData) if self.method else False
+        if bool(self.lblWarning):
+            self.lblWarning.adjustSize()
+            self.lblWarning.move(60 + x_offset, 20 + y_offset)
+            self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.lblWarning.setStyleSheet("background-color: red")
+
+        self.lblId = QLabel("CÓDIGO:",self.tab_mainItemData) if not(self.method) else QLabel("CÓDIGO(*):",self.tab_mainItemData)
+        self.lblId.adjustSize()
+        self.lblId.move(43 + x_offset, 40 + y_offset) if not(self.method) else self.lblId.move(33 + x_offset, 40 + y_offset)
+        self.lblId.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblId.setStyleSheet("background-color: lightgreen")
+        self.txtId = MyLineEdit(self.tab_mainItemData)
+        self.txtId.setFixedHeight(18)
+        self.txtId.setFixedWidth(70)
+        self.txtId.move(95 + x_offset, 37 + y_offset)
+        self.txtId.setEnabled(False)
+        self.defaultPalette = self.txtId.palette()  
+
+        self.lblItem = QLabel("ITEM:",self.tab_mainItemData)
+        self.lblItem.adjustSize()
+        self.lblItem.move(175 + x_offset, 40 + y_offset) 
+        self.lblItem.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblItem.setStyleSheet("background-color: lightgreen")
+
+        self.cmbItem = MyComboBox_Pop(self.tab_mainItemData)
+        self.cmbItem.setGeometry(210 + x_offset, 37 + y_offset, 115, 18)
+
+        self.color = QColor(230,230,230)
+        self.lblISBN = QLabel("ISBN:",self.tab_mainItemData)
+        self.lblISBN.adjustSize()
+        self.lblISBN.move(61 + x_offset, 60 + y_offset)
+        self.lblISBN.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblISBN.setStyleSheet("background-color: lightblue")
+        self.txtISBN = MyLineEdit(self.tab_mainItemData)
+        self.txtISBN.setFixedHeight(18)
+        self.txtISBN.setFixedWidth(230)
+        self.txtISBN.move(95 + x_offset, 58 + y_offset)
+        self.txtISBN.setReadOnly(True)
+        palette = self.txtISBN.palette()
+        palette.setColor(QtGui.QPalette.Base, self.color)
+        self.txtISBN.setPalette(palette)
+        self.txtISBN.clicked.connect(lambda: self.deactivateLineEdit("ISBN"))
+        self.txtISBN.setMaxLength(15)
+
+        self.lblTitle = QLabel("TÍTULO:",self.tab_mainItemData) if not(self.method) else QLabel("TÍTULO(*):",self.tab_mainItemData)
+        self.lblTitle.adjustSize()
+        self.lblTitle.move(48 + x_offset, 80 + y_offset) if not(self.method) else self.lblTitle.move(38 + x_offset, 80 + y_offset)
+        self.lblTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblTitle.setStyleSheet("background-color: lightblue")
+        self.txtTitle = MyLineEdit(self.tab_mainItemData)
+        self.txtTitle.setFixedHeight(18)
+        self.txtTitle.setFixedWidth(230)
+        self.txtTitle.move(95 + x_offset, 78 + y_offset)
+        self.txtTitle.setReadOnly(True)
+        palette = self.txtTitle.palette()
+        palette.setColor(QtGui.QPalette.Base, self.color)
+        self.darkPalette = palette
+        self.txtTitle.setPalette(self.darkPalette)
+        self.txtTitle.clicked.connect(lambda: self.deactivateLineEdit("Title"))
+        self.txtTitle.setMaxLength(90)
+
+        self.lblAutor = QLabel("AUTOR:",self.tab_mainItemData) if not(self.method) else QLabel("AUTOR(*):",self.tab_mainItemData)
+        self.lblAutor.adjustSize()
+        self.lblAutor.move(49 + x_offset, 100 + y_offset) if not(self.method) else self.lblAutor.move(39 + x_offset, 100 + y_offset)
+        self.lblAutor.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblAutor.setStyleSheet("background-color: lightblue")
+        self.txtAutor = MyLineEdit(self.tab_mainItemData)
+        self.txtAutor.setFixedHeight(18)
+        self.txtAutor.setFixedWidth(230)
+        self.txtAutor.move(95 + x_offset, 98 + y_offset)
+        self.txtAutor.setReadOnly(True)
+        self.txtAutor.setPalette(self.darkPalette)
+        self.txtAutor.clicked.connect(lambda: self.deactivateLineEdit("Autor"))
+        self.txtAutor.setMaxLength(45)
+
+        self.lblPublisher = QLabel("EDITORIAL:",self.tab_mainItemData) if not(self.method) else QLabel("EDITORIAL(*):",self.tab_mainItemData)
+        self.lblPublisher.adjustSize()
+        self.lblPublisher.move(31 + x_offset, 120 + y_offset) if not(self.method) else self.lblPublisher.move(21 + x_offset, 120 + y_offset)
+        self.lblPublisher.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblPublisher.setStyleSheet("background-color: lightblue")
+        self.txtPublisher = MyLineEdit(self.tab_mainItemData)
+        self.txtPublisher.setFixedHeight(18)
+        self.txtPublisher.setFixedWidth(230)
+        self.txtPublisher.move(95 + x_offset, 118 + y_offset)
+        self.txtPublisher.setReadOnly(True)
+        self.txtPublisher.setPalette(self.darkPalette)
+        self.txtPublisher.clicked.connect(lambda: self.deactivateLineEdit("Publisher"))
+        self.txtPublisher.setMaxLength(45)
+
+        # self.lblPrice = QLabel("PRECIO:",self.tab_mainItemData) if not(self.method) else QLabel("PRECIO(*):",self.tab_mainItemData)
+        # self.lblPrice.adjustSize()
+        # self.lblPrice.move(47 + x_offset, 140 + y_offset) if not(self.method) else self.lblPrice.move(37 + x_offset, 140 + y_offset)
+        # self.lblPrice.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.lblPrice.setStyleSheet("background-color: lightblue")
+        # self.txtPrice = MyLineEdit(self.tab_mainItemData)
+        # self.txtPrice.setPlaceholderText("Ingresar solo numeros")
+        # self.txtPrice.setFixedHeight(18)
+        # self.txtPrice.setFixedWidth(230)
+        # self.txtPrice.move(95 + x_offset, 138 + y_offset)
+        # self.txtPrice.setReadOnly(True)
+        # self.txtPrice.setPalette(self.darkPalette)
+        # self.txtPrice.clicked.connect(lambda: self.deactivateLineEdit("Price"))
+        # self.txtPrice.setMaxLength(30)
+
+        self.lblInitStock = QLabel("STOCK INGRESO:",self.tab_mainItemData)
+        self.lblInitStock.adjustSize()
+        self.lblInitStock.move(5 + x_offset, 241 + y_offset)
+        self.lblInitStock.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblInitStock.setStyleSheet("background-color: lightblue")
+        self.spinInitStock = MySpinBox(self.tab_mainItemData)
+        self.spinInitStock.setGeometry(100 + x_offset, 100 + y_offset, 50, 20)
+        self.spinInitStock.move(95 + x_offset, 237 + y_offset)
+        self.spinInitStock.setReadOnly(True)
+        self.spinInitStock.setPalette(self.darkPalette)
+        self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
+        self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
+
+        # LABEL BOTTOM IMAGE
+        self.lblImage_ = QLabel(self.tab_mainItemData)
+        self.lblImage_.setGeometry(QtCore.QRect(105 + x_offset, 141 + y_offset, 175, 91))
+        self.lblImage_.setText("")
+        # self.lblImage_.setStyleSheet("QLabel{background-color: red;}")
+        pixMap = QtGui.QPixmap("C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/imgs/newBook.png")
+        # pixMap = pixMap.scaled(600, 600, QtCore.Qt.IgnoreAspectRatio)
+        self.lblImage_.setPixmap(pixMap)
+        self.lblImage_.setScaledContents(True)
+
+        # self.btnCancel = QPushButton('Cancelar', self)
+        # self.btnCancel.adjustSize()
+        # self.btnCancel.move(190, 185)
+        # self.btnCancel.clicked.connect(lambda: self.submitclose())
+
+        # self.btnOk = QPushButton(self)
+        # self.btnOk.setText("Editar") if not(self.method) else self.btnOk.setText("Registrar")
+        # self.btnOk.adjustSize()
+        # self.btnOk.move(80, 185)
+        # self.btnOk.clicked.connect(lambda: self.returnValues(True))
 
     def deactivateLineEdit(self, widget: str = ""):
         if bool(widget):
@@ -1564,390 +1963,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # # self.txtPrice.setReadOnly(True)
                 # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
-
-    def txtEditSignal(self):
-        cursor = self.contentTxtEdit.textCursor()
-        length_ = len(self.contentTxtEdit.toPlainText())
-        # print("initial cursor position: " + str(cursor.position()))
-        # print("initial length: " + str(length_))
-        if length_ < 601:
-            self.prevcurrentPlainText_ = self.contentTxtEdit.toPlainText()
-            if (length_ >= 600 and cursor.position() >= 600):
-                self.prevcurrentPlainText_ = self.prevcurrentPlainText_[:600]
-                self.contentTxtEdit.blockSignals(True)
-                self.contentTxtEdit.setText(self.prevcurrentPlainText_)
-                self.contentTxtEdit.blockSignals(False)
-                cursor = self.contentTxtEdit.textCursor()
-                cursor.movePosition(11)
-                self.contentTxtEdit.setTextCursor(cursor)
-                self.lblCaracterCount.setText("CHARACTERS: %d" % len(self.prevcurrentPlainText_))
-                self.lblCaracterCount.adjustSize()
-            else:
-                # self.contentTxtEdit.blockSignals(True)
-                # self.contentTxtEdit.setText(self.prevcurrentPlainText_)
-                # self.contentTxtEdit.blockSignals(False)
-                self.lblCaracterCount.setText("CHARACTERS: %d" % len(self.prevcurrentPlainText_))
-                self.lblCaracterCount.adjustSize()
-
-        elif length_ == 601:
-            self.contentTxtEdit.blockSignals(True)
-            self.contentTxtEdit.setText(self.prevcurrentPlainText_)
-            self.contentTxtEdit.blockSignals(False)
-            cursor = self.contentTxtEdit.textCursor()
-            cursor.movePosition(11)
-            self.contentTxtEdit.setTextCursor(cursor)
-        #se puede guardar la position antigua de cursor y asignar a la nueva cuando el cursor esta menos de 600
-        #cantidad de caracteres igual a 600 o 601
-
-    def setupComplementary(self):
-        x_offset = -35
-        y_offset = 0
-        
-        # WARNING MESSAGE OF DATEOUT
-        msgwrn = ">DEJAR EN 1752 SI NO DESEA AGREGAR FECHA DE PUBLICACIÓN"
-        self.lblWarning_ = QLabel(msgwrn, self.tab_compItemData)
-        self.lblWarning_.setGeometry(155 + x_offset, 10 + y_offset, 240,25)
-        self.lblWarning_.setWordWrap(True)
-        font = self.lblWarning_.font()
-        font.setBold(True)
-        font.setPointSize(7)
-        self.lblWarning_.setFont(font)
-        self.lblWarning_.setStyleSheet("QLabel{background-color: red; color:white}")
-
-        # DATEOUT PART
-        self.lblDateOut = QLabel("PUBLICACIÓN (AÑO): ",self.tab_compItemData)
-        self.lblDateOut.adjustSize()
-        self.lblDateOut.move(x_offset + 43, y_offset + 40)
-        self.lblDateOut.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblDateOut.setStyleSheet("background-color: lightblue")
-        
-
-        # self.dateOutWidget = QDateEdit(QDate.currentDate(),self.tab_compItemData)
-        self.dateOutWidget = MyDateEdit(self.tab_compItemData)
-        self.dateOutWidget.setMaximumDate(QDate.currentDate().addYears(1))
-        self.dateOutWidget.setDate(QDate(-2,1,1))
-        self.dateOutWidget.move(x_offset + 155, y_offset + 36)
-        self.dateOutWidget.setDisplayFormat("yyyy")
-        self.dateOutWidget.setFixedWidth(240)
-        font = self.dateOutWidget.font()
-        font.setBold(True)
-        self.dateOutWidget.setFont(font)
-        self.dateOutWidget.dateChanged.connect(lambda x: self.dateOutWidget.setStyleSheet("QDateEdit{background-color: red; color:white}") if x.year() == 1752 else self.dateOutWidget.setStyleSheet("QDateEdit{background-color: white; color:default}"))
-        self.dateOutWidget.clicked.connect(lambda: self.deactivateLineEdit("DateOut"))
-        #aqui falta el activador del qdateedit
-        
-        #PAGES PART
-        self.lblPages = QLabel("N. PÁGINAS: ",self.tab_compItemData)
-        self.lblPages.adjustSize()
-        self.lblPages.move(x_offset + 86, y_offset + 62)
-        self.lblPages.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblPages.setStyleSheet("background-color: lightblue")
-        self.pagesSpinBox = MySpinBox(self.tab_compItemData, minimum=0, maximum=9999, value=0)
-        self.pagesSpinBox.move(x_offset + 155, y_offset + 59)
-        self.pagesSpinBox.setFixedWidth(240)
-        self.pagesSpinBox.clicked.connect(lambda: self.deactivateLineEdit("Pages"))
-
-        # IDIOM PART
-        self.lblIdiom = QLabel("IDIOMA: ",self.tab_compItemData)
-        self.lblIdiom.adjustSize()
-        self.lblIdiom.move(x_offset + 106, y_offset + 86)
-        self.lblIdiom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblIdiom.setStyleSheet("background-color: lightblue")
-        self.cmbIdiom = MyComboBox_Pop(self.tab_compItemData)
-        self.cmbIdiom.move(x_offset + 155, y_offset + 82)
-        self.cmbIdiom.setFixedWidth(240)
-        self.cmbIdiom.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("CmbIdiom"))
-        self.cmbIdiom.addItem("ITALIANO")
-        self.cmbIdiom.addItem("QUECHUA")
-
-        # COVER PART
-        self.lblCover = QLabel("CUBIERTA: ",self.tab_compItemData)
-        self.lblCover.adjustSize()
-        self.lblCover.move(x_offset + 94, y_offset + 109)
-        self.lblCover.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblCover.setStyleSheet("background-color: lightblue")
-        self.cmbCover = MyComboBox_Pop(self.tab_compItemData)
-        self.cmbCover.setFixedWidth(240)
-        self.cmbCover.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("CmbCover"))
-        self.cmbCover.move(x_offset + 155, y_offset + 105)
-        self.cmbCover.addItem("BLANDA")
-        self.cmbCover.addItem("DURA")
-
-        # DIMENTIONS PART
-        self.lblWidth = QLabel("ANCHO:", self.tab_compItemData)
-        self.lblWidth.move(x_offset + 111, y_offset + 132)
-        self.lblWidth.setStyleSheet("background-color: lightblue")
-        self.widthSpinBox = MySpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
-        self.widthSpinBox.clicked.connect(lambda: self.deactivateLineEdit("Width"))
-        self.widthSpinBox.move(x_offset + 155, y_offset + 128)
-        self.widthSpinBox.setFixedWidth(99)
-
-        self.lblHeight = QLabel("ALTO:", self.tab_compItemData)
-        self.lblHeight.move(x_offset + 262, y_offset + 132)
-        self.lblHeight.setStyleSheet("background-color: lightblue")
-        self.heightSpinBox = MySpinBox(self.tab_compItemData, minimum=0, maximum=100, value=0, suffix=' cm')
-        self.heightSpinBox.clicked.connect(lambda: self.deactivateLineEdit("Height"))
-        self.heightSpinBox.move(x_offset + 296, y_offset + 128)
-        self.heightSpinBox.setFixedWidth(99)
-        
-        # CATEGORY PART
-        self.lblCategory = QLabel("CATEGORÍA:", self.tab_compItemData)
-        self.lblCategory.move(x_offset + 38, y_offset + 155)
-        self.lblCategory.setStyleSheet("background-color: lightblue")
-        self.cmbCategory1 = MyComboBox_Pop(self.tab_compItemData)
-        self.cmbCategory1.setFixedWidth(95)
-        self.cmbCategory1.setFixedHeight(20)
-        self.cmbCategory1.move(x_offset + 104, y_offset + 151)
-        self.cmbCategory1.setModel(QStringListModel([">SUPERACION PERSONAL", ">GASTRONOMIA", ">EDUCACION", ">LITERATURA"]))
-        font = self.cmbCategory1.font()
-        font.setPointSize(7)
-        self.cmbCategory1.setFont(font)
-        listView = QListView()
-        listView.setWordWrap(True)
-        self.cmbCategory1.setView(listView)
-        self.cmbCategory1.setEditable(True)
-        self.cmbCategory1.setCurrentIndex(-1)
-        self.cmbCategory1.lineEdit().setPlaceholderText("NIVEL 1")
-        self.cmbCategory1.currentIndexChanged.connect(lambda x: self.cmbCategory1.setEditable(False))
-        self.cmbCategory1.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("Category1"))
-
-        self.cmbCategory2 = MyComboBox_Pop(self.tab_compItemData)
-        self.cmbCategory2.setFixedWidth(95)
-        self.cmbCategory2.setFixedHeight(20)
-        self.cmbCategory2.move(x_offset + 202, y_offset + 151)
-        self.cmbCategory2.setModel(QStringListModel([">SUPERACION PERSONAL", ">GASTRONOMIA", ">EDUCACION", ">LITERATURA"]))
-        font = self.cmbCategory2.font()
-        font.setPointSize(7)
-        self.cmbCategory2.setFont(font)
-        listView = QListView()
-        listView.setWordWrap(True)
-        self.cmbCategory2.setView(listView)
-        self.cmbCategory2.setEditable(True)
-        self.cmbCategory2.setCurrentIndex(-1)
-        self.cmbCategory2.lineEdit().setPlaceholderText("NIVEL 2")
-        self.cmbCategory2.currentIndexChanged.connect(lambda x: self.cmbCategory2.setEditable(False))
-        self.cmbCategory2.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("Category2"))
-
-        self.cmbCategory3 = MyComboBox_Pop(self.tab_compItemData)
-        self.cmbCategory3.setFixedWidth(95)
-        self.cmbCategory3.setFixedHeight(20)
-        self.cmbCategory3.move(x_offset + 300, y_offset + 151)
-        self.cmbCategory3.setModel(QStringListModel([">SUPERACION PERSONAL", ">GASTRONOMIA", ">EDUCACION", ">LITERATURA"]))
-        font = self.cmbCategory3.font()
-        font.setPointSize(7)
-        self.cmbCategory3.setFont(font)
-        listView = QListView()
-        listView.setWordWrap(True)
-        self.cmbCategory3.setView(listView)
-        self.cmbCategory3.setEditable(True)
-        self.cmbCategory3.setCurrentIndex(-1)
-        self.cmbCategory3.lineEdit().setPlaceholderText("NIVEL 3")
-        self.cmbCategory3.currentIndexChanged.connect(lambda x: self.cmbCategory3.setEditable(False))
-        self.cmbCategory3.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("Category3"))
-
-        # CONTENT PART
-        self.lblContent = QLabel("RESUMEN:", self.tab_compItemData)
-        self.lblContent.move(x_offset + 50, y_offset + 180)
-        self.lblContent.setStyleSheet("background-color: lightblue")
-        self.contentTxtEdit = MyQTextEdit(self.tab_compItemData)
-        self.contentTxtEdit.move(x_offset + 105, y_offset + 180)
-        self.contentTxtEdit.setFixedSize(290,65)
-        self.contentTxtEdit.setAcceptRichText(False)
-        self.contentTxtEdit.setTabChangesFocus(True)
-        font = self.contentTxtEdit.font()
-        font.setPointSize(8)
-        self.contentTxtEdit.setFont(font)
-        self.contentTxtEdit.textChanged.connect(self.txtEditSignal)
-        self.contentTxtEdit.clicked.connect(lambda: self.deactivateLineEdit("TextEdit"))
-
-        # LABEL CARACTER
-        self.lblCaracterCount = QLabel("CHARACTERS: 0", self.tab_compItemData)
-        # self.lblCaracterCount.setFixedWidth(82)
-        self.lblCaracterCount.move(x_offset + 105, y_offset + 245)
-        self.lblCaracterCount.setStyleSheet("QLabel{background-color: lightgreen;}")
-
-        # LABEL MAX CARACTER
-        self.lblMaxCarecter = QLabel("MAX: 600 CHAR", self.tab_compItemData)
-        self.lblMaxCarecter.move(x_offset + 205, y_offset + 245)
-        self.lblMaxCarecter.setStyleSheet("QLabel{background-color: red; color: white;}")
-        font = QFont()
-        font.setBold(True)
-        self.lblMaxCarecter.setFont(font)
-
-    def setupUi(self):
-        x_offset = 10
-        y_offset = 0
-
-        self.resize(340, 300)
-        self.setFixedSize(400, 338)
-        self.setObjectName("ui_EditNewItemDialog")
-        self.setWindowTitle("Editar producto") if not(self.method) else self.setWindowTitle("Registrar nuevo producto")
-
-        self.main_layout = QGridLayout(self)
-        self.setLayout(self.main_layout)
-
-        self.tab_mainItemData = QWidget(self)
-        self.tab_mainItemData.setFixedSize(360, 285)
-        self.tab_compItemData = QWidget(self)
-        self.tab_compItemData.setFixedSize(370, 260)
-
-        #create a tabWidget
-        self.tabItem = QTabWidget(self)
-        self.tabItem.addTab(self.tab_mainItemData, "Información principal")
-        self.tabItem.addTab(self.tab_compItemData, "Información secundaria")
-        self.tabItem.currentChanged.connect(lambda x: self.cleanInputFields())
-
-        self.main_layout.addWidget(self.tabItem, 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
-        self.main_layout.addWidget(QPushButton('Guardar'), 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
-        self.main_layout.addWidget(QPushButton('Cancelar'),2, 0, alignment=Qt.AlignmentFlag.AlignJustify)
-        self.setupComplementary()
-
-        warning_text = ">¡No ingresar tildes ni caracteres especiales (,', \", ´,)!"
-
-        self.lblWarning = QLabel(warning_text,self.tab_mainItemData)
-        self.lblWarning.adjustSize()
-        self.lblWarning.move(55 + x_offset, 15 + y_offset) if not(self.method) else self.lblWarning.move(60 + x_offset, 5 + y_offset)
-        self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblWarning.setStyleSheet("background-color: red")
-
-        self.lblWarning = QLabel(">(*): Campos obligatorios",self.tab_mainItemData) if self.method else False
-        if bool(self.lblWarning):
-            self.lblWarning.adjustSize()
-            self.lblWarning.move(60 + x_offset, 20 + y_offset)
-            self.lblWarning.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            self.lblWarning.setStyleSheet("background-color: red")
-
-        self.lblId = QLabel("CÓDIGO:",self.tab_mainItemData) if not(self.method) else QLabel("CÓDIGO(*):",self.tab_mainItemData)
-        self.lblId.adjustSize()
-        self.lblId.move(43 + x_offset, 40 + y_offset) if not(self.method) else self.lblId.move(33 + x_offset, 40 + y_offset)
-        self.lblId.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblId.setStyleSheet("background-color: lightgreen")
-        self.txtId = MyLineEdit(self.tab_mainItemData)
-        self.txtId.setFixedHeight(18)
-        self.txtId.setFixedWidth(70)
-        self.txtId.move(95 + x_offset, 37 + y_offset)
-        self.txtId.setEnabled(False)
-        self.defaultPalette = self.txtId.palette()  
-
-        self.lblItem = QLabel("ITEM:",self.tab_mainItemData)
-        self.lblItem.adjustSize()
-        self.lblItem.move(175 + x_offset, 40 + y_offset) 
-        self.lblItem.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblItem.setStyleSheet("background-color: lightgreen")
-
-        self.cmbItem = QComboBox(self.tab_mainItemData)
-        self.cmbItem.setGeometry(210 + x_offset, 37 + y_offset, 115, 18)
-
-        self.color = QColor(230,230,230)
-        self.lblISBN = QLabel("ISBN:",self.tab_mainItemData)
-        self.lblISBN.adjustSize()
-        self.lblISBN.move(61 + x_offset, 60 + y_offset)
-        self.lblISBN.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblISBN.setStyleSheet("background-color: lightblue")
-        self.txtISBN = MyLineEdit(self.tab_mainItemData)
-        self.txtISBN.setFixedHeight(18)
-        self.txtISBN.setFixedWidth(230)
-        self.txtISBN.move(95 + x_offset, 58 + y_offset)
-        self.txtISBN.setReadOnly(True)
-        palette = self.txtISBN.palette()
-        palette.setColor(QtGui.QPalette.Base, self.color)
-        self.txtISBN.setPalette(palette)
-        self.txtISBN.clicked.connect(lambda: self.deactivateLineEdit("ISBN"))
-        self.txtISBN.setMaxLength(15)
-
-        self.lblTitle = QLabel("TÍTULO:",self.tab_mainItemData) if not(self.method) else QLabel("TÍTULO(*):",self.tab_mainItemData)
-        self.lblTitle.adjustSize()
-        self.lblTitle.move(48 + x_offset, 80 + y_offset) if not(self.method) else self.lblTitle.move(38 + x_offset, 80 + y_offset)
-        self.lblTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblTitle.setStyleSheet("background-color: lightblue")
-        self.txtTitle = MyLineEdit(self.tab_mainItemData)
-        self.txtTitle.setFixedHeight(18)
-        self.txtTitle.setFixedWidth(230)
-        self.txtTitle.move(95 + x_offset, 78 + y_offset)
-        self.txtTitle.setReadOnly(True)
-        palette = self.txtTitle.palette()
-        palette.setColor(QtGui.QPalette.Base, self.color)
-        self.darkPalette = palette
-        self.txtTitle.setPalette(self.darkPalette)
-        self.txtTitle.clicked.connect(lambda: self.deactivateLineEdit("Title"))
-        self.txtTitle.setMaxLength(90)
-
-        self.lblAutor = QLabel("AUTOR:",self.tab_mainItemData) if not(self.method) else QLabel("AUTOR(*):",self.tab_mainItemData)
-        self.lblAutor.adjustSize()
-        self.lblAutor.move(49 + x_offset, 100 + y_offset) if not(self.method) else self.lblAutor.move(39 + x_offset, 100 + y_offset)
-        self.lblAutor.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblAutor.setStyleSheet("background-color: lightblue")
-        self.txtAutor = MyLineEdit(self.tab_mainItemData)
-        self.txtAutor.setFixedHeight(18)
-        self.txtAutor.setFixedWidth(230)
-        self.txtAutor.move(95 + x_offset, 98 + y_offset)
-        self.txtAutor.setReadOnly(True)
-        self.txtAutor.setPalette(self.darkPalette)
-        self.txtAutor.clicked.connect(lambda: self.deactivateLineEdit("Autor"))
-        self.txtAutor.setMaxLength(45)
-
-        self.lblPublisher = QLabel("EDITORIAL:",self.tab_mainItemData) if not(self.method) else QLabel("EDITORIAL(*):",self.tab_mainItemData)
-        self.lblPublisher.adjustSize()
-        self.lblPublisher.move(31 + x_offset, 120 + y_offset) if not(self.method) else self.lblPublisher.move(21 + x_offset, 120 + y_offset)
-        self.lblPublisher.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblPublisher.setStyleSheet("background-color: lightblue")
-        self.txtPublisher = MyLineEdit(self.tab_mainItemData)
-        self.txtPublisher.setFixedHeight(18)
-        self.txtPublisher.setFixedWidth(230)
-        self.txtPublisher.move(95 + x_offset, 118 + y_offset)
-        self.txtPublisher.setReadOnly(True)
-        self.txtPublisher.setPalette(self.darkPalette)
-        self.txtPublisher.clicked.connect(lambda: self.deactivateLineEdit("Publisher"))
-        self.txtPublisher.setMaxLength(45)
-
-        # self.lblPrice = QLabel("PRECIO:",self.tab_mainItemData) if not(self.method) else QLabel("PRECIO(*):",self.tab_mainItemData)
-        # self.lblPrice.adjustSize()
-        # self.lblPrice.move(47 + x_offset, 140 + y_offset) if not(self.method) else self.lblPrice.move(37 + x_offset, 140 + y_offset)
-        # self.lblPrice.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # self.lblPrice.setStyleSheet("background-color: lightblue")
-        # self.txtPrice = MyLineEdit(self.tab_mainItemData)
-        # self.txtPrice.setPlaceholderText("Ingresar solo numeros")
-        # self.txtPrice.setFixedHeight(18)
-        # self.txtPrice.setFixedWidth(230)
-        # self.txtPrice.move(95 + x_offset, 138 + y_offset)
-        # self.txtPrice.setReadOnly(True)
-        # self.txtPrice.setPalette(self.darkPalette)
-        # self.txtPrice.clicked.connect(lambda: self.deactivateLineEdit("Price"))
-        # self.txtPrice.setMaxLength(30)
-
-        self.lblInitStock = QLabel("STOCK INGRESO:",self.tab_mainItemData)
-        self.lblInitStock.adjustSize()
-        self.lblInitStock.move(5 + x_offset, 241 + y_offset)
-        self.lblInitStock.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblInitStock.setStyleSheet("background-color: lightblue")
-        self.spinInitStock = MySpinBox(self.tab_mainItemData)
-        self.spinInitStock.setGeometry(100 + x_offset, 100 + y_offset, 50, 20)
-        self.spinInitStock.move(95 + x_offset, 237 + y_offset)
-        self.spinInitStock.setReadOnly(True)
-        self.spinInitStock.setPalette(self.darkPalette)
-        self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
-        self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
-
-        # LABEL BOTTOM IMAGE
-        self.lblImage_ = QLabel(self.tab_mainItemData)
-        self.lblImage_.setGeometry(QtCore.QRect(105 + x_offset, 141 + y_offset, 175, 91))
-        self.lblImage_.setText("")
-        # self.lblImage_.setStyleSheet("QLabel{background-color: red;}")
-        pixMap = QtGui.QPixmap("C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/imgs/newBook.png")
-        # pixMap = pixMap.scaled(600, 600, QtCore.Qt.IgnoreAspectRatio)
-        self.lblImage_.setPixmap(pixMap)
-        self.lblImage_.setScaledContents(True)
-
-        # self.btnCancel = QPushButton('Cancelar', self)
-        # self.btnCancel.adjustSize()
-        # self.btnCancel.move(190, 185)
-        # self.btnCancel.clicked.connect(lambda: self.submitclose())
-
-        # self.btnOk = QPushButton(self)
-        # self.btnOk.setText("Editar") if not(self.method) else self.btnOk.setText("Registrar")
-        # self.btnOk.adjustSize()
-        # self.btnOk.move(80, 185)
-        # self.btnOk.clicked.connect(lambda: self.returnValues(True))
 
     def show_window(self):
        self.show()
