@@ -1106,8 +1106,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.cmbIdiom.move(x_offset + 155, y_offset + 82)
         self.cmbIdiom.setFixedWidth(240)
         self.cmbIdiom.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("CmbIdiom"))
-        self.cmbIdiom.addItem("ITALIANO")
-        self.cmbIdiom.addItem("QUECHUA")
 
         # COVER PART
         self.lblCover = QLabel("CUBIERTA: ",self.tab_compItemData)
@@ -1119,9 +1117,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.cmbCover.setFixedWidth(240)
         self.cmbCover.popupAboutToBeShown.connect(lambda: self.deactivateLineEdit("CmbCover"))
         self.cmbCover.move(x_offset + 155, y_offset + 105)
-        self.cmbCover.addItem("BLANDA")
-    
-        self.cmbCover.addItem("DURA")
+        self.cmbCover.addItems(["BLANDA", "DURA"])
 
         # DIMENTIONS PART
         self.lblWidth = QLabel("ANCHO:", self.tab_compItemData)
@@ -1376,7 +1372,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.spinInitStock.setReadOnly(True)
         self.spinInitStock.setPalette(self.darkPalette)
         self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
-        self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
+        # self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
+        self.spinInitStock.setEnabled(False)
+
 
         # LABEL BOTTOM IMAGE
         self.lblImage_ = QLabel(self.tab_mainItemData)
