@@ -371,12 +371,13 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     # -----------  user validation  -----------
     def userValidation(self):
-        # ok: True or False
+        # isPressedOk: True or False
         # text: content
-        text, ok = QInputDialog.getText(self, 'Validar usuario', 'Ingrese contraseña', QtWidgets.QLineEdit.Password)
-        if(ok):
-            currentUser = list(filter(lambda x: x.user == self.ownUsers[0], self.ownUsers[1]))[0]
-            if currentUser.passwd == text:
+        text, isPressedOk = QInputDialog.getText(self, 'Validar usuario', 'Ingrese contraseña', QtWidgets.QLineEdit.Password)
+        if(isPressedOk):
+            print(self.ownUsers)
+            # currentUser = list(filter(lambda x: x.user == self.ownUsers[0], self.ownUsers[1]))[0]
+            if self.ownUsers.pwd == text:
                 return True
             else:
                 QMessageBox.question(self, 'Alerta', "Contraseña incorrecta", QMessageBox.Ok, QMessageBox.Ok)
@@ -540,10 +541,10 @@ class Ui_Dialog(QtWidgets.QDialog):
             ui_NewItemDialog.cleanInputFields(True)
             ui_NewItemDialog.setDataFields(data)
             if ui_NewItemDialog.exec_() == QDialog.Accepted:
-                validator, data = ui_NewItemDialog.returnedVal
+                validator, dataAfter = ui_NewItemDialog.returnedVal
                 if validator:
                     if self.userValidation():
-                        if(self.ware_gest.insertNewItemDB(data, self.currWare[0]) and self.gestWareProduct.insertInnerNewItem(data, self.currWare)):
+                        if(self.ware_gest.insertNewItemDB(dataAfter.copy(), self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter.copy(), self.currWare.cod)):
                             QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
                             self.txtBusChanged()
                         else:
@@ -893,8 +894,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 tmp_dict["autor"] = self.txtAutor.text().strip()
             if self.innerEditData["publisher"] != self.txtPublisher.text() and bool(len(self.txtPublisher.text().strip())):
                 tmp_dict["editorial"] = self.txtPublisher.text().strip()
-            # if self.innerEditData["price"] != self.txtPrice.text() and bool(len(self.txtPrice.text().strip())):
-                # tmp_dict["pv"] = self.txtPrice.text().strip()
 
             if bool(len(tmp_dict)):
                 self.returnedVal = (True, tmp_dict)
@@ -904,27 +903,30 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.returnedVal = (False, None)
 
         elif btnConfirmation and self.method:
-            tmp_dict["id"] = self.txtId.text().strip()
+            tmp_dict["id"] = int(self.txtId.text().strip())
             if bool(len(self.txtTitle.text().strip())):
                 tmp_dict["title"] = self.txtTitle.text().strip()
             if bool(len(self.txtAutor.text().strip())):
                 tmp_dict["autor"] = self.txtAutor.text().strip()
             if bool(len(self.txtPublisher.text().strip())):
                 tmp_dict["publisher"] = self.txtPublisher.text().strip()
+            if bool(len(self.cmbItem.currentText().strip())):
+                tmp_dict["idItem"] = self.dataItems[self.cmbItem.currentIndex()]
 
-            if ("id" in tmp_dict) and ("title" in tmp_dict) and ("autor" in tmp_dict) and ("publisher" in tmp_dict):
+            if ("id" in tmp_dict) and ("title" in tmp_dict) and ("autor" in tmp_dict) and ("publisher" in tmp_dict) and ("idItem" in tmp_dict):
                 if bool(len(self.txtISBN.text().strip())): tmp_dict["isbn"] = self.txtISBN.text().strip()
-                if self.dateOutWidget.date().year() != 1752: tmp_dict["dateOut"] = str(self.dateOutWidget.date().year())
-                if bool(self.editionSpinBox.value()): tmp_dict["edition"] = str(self.editionSpinBox.value())
-                if bool(self.pagesSpinBox.value()): tmp_dict["pages"] = str(self.pagesSpinBox.value())
-                if bool(self.cmbIdiom.currentText()): tmp_dict["idlanguage"] = str(self.cmbIdiom.currentText())
-                if (self.cmbCover.currentIndex() >= 0): tmp_dict["cover"] = str(self.cmbCover.currentIndex())
-                if bool(self.widthSpinBox.value()): tmp_dict["width"] = str(self.widthSpinBox.value())
-                if bool(self.heightSpinBox.value()): tmp_dict["height"] = str(self.heightSpinBox.value())
+                if self.dateOutWidget.date().year() != 1752: tmp_dict["dateOut"] = self.dateOutWidget.date().toString("yyyy-MM-dd")
+                if bool(self.editionSpinBox.value()): tmp_dict["edition"] = self.editionSpinBox.value()
+                if bool(self.pagesSpinBox.value()): tmp_dict["pages"] = self.pagesSpinBox.value()
+                if bool(self.cmbIdiom.currentText()): tmp_dict["idLanguage"] = self.dataLanguages[self.cmbIdiom.currentIndex()]
+                if (self.cmbCover.currentIndex() >= 0): tmp_dict["cover"] = self.cmbCover.currentIndex()
+                if bool(self.widthSpinBox.value()): tmp_dict["width"] = self.widthSpinBox.value()
+                if bool(self.heightSpinBox.value()): tmp_dict["height"] = self.heightSpinBox.value()
                 #aqui falta la parte de categorias, esto revisar arquitectura base de datos
                 if bool(len(self.contentTxtEdit.toPlainText().strip())): tmp_dict["content"] = self.contentTxtEdit.toPlainText().strip()
                 # if bool(self.spinInitStock.value()): tmp_dict["stock"] = self.spinInitStock.text().strip()
                 self.returnedVal = (True, tmp_dict)
+
             else:
                 QMessageBox.information(self, 'Mensaje', "Llenar los campos obligatorios (*)", QMessageBox.Ok, QMessageBox.Ok)
                 self.returnedVal = (False, None)
@@ -996,6 +998,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         if bool(data): self.prevData = data
 
         if bool(self.prevData) and self.method:
+            self.dataItems = data["items"]
+            self.dataLanguages = data["languages"]
             self.txtId.setText(str(data["next"]))
             self.cmbItem.addItems(list(map(lambda x: x[1], data["items"])))
             self.cmbIdiom.addItems(list(map(lambda x: x[1], data["languages"])))
@@ -1272,7 +1276,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.btnSave = QPushButton("Guardar", self)
         self.btnCancel = QPushButton("Cancelar", self)
         self.btnSave.clicked.connect(lambda: self.saveEvent(True))
-        self.btnCancel.clicked.connect(lambda: print("Esta dando el boton de Cancelar"))
+        self.btnCancel.clicked.connect(lambda: self.submitclose())
 
         self.main_layout.addWidget(self.tabItem, 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
         self.main_layout.addWidget(self.btnSave, 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)

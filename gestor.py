@@ -121,13 +121,13 @@ class wares_gestor:
 			return False
 
 	def getNextCodDB(self):
-		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, null FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl FROM genesisdb.category c;"
+		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, i.code FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl FROM genesisdb.category c;"
 		try:
 			self.connectDB()
 			self.cursor.execute(query)
 			data = self.cursor.fetchall()
 			nextCode = list(filter(lambda x: True if x[0] == 'next' else False, data))[0][1]
-			items = list(map(lambda x: (x[1], x[2]),list(filter(lambda x: True if x[0] == 'item' else False, data))))
+			items = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if x[0] == 'item' else False, data))))
 			languages = list(map(lambda x: (x[1], x[2]),list(filter(lambda x: True if x[0] == 'lang' else False, data))))
 			category1 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 1) else False, data))))
 			category2 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 2) else False, data))))
@@ -141,15 +141,25 @@ class wares_gestor:
 			return False, None
 
 	def insertNewItemDB(self, data: dict = None, currentWare: str = None):
+
+		#anteriormente se lee el spinbox stock para ver si te tiene que agregar cantidad a nuevo producto
+		
 		if bool(len(data)) and bool(currentWare):
-			query_1 = "insert into genesisDB.books (cod, isbn, name, autor, editorial, pv) values ('%s', '%s','%s','%s','%s', %s);" % (data["cod"],data["isbn"],data["name"], data["autor"], data["editorial"], data["pv"]) if ("isbn" in data) else "insert into genesisDB.books (cod, name, autor, editorial, pv) values ('%s', '%s','%s','%s','%s');" % (data["cod"], data["name"], data["autor"], data["editorial"], data["pv"])
-			query_2 = "insert into genesisDB.ware_books (cod_book) values ('%s');" % (data["cod"])
-			query_3 = "update genesisDB.ware_books set cant_%s = %s where cod_book = '%s';" % (currentWare, data["stock"], data["cod"]) if ("stock" in data) else False
+			
+			#esta parte es para hacer las subconsultas
+			if "idItem" in data:
+				data["idItem"] = "(select id from genesisdb.item where item = '" + str(data["idItem"][1]) + "')"
+			if "idLanguage" in data:
+				data["idLanguage"] = "(select id from genesisdb.language where language = '" + data["idLanguage"][1] + "')"
+
+			#esta parte para crear el string separado por comas
+			fieldsCSV = ",".join(tuple(data.keys()))
+			valuesCSV = ",".join(tuple("'" + value + "'" if (isinstance(value, str) and key !="idItem" and key != "idLanguage") else str(value) for key, value in data.items()))
+			query_1 = "insert into genesisdb.product (" + fieldsCSV + ") values (" + valuesCSV + ");"
+			
 			try:
 				self.connectDB()
 				self.cursor.execute(query_1)
-				self.cursor.execute(query_2)
-				if bool(query_3): self.cursor.execute(query_3)
 				self.mydb.commit()
 				self.disconnectDB()
 				return True
@@ -188,31 +198,6 @@ class WareProduct:
 						j.wareData[currentWare]["qtyOld"] += i["qtyOld"]
 					elif operationType == "salida":
 						j.wareData[currentWare]["qtyOld"] -= i["qtyOld"]
-
-	"""def buscar(self, criterio, patron):
-		self.temp_list.clear()
-		if criterio == "cod":
-			for i in self.innerWareList:
-				if(i.book.cod == str.upper(patron)):
-					self.temp_list.append(i)
-			return len(self.temp_list)
-		elif criterio == "isbn":
-			for i in self.innerWareList:
-				if(i.book.isbn == patron):
-					self.temp_list.append(i)
-			return len(self.temp_list)
-		elif criterio == "nombre":
-			for i in self.innerWareList:
-				if(i.book.name.find(str.upper(patron)) >= 0):
-					self.temp_list.append(i)
-			return len(self.temp_list)
-
-		elif criterio == "autor":
-			for i in self.innerWareList:
-				if(i.book.autor.find(str.upper(patron)) >= 0):
-					self.temp_list.append(i)
-			return len(self.temp_list)
-		return 0"""
 
 	def update_quantity(self, listNew: list[int] = None, listOld: list[int] = None, operationType: str = "", idWare: str = "", location: str = ""):
 		oprDict = { "ingreso": "+",
@@ -387,10 +372,20 @@ class WareProduct:
 
 	def insertInnerNewItem(self, data: dict = None, own_wares = None):
 		if bool(data):
-			book_params = (data["cod"], data["isbn"] if ("isbn" in data) else "", data["name"], data["autor"], data["editorial"], "", data["pv"], True)
-			objBook = book(book_params)
-			values = data["stock"] if "stock" in data else 0
-			objwareBook = ware_product(objBook, own_wares, values, True)
+
+			objProduct = product(data["idItem"][2], 
+						data["id"], 
+						None if not("isbn" in data) else data["isbn"],
+						data["title"], data["autor"], data["publisher"], 
+						None if not("dateOut" in data) else data["dateOut"],
+						None if not("idLanguage" in data) else data["idLanguage"][1],
+						None if not("pages" in data) else data["pages"],
+						None if not("edition" in data) else data["edition"],
+						None if not("cover" in data) else data["cover"],
+						None if not("width" in data) else data["width"],
+						None if not("eight" in data) else data["height"])
+			
+			objwareBook = ware_product(objProduct)
 			self.innerWareList.append(objwareBook)
 			return True
 		else:

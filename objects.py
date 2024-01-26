@@ -86,11 +86,11 @@ class product:
 		self.title = title
 		self.autor = autor
 		self.publisher = publisher 
-		self.dateOut = dateOut.strftime("%Y") if bool(dateOut) else None
+		self.dateOut = dateOut
 		self.lang = lang
 		self.pages = pages
 		self.edition = edition
-		self.cover = "DURA" if cover else "BLANDA"
+		self.cover = "DURA" if bool(cover) else "BLANDA"
 		self.width = width
 		self.height = height
 	
