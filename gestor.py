@@ -6,7 +6,10 @@ import os
 from objects import user, ware, ware_product, product
 from decouple import Config, RepositoryEnv
 from datetime import datetime, date
-import traceback
+import bcrypt
+
+
+# import traceback
 
 
 
@@ -392,6 +395,7 @@ class WareProduct:
 			return False
 
 class users_gestor:
+	pswHashed = None
 	def __init__(self):
 		self.userList = []
 		self.fill_users()
@@ -445,6 +449,11 @@ class users_gestor:
 			return objResult
 		else:
 			return None
+	
+	def checkPSW(self, Password: str = None):
+		bytes = Password.encode('utf-8')
+		salt = bcrypt.gensalt()
+		hash = bcrypt.hashpw(bytes, salt)
 
 class documents:
 	def __init__(self):
