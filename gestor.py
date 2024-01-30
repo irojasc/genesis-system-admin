@@ -395,7 +395,7 @@ class WareProduct:
 			return False
 
 class users_gestor:
-	pswHashed = None
+	_pswHashed = None
 	def __init__(self):
 		self.userList = []
 		self.fill_users()
@@ -451,9 +451,9 @@ class users_gestor:
 			return None
 	
 	def checkPSW(self, Password: str = None):
-		bytes = Password.encode('utf-8')
-		salt = bcrypt.gensalt()
-		hash = bcrypt.hashpw(bytes, salt)
+		#areMatched: Bool 
+		userBytes = Password.encode('utf-8')
+		areMatched = bcrypt.checkpw(userBytes, self.pswHashed)
 
 class documents:
 	def __init__(self):
