@@ -396,6 +396,18 @@ class WareProduct:
 
 class users_gestor:
 	_pswHashed = None
+
+	@property
+	def pswHashed(self) -> str:
+		return self._pswHashed
+	
+	@pswHashed.setter
+	def pswHashed(self, initialPsw: str = None) -> None:
+		if bool(initialPsw) and len(initialPsw) > 0:
+			self._pswHashed = initialPsw
+		else:
+			print("Something wrong happened")
+
 	def __init__(self):
 		self.userList = []
 		self.fill_users()
@@ -451,9 +463,17 @@ class users_gestor:
 			return None
 	
 	def checkPSW(self, Password: str = None):
-		#areMatched: Bool 
-		userBytes = Password.encode('utf-8')
-		areMatched = bcrypt.checkpw(userBytes, self.pswHashed)
+		#areMatched: Bool
+		try:
+			if (isinstance(Password, str) and len(Password) > 0):
+				userBytes = Password.encode('utf-8')
+				areMatched = bcrypt.checkpw(userBytes, self._pswHashed)
+				return True, areMatched
+			else:
+				return False, None
+		except Exception as e:
+			print("Error: %s" % e)
+			return False, None
 
 class documents:
 	def __init__(self):
