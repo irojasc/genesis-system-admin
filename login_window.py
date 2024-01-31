@@ -36,6 +36,8 @@ class Ui_LoginWindow(QtWidgets.QMainWindow):
         currentUser = self.user_gest.check_login(self.txtUser.text(),self.txtPwd.text())
         validator, objWares, currentWareName = self.ware_gest.exist_ware()
         # objWares = (curretWare: ware, restWares: list[ware])
+        #aqui es donde el atributo de la clase se setea con el hash code
+        users_gestor.pswHashed = currentUser.pwd
 
         if bool(currentUser) and validator:
             # QMessageBox.information(self, 'Mensaje', "Log In Correcto", QMessageBox.Ok, QMessageBox.Ok)

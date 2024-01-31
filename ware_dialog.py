@@ -13,7 +13,7 @@ from PyQt5.QtGui import QFont, QBrush, QColor, QKeyEvent, QMouseEvent, QTextCurs
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel
 from PyQt5.QtWidgets import QWidget
-from gestor import WareProduct, wares_gestor, aws_s3
+from gestor import WareProduct, wares_gestor, aws_s3, users_gestor
 from objects import ware, user
 from inout_dialog import Ui_inoutDialog
 from uiConfigurations import *
@@ -42,7 +42,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.setupUi()
             # -----------  cargar datos en tabla  -----------
             self.gestWareProduct.loadInnerTable() ##para cargar la tabla principal del gestor
-            self.loadData("main")
+            self.txtBusChanged()
             # -----------  QDialog para ventana in/out  -----------
             self.dialog = QDialog()
             self.ui_dialog = Ui_inoutDialog(self.ownUsers, self.currWare, self.dialog)
@@ -72,11 +72,12 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.cmbWarePrice.setEnabled(True) if self.ownUsers.auth["ckWarePrice"] else self.cmbWarePrice.setEnabled(False)
         self.cmbSearch.setCurrentIndex(-1)
         # las dos lineas de abajo actualizan los datos de precio con el item de la primera fila
-        self.loadData("main")
+        # self.txtBusChanged() es una funcion que actua segun las condiciones de los inputs
+        self.txtBusChanged()
         self.ware_table.setCurrentCell(0, 0)
         self.actualizar_img(0)
 
-    def sortTable(self, unsortList):
+    def sortTable(self, unsortList: list =  None) -> tuple:
         # separar items que pertencen a libros
         result_books = list(filter(lambda x: x.product.prdCode.split("_")[0] == "GN", unsortList))
 
@@ -85,7 +86,8 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         # # ordenar items de libros por codigo de menor a mayor
         # result_books.sort(key=lambda z: int(z.objBook.cod.split("_")[1]))
-        return result_books +  result_nobooks
+        return len(result_books), result_books +  result_nobooks
+        
 
     ## Funcion que permite la apertura de ventana ware desde el main_
     def showWindow(self):
@@ -103,7 +105,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 for i in self.gestWareProduct.ware_list:
                     if i.book.cod == j["cod"]:
                         i.almacen_quantity[1] -= j["cantidad"]
-        self.loadData()
+        self.txtBusChanged()
 
     # -----------  close event configuration  -----------
     def keyPressEvent(self, event):
@@ -131,17 +133,19 @@ class Ui_Dialog(QtWidgets.QDialog):
     #     self.loadData()
 
     # -----------  carga tabla qtableWidget  -----------
-    def loadData(self, condition = "search"):
+    # def loadData(self, condition = "search") -> int:
+    def loadData(self) -> int:
         backgrounditem = lambda x, z: not(z) and x.setBackground(QtGui.QColor(200, 200, 200, 255))
         flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
-        if condition == "main":
-            # sortTable: ordena la tabla que llega de gestor por tipo de producto y nivel de codigo
-            self.real_table = self.sortTable(self.gestWareProduct.innerWareList.copy())
+        # if condition == "main":
+        # sortTable: ordena la tabla que llega de gestor por tipo de producto y nivel de codigo
+        lenTableBooks, self.real_table = self.sortTable(self.real_table.copy())
+        # lenTableBooks, self.real_table = self.sortTable(self.gestWareProduct.innerWareList.copy())
 
         # -----------  esta parte para llenar la tabla  -----------
-        row = 0
+        # row = 0
         self.ware_table.setRowCount(len(self.real_table))
-        for ware_li in self.real_table:
+        for row, ware_li in enumerate(self.real_table):
             # isExistActive: primero comprueba que el item exista en el presente almacen, luego recien verifica que el item este habilitado en el almacen
             isExistActive = (self.currWare.cod in ware_li.wareData) and ware_li.wareData[self.currWare.cod]["isEnabled"]
             # isOldExist: primero verifica que existe algun almancen activo para el item y luego que todos los valoes de PVOLD sean iguales
@@ -191,28 +195,34 @@ class Ui_Dialog(QtWidgets.QDialog):
                 item.setFlags(flag)
                 self.ware_table.setItem(row, 6, item)
                 if isWareEnEx and isOldExist: self.ware_table.item(row, 6).setToolTip("-->[%s]"%str(ware_li.wareData[currTextCmbWare]["qtyOld"]))
-            row += 1
+            # row += 1
 
-    def txtBusChanged(self):
+        return lenTableBooks
+
+    def txtBusChanged(self, method: bool = False):
+        #method: True # cuando se crea un nuevo item
         if str(self.cmbSearch.currentText()) == "" and self.txtSearch.text() != "":
             ret = QMessageBox.information(self, 'Aviso', "Ingresar criterio de busqueda")
 
         elif str(self.cmbSearch.currentText()) == "" and self.txtSearch.text() == "":
-            # self.loadData("main"): para copiar toda la lista inner to frond
-            self.loadData("main")
-            self.ware_table.setCurrentCell(0, 0)
-            self.actualizar_img(0)
+            # self.loadData(): para copiar toda la lista inner to frond
+            if self.buscar("main") > 0:
+                #lstBookIndex: la posicion final del ultimo item de la categoria libros
+                lstBookIndex = self.loadData()
+                self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
+                self.actualizar_img(0)
 
         elif self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() == "":
-            self.loadData("main")
-            self.ware_table.setCurrentCell(0, 0)
-            self.actualizar_img(0)
+            if self.buscar("main") > 0:
+                lstBookIndex = self.loadData()
+                self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
+                self.actualizar_img(0)
 
         else:
             if self.cmbSearch.currentText() == "cod":
                 if self.buscar("cod", self.txtSearch.text()) > 0:
-                    self.loadData("search")
-                    self.ware_table.setCurrentCell(0, 0)
+                    lstBookIndex = self.loadData()
+                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
                     self.actualizar_img(0)
                 else:
                     self.real_table.clear()
@@ -221,8 +231,8 @@ class Ui_Dialog(QtWidgets.QDialog):
 
             elif self.cmbSearch.currentText() == "isbn":
                 if self.buscar("isbn", self.txtSearch.text()) > 0:
-                    self.loadData("search")
-                    self.ware_table.setCurrentCell(0, 0)
+                    lstBookIndex = self.loadData()
+                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
                     self.actualizar_img(0)
                     #self.txtSearch.setText("")
                 else:
@@ -233,8 +243,8 @@ class Ui_Dialog(QtWidgets.QDialog):
 
             elif self.cmbSearch.currentText() == "titulo":
                 if self.buscar("titulo", self.txtSearch.text()) > 0:
-                    self.loadData("search")
-                    self.ware_table.setCurrentCell(0, 0)
+                    lstBookIndex = self.loadData()
+                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
                     self.actualizar_img(0)
                 else:
                     self.real_table.clear()
@@ -243,9 +253,8 @@ class Ui_Dialog(QtWidgets.QDialog):
 
             elif self.cmbSearch.currentText() == "autor":
                 if self.buscar("autor", self.txtSearch.text()) > 0:
-
-                    self.loadData("search")
-                    self.ware_table.setCurrentCell(0, 0)
+                    lstBookIndex = self.loadData()
+                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
                     self.actualizar_img(0)
                 else:
                     self.real_table.clear()
@@ -254,8 +263,8 @@ class Ui_Dialog(QtWidgets.QDialog):
 
             elif self.cmbSearch.currentText() == "editorial":
                 if self.buscar("editorial", self.txtSearch.text()) > 0:
-                    self.loadData("search")
-                    self.ware_table.setCurrentCell(0, 0)
+                    lstBookIndex = self.loadData()
+                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
                     self.actualizar_img(0)
                 else:
                     self.real_table.clear()
@@ -375,13 +384,8 @@ class Ui_Dialog(QtWidgets.QDialog):
         # text: content
         text, isPressedOk = QInputDialog.getText(self, 'Validar usuario', 'Ingrese contraseña', QtWidgets.QLineEdit.Password)
         if(isPressedOk):
-            print(self.ownUsers)
-            # currentUser = list(filter(lambda x: x.user == self.ownUsers[0], self.ownUsers[1]))[0]
-            if self.ownUsers.pwd == text:
-                return True
-            else:
-                QMessageBox.question(self, 'Alerta', "Contraseña incorrecta", QMessageBox.Ok, QMessageBox.Ok)
-                return False
+            a = users_gestor() 
+            return a.checkPSW(text)[1] if a.checkPSW(text)[0] else False
         else:
             return False
 
@@ -410,7 +414,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 if self.ui_dialog.returned_val[3]:
                     self.gestWareProduct.update_backtablequantity(self.ui_dialog.returned_val[0], self.ui_dialog.returned_val[1], self.ui_dialog.returned_val[2], self.currWare.cod)
                     # self.updateRealTable()
-                    self.loadData()
+                    self.txtBusChanged()
                     self.actualizar_img(self.ware_table.currentIndex().row())
             # self.ui_dialog.show_window()
         else:
@@ -422,7 +426,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         elif self.cmbWares.currentIndex() != -1:
             self.ware_table.horizontalHeaderItem(6).setText("[" + self.cmbWares.currentText() + "]")
             #self.seColumn = str(self.cmbWares.currentText())
-            self.loadData()
+            self.txtBusChanged()
 
     def onCmbWarePriceIndexChanged(self):
         if self.cmbWarePrice.currentIndex() != -1:
@@ -446,6 +450,11 @@ class Ui_Dialog(QtWidgets.QDialog):
     # -----------  funcion buscar  -----------
     def buscar(self, criterio: str = None, patron: str = None):
         self.real_table.clear()
+        
+        if criterio == "main":
+            self.real_table = self.gestWareProduct.innerWareList.copy()
+            return len(self.real_table)
+        
         if criterio == "cod":
             self.real_table = list(filter(lambda x: x.product.prdCode == str.upper(patron) ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
@@ -546,7 +555,8 @@ class Ui_Dialog(QtWidgets.QDialog):
                     if self.userValidation():
                         if(self.ware_gest.insertNewItemDB(dataAfter.copy(), self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter.copy(), self.currWare.cod)):
                             QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
-                            self.txtBusChanged()
+                            self.txtBusChanged(True)
+                            self.actualizar_img(self.ware_table.currentIndex().row())
                         else:
                             QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
 
@@ -561,7 +571,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         # setea el index antiguo a la tabla actualizada
         self.ware_table.setCurrentCell(row, 0)
         self.actualizar_img(row)
-        # self.loadData("main")
+        # self.loadData()
         # if self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() != "":
         #     self.txtBusChanged()
         # elif self.cmbSearch.currentIndex() == -1 and self.txtSearch.text() == "":
@@ -1035,30 +1045,43 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         # print("initial length: " + str(length_))
         if length_ < 601:
             self.prevcurrentPlainText_ = self.contentTxtEdit.toPlainText()
-            if (length_ >= 600 and cursor.position() >= 600):
-                self.prevcurrentPlainText_ = self.prevcurrentPlainText_[:600]
-                self.contentTxtEdit.blockSignals(True)
-                self.contentTxtEdit.setText(self.prevcurrentPlainText_)
-                self.contentTxtEdit.blockSignals(False)
-                cursor = self.contentTxtEdit.textCursor()
-                cursor.movePosition(11)
-                self.contentTxtEdit.setTextCursor(cursor)
-                self.lblCaracterCount.setText("CHARACTERS: %d" % len(self.prevcurrentPlainText_))
-                self.lblCaracterCount.adjustSize()
-            else:
-                # self.contentTxtEdit.blockSignals(True)
-                # self.contentTxtEdit.setText(self.prevcurrentPlainText_)
-                # self.contentTxtEdit.blockSignals(False)
-                self.lblCaracterCount.setText("CHARACTERS: %d" % len(self.prevcurrentPlainText_))
-                self.lblCaracterCount.adjustSize()
-
-        elif length_ == 601:
+            positionCursor = cursor.position()
             self.contentTxtEdit.blockSignals(True)
             self.contentTxtEdit.setText(self.prevcurrentPlainText_)
-            self.contentTxtEdit.blockSignals(False)
             cursor = self.contentTxtEdit.textCursor()
-            cursor.movePosition(11)
+            cursor.setPosition(positionCursor)
             self.contentTxtEdit.setTextCursor(cursor)
+            self.contentTxtEdit.blockSignals(False)
+
+            self.lblCaracterCount.setText("CHARACTERS: %d" % len(self.prevcurrentPlainText_))
+            self.lblCaracterCount.adjustSize()
+
+        elif length_ >= 601 and cursor.position() >= 600:
+            positionCursor = cursor.position()
+            self.contentTxtEdit.blockSignals(True)
+            # self.contentTxtEdit.setText(self.prevcurrentPlainText_)
+            self.contentTxtEdit.setText(self.contentTxtEdit.toPlainText()[:600])
+            cursor = self.contentTxtEdit.textCursor()
+            cursor.setPosition(positionCursor - 1) if positionCursor < 600 else cursor.setPosition(600)
+            self.contentTxtEdit.setTextCursor(cursor)
+            self.contentTxtEdit.blockSignals(False)
+            self.lblCaracterCount.setText("CHARACTERS: %d" % len(self.contentTxtEdit.toPlainText()[:600]))
+            self.lblCaracterCount.adjustSize()
+            self.prevcurrentPlainText_ = self.contentTxtEdit.toPlainText()[:600]
+
+
+        elif length_ >= 601 and cursor.position() < 600:
+            positionCursor = cursor.position()
+            self.contentTxtEdit.blockSignals(True)
+            self.contentTxtEdit.setText(self.prevcurrentPlainText_)
+            cursor = self.contentTxtEdit.textCursor()
+            cursor.setPosition(positionCursor - 1)
+            self.contentTxtEdit.setTextCursor(cursor)
+            self.contentTxtEdit.blockSignals(False)
+
+            # cursor = self.contentTxtEdit.textCursor()
+            # cursor.movePosition(11)
+            # self.contentTxtEdit.setTextCursor(cursor)
         #se puede guardar la position antigua de cursor y asignar a la nueva cuando el cursor esta menos de 600
         #cantidad de caracteres igual a 600 o 601
 
@@ -2047,6 +2070,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def show_window(self):
        self.show()
 
+
+
+
 class MySpinBox(QSpinBox):
     clicked = pyqtSignal()
     def mousePressEvent(self, event):
@@ -2118,6 +2144,11 @@ class MyQTextEdit(QTextEdit):
         self.clicked.emit()
         QTextEdit.mousePressEvent(self, event)
         # self.textChanged.connect(self.text_changed)
+    
+    def keyPressEvent(self, e: QKeyEvent) -> None:
+        if e.key() in (Qt.Key_Return, Qt.Key_Enter):
+            return
+        return super().keyPressEvent(e)
 
 class ui_CustomChangeLocation(QtWidgets.QDialog):
     def __init__(self, parent=None):

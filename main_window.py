@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ware_dialog import Ui_Dialog
 from datetime import datetime # estos es para mostrar la hora en el main
+# from gestor import users_gestor
 from decouple import Config, RepositoryEnv
 from objects import user, ware
 from datetime import datetime

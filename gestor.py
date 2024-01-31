@@ -395,7 +395,7 @@ class WareProduct:
 			return False
 
 class users_gestor:
-	_pswHashed = None
+	_pswHashed = "Ivan Rojas"
 
 	@property
 	def pswHashed(self) -> str:
@@ -404,7 +404,7 @@ class users_gestor:
 	@pswHashed.setter
 	def pswHashed(self, initialPsw: str = None) -> None:
 		if bool(initialPsw) and len(initialPsw) > 0:
-			self._pswHashed = initialPsw
+			_pswHashed = initialPsw
 		else:
 			print("Something wrong happened")
 
@@ -456,18 +456,17 @@ class users_gestor:
 				print("No se pudo conectar")
 
 	def check_login(self, usr: str = "", pwd: str = ""):
-		objResult = next((obj for obj in self.userList if (obj.user == usr and obj.pwd == pwd)), None)
+		objResult = next((obj for obj in self.userList if (obj.user == usr) and bcrypt.checkpw(bytes(pwd, "utf-8"), bytes(obj.pwd, "utf-8"))), None)
 		if (bool(objResult) and objResult.auth["enabled"]):
 			return objResult
 		else:
 			return None
 	
-	def checkPSW(self, Password: str = None):
+	def checkPSW(self, Password: str = None) -> tuple:
 		#areMatched: Bool
 		try:
 			if (isinstance(Password, str) and len(Password) > 0):
-				userBytes = Password.encode('utf-8')
-				areMatched = bcrypt.checkpw(userBytes, self._pswHashed)
+				areMatched = bcrypt.checkpw(bytes(Password, "utf-8"), bytes(self.pswHashed, "utf-8"))
 				return True, areMatched
 			else:
 				return False, None
