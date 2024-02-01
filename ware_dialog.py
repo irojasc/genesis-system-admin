@@ -555,6 +555,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                     if self.userValidation():
                         if(self.ware_gest.insertNewItemDB(dataAfter.copy(), self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter.copy(), self.currWare.cod)):
                             QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
+                            #True: argumento para indicar que se esta creadno un nuevo item y index selected apunte al ultimo producto libro
                             self.txtBusChanged(True)
                             self.actualizar_img(self.ware_table.currentIndex().row())
                         else:
@@ -1085,7 +1086,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         #se puede guardar la position antigua de cursor y asignar a la nueva cuando el cursor esta menos de 600
         #cantidad de caracteres igual a 600 o 601
 
-    def setupComplementary(self):
+    def setupSecondItemData(self):
         x_offset = -35
         y_offset = 20
         
@@ -1271,6 +1272,82 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         font.setBold(True)
         self.lblMaxCarecter.setFont(font)
 
+    def setupWareItemData(self):
+        x_offset = 10
+        y_offset = 10
+
+         # -----------  wareTableItemData configuration  -----------
+        self.wareTableItemData = QtWidgets.QTableWidget(self.tab_wareItemData)
+        self.wareTableItemData.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        self.wareTableItemData.setGeometry(QtCore.QRect(x_offset, y_offset, 350, 270))
+        self.wareTableItemData.setMinimumHeight(100) ## esto se agrego
+        self.wareTableItemData.setObjectName("wareTableItemData")
+
+        self.wareTableItemData.setColumnCount(8)
+        self.wareTableItemData.setHorizontalHeaderItem(0, QtWidgets.QTableWidgetItem())
+        self.wareTableItemData.setHorizontalHeaderItem(1, QtWidgets.QTableWidgetItem())
+        self.wareTableItemData.setHorizontalHeaderItem(2, QtWidgets.QTableWidgetItem())
+        self.wareTableItemData.setHorizontalHeaderItem(3, QtWidgets.QTableWidgetItem())
+        self.wareTableItemData.setHorizontalHeaderItem(4, QtWidgets.QTableWidgetItem())
+        self.wareTableItemData.setHorizontalHeaderItem(5, QtWidgets.QTableWidgetItem())
+        self.wareTableItemData.setHorizontalHeaderItem(6, QtWidgets.QTableWidgetItem())
+        self.wareTableItemData.setHorizontalHeaderItem(7, QtWidgets.QTableWidgetItem())
+        # item = QtWidgets.QTableWidgetItem()
+        # self.wareTableItemData.setHorizontalHeaderItem(4, item)
+        # item = QtWidgets.QTableWidgetItem()
+        # self.wareTableItemData.setHorizontalHeaderItem(5, item)
+        # item = QtWidgets.QTableWidgetItem()
+        # self.wareTableItemData.setHorizontalHeaderItem(6, item)
+
+        self.wareTableItemData.setColumnWidth(0,56)
+        self.wareTableItemData.setColumnWidth(1,51)
+        self.wareTableItemData.setColumnWidth(2,56)
+        self.wareTableItemData.setColumnWidth(3,86)
+        self.wareTableItemData.setColumnWidth(4,65)
+        self.wareTableItemData.setColumnWidth(5,43)
+        self.wareTableItemData.setColumnWidth(6,43)
+        self.wareTableItemData.setColumnWidth(7,41)
+
+        self.wareTableItemData.horizontalHeader().setEnabled(False)
+        self.wareTableItemData.setSelectionBehavior(1)
+        self.wareTableItemData.setSelectionMode(1)
+        # # self.wareTableItemData.setStyleSheet("selection-background-color: rgb(0, 120, 255);selection-color: rgb(255, 255, 255);")
+        # self.wareTableItemData.verticalHeader().hide()
+        # self.wareTableItemData.viewport().installEventFilter(self)
+        # self.wareTableItemData.keyPressEvent = self.KeyPressed
+        # self.wareTableItemData.doubleClicked.connect(self.tableWidget_doubleClicked)
+
+        self.wareTableItemData.setHorizontalHeaderItem(0, QTableWidgetItem("Almacén"))
+        self.wareTableItemData.setHorizontalHeaderItem(1, QTableWidgetItem("¿Existe?"))
+        self.wareTableItemData.setHorizontalHeaderItem(2, QTableWidgetItem("¿Activo?"))
+        self.wareTableItemData.setHorizontalHeaderItem(3, QTableWidgetItem("Ubicación"))
+        self.wareTableItemData.setHorizontalHeaderItem(4, QTableWidgetItem("Stock Min."))
+        self.wareTableItemData.setHorizontalHeaderItem(5, QTableWidgetItem("PVP 1°"))
+        self.wareTableItemData.setHorizontalHeaderItem(6, QTableWidgetItem("PVP 2°"))
+        self.wareTableItemData.setHorizontalHeaderItem(7, QTableWidgetItem("DSCT."))
+
+        verticalHeader_ = self.wareTableItemData.verticalHeader()
+        verticalHeader_.setSectionResizeMode(QHeaderView.ResizeToContents)
+
+        horizontalHeader_ = self.wareTableItemData.horizontalHeader()
+        horizontalHeader_.setFrameStyle(QFrame.Box | QFrame.Plain)
+        horizontalHeader_.setLineWidth(1)
+        self.wareTableItemData.setHorizontalHeader(horizontalHeader_)
+        
+
+        self.wareTableItemData.setRowCount(3)
+        self.wareTableItemData.setItem(0, 0, QtWidgets.QTableWidgetItem("Hola"))
+        self.wareTableItemData.setItem(1, 0, QtWidgets.QTableWidgetItem("Hola"))
+        self.wareTableItemData.setItem(2, 0, QtWidgets.QTableWidgetItem("Hola"))
+        # self.wareTableItemData.setItem(0, 1, QtWidgets.QTableWidgetItem("Hola"))
+
+        # item.setText(_translate("Dialog", "cod"))
+        # item.setFont(font)
+        # item.setForeground(QBrush(QColor(0,0,0)))
+
+
+
+
     def setupUi(self):
         x_offset = 10
         y_offset = 10
@@ -1290,10 +1367,15 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.tab_compItemData.setFixedSize(370, 290)
         self.tab_compItemData.move(0,0)
 
+        self.tab_wareItemData = QWidget(self)
+        self.tab_wareItemData.setFixedSize(370, 290)
+        self.tab_wareItemData.move(0,0)
+
         #create a tabWidget
         self.tabItem = QTabWidget(self)
-        self.tabItem.addTab(self.tab_mainItemData, "Información principal")
-        self.tabItem.addTab(self.tab_compItemData, "Información secundaria")
+        self.tabItem.addTab(self.tab_mainItemData, "Info. Principal")
+        self.tabItem.addTab(self.tab_compItemData, "Info. Secundaria")
+        self.tabItem.addTab(self.tab_wareItemData, "Info. Almacén")
         self.tabItem.currentChanged.connect(lambda x: self.cleanInputFields())
 
         self.btnSave = QPushButton("Guardar", self)
@@ -1304,7 +1386,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.main_layout.addWidget(self.tabItem, 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
         self.main_layout.addWidget(self.btnSave, 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
         self.main_layout.addWidget(self.btnCancel,2, 0, alignment=Qt.AlignmentFlag.AlignJustify)
-        self.setupComplementary()
+        self.setupSecondItemData()
+        self.setupWareItemData()
 
         warning_text = ">¡No ingresar tildes ni caracteres especiales (,', \", ´,)!"
 
@@ -1454,6 +1537,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         # self.btnOk.adjustSize()
         # self.btnOk.move(80, 185)
         # self.btnOk.clicked.connect(lambda: self.saveEvent(True))
+
+
 
     def deactivateLineEdit(self, widget: str = ""):
         if bool(widget):
