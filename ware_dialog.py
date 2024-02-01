@@ -199,7 +199,7 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         return lenTableBooks
 
-    def txtBusChanged(self, method: bool = False):
+    def txtBusChanged(self, currentLineText: str = None, method: bool = False):
         #method: True # cuando se crea un nuevo item
         if str(self.cmbSearch.currentText()) == "" and self.txtSearch.text() != "":
             ret = QMessageBox.information(self, 'Aviso', "Ingresar criterio de busqueda")
