@@ -19,6 +19,7 @@ from inout_dialog import Ui_inoutDialog
 from uiConfigurations import *
 from datetime import datetime
 from functools import reduce
+import copy
 ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 
 
@@ -935,7 +936,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 if bool(self.heightSpinBox.value()): tmp_dict["height"] = self.heightSpinBox.value()
                 #aqui falta la parte de categorias, esto revisar arquitectura base de datos
                 if bool(len(self.contentTxtEdit.toPlainText().strip())): tmp_dict["content"] = self.contentTxtEdit.toPlainText().strip()
-                # if bool(self.spinInitStock.value()): tmp_dict["stock"] = self.spinInitStock.text().strip()
+                # # if bool(self.spinInitStock.value()): tmp_dict["stock"] = self.spinInitStock.text().strip()
                 self.returnedVal = (True, tmp_dict)
 
             else:
@@ -953,7 +954,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.txtTitle.setReadOnly(True)
         self.txtAutor.setReadOnly(True)
         self.txtPublisher.setReadOnly(True)
-        self.spinInitStock.setReadOnly(True)
+        # self.spinInitStock.setReadOnly(True)
         self.dateOutWidget.setReadOnly(True)
         self.editionSpinBox.setReadOnly(True)
         self.pagesSpinBox.setReadOnly(True)
@@ -1339,15 +1340,11 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.wareTableItemData.setVerticalHeaderItem(3, QTableWidgetItem("MAGISTERIO"))
         self.wareTableItemData.setVerticalHeaderItem(4, QTableWidgetItem("IVANROJAS"))
         
-        tmp = SuffixDelegate()
-        tmp.setSuffix("%")
-        
-        # tmp = PrefixDelegate()
-        # tmp.setPrefix("S/. ")
+        tmp = PrefixDelegate()
+        tmp.setSuffix(" %")
+        tmp.setPrefix("S/. ")
         self.wareTableItemData.setItemDelegateForColumn(4,tmp)
         self.wareTableItemData.setItemDelegateForColumn(5,tmp)
-
-        self.wareTableItemData.setItemDelegateForColumn(6,tmp)
 
         # item = QtWidgets.QTableWidgetItem()
         # item.setTextAlignment(Qt.AlignHCenter)
@@ -1360,10 +1357,10 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         item.setStyleSheet("padding-left: 17px;")
         self.wareTableItemData.setCellWidget(0,1,item)
     
-        item = QtWidgets.QTableWidgetItem()
-        # item.setFlags(flag1)
-        item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
-        self.wareTableItemData.setItem(0,2,item)
+        item = QLineEdit()
+        item.setPlaceholderText("MUEBLE ?, FILA ?")
+        item.setStyleSheet("Border: 0px")
+        self.wareTableItemData.setCellWidget(0,2,item)
         
         item = MySpinBox()
         item.setFixedWidth(59)
@@ -1379,9 +1376,12 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
         self.wareTableItemData.setItem(0,5,item)
 
-        # item = QtWidgets.QTableWidgetItem("")
-        # item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
-        # self.wareTableItemData.setItem(0,6,item)
+        item = MySpinBox()
+        item.setMaximum(100)
+        item.setSingleStep(5)
+        item.setSuffix(" %")
+        item.setStyleSheet("Border: 0px")
+        self.wareTableItemData.setCellWidget(0,6,item)
 
     def setupUi(self):
         x_offset = 10
@@ -1537,24 +1537,19 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         # self.txtPrice.clicked.connect(lambda: self.deactivateLineEdit("Price"))
         # self.txtPrice.setMaxLength(30)
 
-        self.lblInitStock = QLabel("STOCK INGRESO:",self.tab_mainItemData)
-        self.lblInitStock.adjustSize()
-        self.lblInitStock.move(5 + x_offset, 241 + y_offset)
-        self.lblInitStock.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblInitStock.setStyleSheet("background-color: lightblue")
-        self.spinInitStock = MySpinBox(self.tab_mainItemData)
-        self.spinInitStock.setGeometry(100 + x_offset, 100 + y_offset, 50, 20)
-        self.spinInitStock.move(95 + x_offset, 237 + y_offset)
-        self.spinInitStock.setReadOnly(True)
-        self.spinInitStock.setPalette(self.darkPalette)
-        self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
-        # self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
-        self.spinInitStock.setEnabled(False)
+        # self.spinInitStock = MySpinBox(self.tab_mainItemData)
+        # self.spinInitStock.setGeometry(100 + x_offset, 100 + y_offset, 50, 20)
+        # self.spinInitStock.move(95 + x_offset, 237 + y_offset)
+        # self.spinInitStock.setReadOnly(True)
+        # self.spinInitStock.setPalette(self.darkPalette)
+        # self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
+        # # self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
+        # self.spinInitStock.setEnabled(False)
 
 
         # LABEL BOTTOM IMAGE
         self.lblImage_ = QLabel(self.tab_mainItemData)
-        self.lblImage_.setGeometry(QtCore.QRect(105 + x_offset, 141 + y_offset, 175, 91))
+        self.lblImage_.setGeometry(QtCore.QRect(95 + x_offset, 150 + y_offset, 200, 105))
         self.lblImage_.setText("")
         # self.lblImage_.setStyleSheet("QLabel{background-color: red;}")
         pixMap = QtGui.QPixmap("C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/imgs/newBook.png")
@@ -1594,7 +1589,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtAutor.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
 
                 #readonly_
                 # self.dateOutWidget.setReadOnly(True)
@@ -1610,7 +1605,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtTitle.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
 
             elif widget == "Title":
                 self.txtTitle.setReadOnly(False)
@@ -1630,7 +1625,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtISBN.setPalette(self.darkPalette)
                 self.txtAutor.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
 
                 #readonly_
                 # self.dateOutWidget.setReadOnly(True)
@@ -1646,7 +1641,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtISBN.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
 
             elif widget == "Autor":
                 self.txtAutor.setReadOnly(False)
@@ -1666,7 +1661,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtISBN.setPalette(self.darkPalette)
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtPublisher.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
 
                 #readonly_
                 # self.dateOutWidget.setReadOnly(True)
@@ -1682,7 +1677,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtISBN.setReadOnly(True)
                 self.txtTitle.setReadOnly(True)
                 self.txtPublisher.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
 
             elif widget == "Publisher":
                 self.txtPublisher.setReadOnly(False)
@@ -1702,7 +1697,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtISBN.setPalette(self.darkPalette)
                 self.txtTitle.setPalette(self.darkPalette)
                 self.txtAutor.setPalette(self.darkPalette)
-                self.spinInitStock.setPalette(self.darkPalette)
+                # self.spinInitStock.setPalette(self.darkPalette)
                 
 
                 #readonly_
@@ -1719,11 +1714,11 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.txtISBN.setReadOnly(True)
                 self.txtTitle.setReadOnly(True)
                 self.txtAutor.setReadOnly(True)
-                self.spinInitStock.setReadOnly(True)
+                # self.spinInitStock.setReadOnly(True)
 
             elif widget == "Stock":
-                self.spinInitStock.setReadOnly(False)
-                self.spinInitStock.setPalette(self.defaultPalette)
+                # self.spinInitStock.setReadOnly(False)
+                # self.spinInitStock.setPalette(self.defaultPalette)
 
                 #palette_
                 # self.dateOutWidget.setStyleSheet("QDateEdit{background-color: rgb(230,230,230);}")
@@ -1776,7 +1771,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
@@ -1795,7 +1790,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
 
             elif widget == "Edition":
@@ -1843,7 +1838,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
@@ -1860,7 +1855,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
 
             elif widget == "CmbIdiom":
@@ -1882,7 +1877,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
                 
                 #readonly
@@ -1900,7 +1895,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
                 
             
@@ -1923,7 +1918,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
                 
                 #readonly                
@@ -1941,7 +1936,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
             
             elif widget == "Width":
@@ -1963,7 +1958,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
@@ -1981,7 +1976,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
 
 
@@ -2004,7 +1999,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
@@ -2022,7 +2017,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
 
             elif widget == "Category1":
@@ -2044,7 +2039,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
@@ -2062,7 +2057,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
             
             elif widget == "Category2":
@@ -2084,7 +2079,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
@@ -2102,7 +2097,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
             
             elif widget == "Category3":
@@ -2124,7 +2119,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
@@ -2142,7 +2137,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
 
             elif widget == "TextEdit":
@@ -2164,7 +2159,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setPalette(self.darkPalette)
                 # self.txtAutor.setPalette(self.darkPalette)
                 # # self.txtPrice.setPalette(self.darkPalette)
-                # self.spinInitStock.setPalette(self.darkPalette)
+                # # self.spinInitStock.setPalette(self.darkPalette)
                 # self.txtPublisher.setPalette(self.darkPalette)
 
                 #readonly
@@ -2182,7 +2177,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 # self.txtTitle.setReadOnly(True)
                 # self.txtAutor.setReadOnly(True)
                 # # self.txtPrice.setReadOnly(True)
-                # self.spinInitStock.setReadOnly(True)
+                # # self.spinInitStock.setReadOnly(True)
                 # self.txtPublisher.setReadOnly(True)
 
     def show_window(self):
@@ -2195,7 +2190,6 @@ class TestDelegate(QStyledItemDelegate):
         pen = QPen(QColor("black"))
         qr = QRect(option.rect)
         qr.setWidth(pen.width())
-        # qr.moveRight(0)
         painter.setPen(pen)
         painter.drawRect(qr)
         painter.restore()
@@ -2203,35 +2197,29 @@ class TestDelegate(QStyledItemDelegate):
 class PrefixDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.flag = True
+        self.m_suffix = ""
         self.m_prefix = ""
 
     def displayText(self, value, locale):
         original_text = super().displayText(value, locale)
-        return f"{self.m_prefix}{original_text}"
-
-    def setPrefix(self, val):
-        self.m_prefix = val
-
-    def Prefix(self):
-        return self.m_prefix
-    
-
-class SuffixDelegate(QStyledItemDelegate):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.m_suffix = ""
-
-    def displayText(self, value, locale):
-        original_text = super().displayText(value, locale)
-        return f"{original_text}{self.m_suffix}"
+        return f"{self.m_prefix}{original_text}" if self.flag else f"{original_text}{self.m_suffix}"
 
     def setSuffix(self, val):
         self.m_suffix = val
+        
+    def setPrefix(self, val):
+        self.m_prefix = val
 
     def Suffix(self):
         return self.m_suffix
     
-
+    def Prefix(self):
+        return self.m_prefix
+    
+    def setFlag(self, val: bool = True):
+        self.flag = val
+    
 
 class MySpinBox(QSpinBox):
     clicked = pyqtSignal()
