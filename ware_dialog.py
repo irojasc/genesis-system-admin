@@ -11,7 +11,7 @@ import unicodedata
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QFont, QBrush, QColor, QKeyEvent, QMouseEvent, QTextCursor, QWheelEvent, QPen
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel, QRect, QPoint
+from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel, QRect
 from PyQt5.QtWidgets import QWidget
 from gestor import WareProduct, wares_gestor, aws_s3, users_gestor
 from objects import ware, user
@@ -1275,15 +1275,16 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def setupWareItemData(self):
         x_offset = 10
         y_offset = 10
+        flag1 = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable
 
          # -----------  wareTableItemData configuration  -----------
         self.wareTableItemData = QtWidgets.QTableWidget(self.tab_wareItemData)
-        self.wareTableItemData.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        # self.wareTableItemData.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
         self.wareTableItemData.setGeometry(QtCore.QRect(x_offset, y_offset, 350, 270))
         self.wareTableItemData.setMinimumHeight(100) ## esto se agrego
         self.wareTableItemData.setObjectName("wareTableItemData")
 
-        self.wareTableItemData.setColumnCount(8)
+        self.wareTableItemData.setColumnCount(7)
         self.wareTableItemData.setHorizontalHeaderItem(0, QtWidgets.QTableWidgetItem())
         self.wareTableItemData.setHorizontalHeaderItem(1, QtWidgets.QTableWidgetItem())
         self.wareTableItemData.setHorizontalHeaderItem(2, QtWidgets.QTableWidgetItem())
@@ -1291,80 +1292,96 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.wareTableItemData.setHorizontalHeaderItem(4, QtWidgets.QTableWidgetItem())
         self.wareTableItemData.setHorizontalHeaderItem(5, QtWidgets.QTableWidgetItem())
         self.wareTableItemData.setHorizontalHeaderItem(6, QtWidgets.QTableWidgetItem())
-        self.wareTableItemData.setHorizontalHeaderItem(7, QtWidgets.QTableWidgetItem())
-        # item = QtWidgets.QTableWidgetItem()
-        # self.wareTableItemData.setHorizontalHeaderItem(4, item)
-        # item = QtWidgets.QTableWidgetItem()
-        # self.wareTableItemData.setHorizontalHeaderItem(5, item)
-        # item = QtWidgets.QTableWidgetItem()
-        # self.wareTableItemData.setHorizontalHeaderItem(6, item)
-
-        self.wareTableItemData.setColumnWidth(0,72)
-        self.wareTableItemData.setColumnWidth(1,51)
-        self.wareTableItemData.setColumnWidth(2,56)
-        self.wareTableItemData.setColumnWidth(3,86)
-        self.wareTableItemData.setColumnWidth(4,65)
-        self.wareTableItemData.setColumnWidth(5,43)
+        
+        self.wareTableItemData.setColumnWidth(0,49)
+        self.wareTableItemData.setColumnWidth(1,50)
+        self.wareTableItemData.setColumnWidth(2,107)
+        self.wareTableItemData.setColumnWidth(3,59)
+        self.wareTableItemData.setColumnWidth(4,56)
+        self.wareTableItemData.setColumnWidth(5,56)
         self.wareTableItemData.setColumnWidth(6,43)
-        self.wareTableItemData.setColumnWidth(7,41)
 
         self.wareTableItemData.horizontalHeader().setEnabled(False)
+        self.wareTableItemData.verticalHeader().setEnabled(False)
         self.wareTableItemData.setSelectionBehavior(1)
         self.wareTableItemData.setSelectionMode(1)
-        # # self.wareTableItemData.setStyleSheet("selection-background-color: rgb(0, 120, 255);selection-color: rgb(255, 255, 255);")
-        # self.wareTableItemData.verticalHeader().hide()
+        self.wareTableItemData.setStyleSheet("selection-background-color: rgb(0, 120, 255);selection-color: rgb(255, 255, 255);")
         # self.wareTableItemData.viewport().installEventFilter(self)
         # self.wareTableItemData.keyPressEvent = self.KeyPressed
         # self.wareTableItemData.doubleClicked.connect(self.tableWidget_doubleClicked)
 
-        self.wareTableItemData.setHorizontalHeaderItem(0, QTableWidgetItem("Almacén"))
-        self.wareTableItemData.setHorizontalHeaderItem(1, QTableWidgetItem("¿Existe?"))
-        self.wareTableItemData.setHorizontalHeaderItem(2, QTableWidgetItem("¿Activo?"))
-        self.wareTableItemData.setHorizontalHeaderItem(3, QTableWidgetItem("Ubicación"))
-        self.wareTableItemData.setHorizontalHeaderItem(4, QTableWidgetItem("Stock Min."))
-        self.wareTableItemData.setHorizontalHeaderItem(5, QTableWidgetItem("PVP 1°"))
-        self.wareTableItemData.setHorizontalHeaderItem(6, QTableWidgetItem("PVP 2°"))
-        self.wareTableItemData.setHorizontalHeaderItem(7, QTableWidgetItem("DSCT."))
+        self.wareTableItemData.setHorizontalHeaderItem(0, QTableWidgetItem("¿Existe?"))
+        self.wareTableItemData.setHorizontalHeaderItem(1, QTableWidgetItem("¿Activo?"))
+        self.wareTableItemData.setHorizontalHeaderItem(2, QTableWidgetItem("Ubicación"))
+        self.wareTableItemData.setHorizontalHeaderItem(3, QTableWidgetItem("Stock Min."))
+        self.wareTableItemData.setHorizontalHeaderItem(4, QTableWidgetItem("PVP 1°"))
+        self.wareTableItemData.setHorizontalHeaderItem(5, QTableWidgetItem("PVP 2°"))
+        self.wareTableItemData.setHorizontalHeaderItem(6, QTableWidgetItem("DSCT."))
 
         verticalHeader_ = self.wareTableItemData.verticalHeader()
         verticalHeader_.setSectionResizeMode(QHeaderView.ResizeToContents)
+        verticalHeader_.setFont(QFont("Times", 7, QFont.Bold))
 
         horizontalHeader_ = self.wareTableItemData.horizontalHeader()
         horizontalHeader_.setFrameStyle(QFrame.Box | QFrame.Plain)
         horizontalHeader_.setLineWidth(1)
-        # horizontalHeader_.setStyleSheet("QTableView {font-size: 20pt;}")
-        font = QFont()
-        font.setBold(True)
-        font.setPointSize(8)
-        horizontalHeader_.setFont(font)
-        # self.wareTableItemData.setHorizontalHeader(horizontalHeader_)
-
-        self.wareTableItemData.setRowCount(5)
-        self.wareTableItemData.setItemDelegateForColumn(0,TestDelegate())
-        item = QTableWidgetItem("STA. CATALINA")
-        item.setFont(QFont("Times", 7, QFont.Bold))
-        self.wareTableItemData.setItem(0, 0, item)
-        item = QTableWidgetItem("SANTIAGO")
-        item.setFont(QFont("Times", 7, QFont.Bold))
-        self.wareTableItemData.setItem(1, 0, QtWidgets.QTableWidgetItem(item))
-        item = QTableWidgetItem("ALAYZA")
-        item.setFont(QFont("Times", 7, QFont.Bold))
-        self.wareTableItemData.setItem(2, 0, item)
-        self.wareTableItemData.setItem(3, 0, QtWidgets.QTableWidgetItem("MAGISTERIO"))
-        self.wareTableItemData.setItem(4, 0, QtWidgets.QTableWidgetItem("IVANROJAS"))
+        horizontalHeader_.setFont(QFont("Times", 7, QFont.Bold))
 
         font = self.wareTableItemData.font()
         font.setPointSize(8)
         self.wareTableItemData.setFont(font)
-        # self.wareTableItemData.setStyleSheet("QTableWidget:item{border : 2px solid  rgb(0, 255, 255); color: rgb(0, 0, 0);}")
-        # self.wareTableItemData.setItemDelegate(TestDelegate())
+        
+        
+        self.wareTableItemData.setRowCount(5)
+        self.wareTableItemData.setVerticalHeaderItem(0, QTableWidgetItem("STA. CATALINA"))
+        self.wareTableItemData.setVerticalHeaderItem(1, QTableWidgetItem("SANTIAGO"))
+        self.wareTableItemData.setVerticalHeaderItem(2, QTableWidgetItem("ALAYZA"))
+        self.wareTableItemData.setVerticalHeaderItem(3, QTableWidgetItem("MAGISTERIO"))
+        self.wareTableItemData.setVerticalHeaderItem(4, QTableWidgetItem("IVANROJAS"))
+        
+        tmp = SuffixDelegate()
+        tmp.setSuffix("%")
+        
+        # tmp = PrefixDelegate()
+        # tmp.setPrefix("S/. ")
+        self.wareTableItemData.setItemDelegateForColumn(4,tmp)
+        self.wareTableItemData.setItemDelegateForColumn(5,tmp)
 
-        # self.wareTableItemData.setItem(0, 1, QtWidgets.QTableWidgetItem("Hola"))
+        self.wareTableItemData.setItemDelegateForColumn(6,tmp)
 
-        # item.setText(_translate("Dialog", "cod"))
-        # item.setFont(font)
-        # item.setForeground(QBrush(QColor(0,0,0)))
+        # item = QtWidgets.QTableWidgetItem()
+        # item.setTextAlignment(Qt.AlignHCenter)
+        # item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+        # item.setCheckState(QtCore.Qt.Unchecked)
+        item = QCheckBox()
+        item.setStyleSheet("padding-left: 17px;")
+        self.wareTableItemData.setCellWidget(0,0,item)
+        item = QCheckBox()
+        item.setStyleSheet("padding-left: 17px;")
+        self.wareTableItemData.setCellWidget(0,1,item)
+    
+        item = QtWidgets.QTableWidgetItem()
+        # item.setFlags(flag1)
+        item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
+        self.wareTableItemData.setItem(0,2,item)
+        
+        item = MySpinBox()
+        item.setFixedWidth(59)
+        item.setSuffix(" und")
+        item.setStyleSheet("Border: 0px")
+        self.wareTableItemData.setCellWidget(0,3,item)
 
+        item = QtWidgets.QTableWidgetItem("")
+        item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
+        self.wareTableItemData.setItem(0,4,item)
+
+        item = QtWidgets.QTableWidgetItem("")
+        item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
+        self.wareTableItemData.setItem(0,5,item)
+
+        # item = QtWidgets.QTableWidgetItem("")
+        # item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
+        # self.wareTableItemData.setItem(0,6,item)
 
     def setupUi(self):
         x_offset = 10
@@ -1555,8 +1572,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         # self.btnOk.adjustSize()
         # self.btnOk.move(80, 185)
         # self.btnOk.clicked.connect(lambda: self.saveEvent(True))
-
-
 
     def deactivateLineEdit(self, widget: str = ""):
         if bool(widget):
@@ -2173,8 +2188,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def show_window(self):
        self.show()
 
-
-
 class TestDelegate(QStyledItemDelegate):
     def paint(self, painter: QtGui.QPainter, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> None:
         super().paint(painter, option, index)
@@ -2182,10 +2195,42 @@ class TestDelegate(QStyledItemDelegate):
         pen = QPen(QColor("black"))
         qr = QRect(option.rect)
         qr.setWidth(pen.width())
-        qr.moveRight(69)
+        # qr.moveRight(0)
         painter.setPen(pen)
         painter.drawRect(qr)
         painter.restore()
+
+class PrefixDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.m_prefix = ""
+
+    def displayText(self, value, locale):
+        original_text = super().displayText(value, locale)
+        return f"{self.m_prefix}{original_text}"
+
+    def setPrefix(self, val):
+        self.m_prefix = val
+
+    def Prefix(self):
+        return self.m_prefix
+    
+
+class SuffixDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.m_suffix = ""
+
+    def displayText(self, value, locale):
+        original_text = super().displayText(value, locale)
+        return f"{original_text}{self.m_suffix}"
+
+    def setSuffix(self, val):
+        self.m_suffix = val
+
+    def Suffix(self):
+        return self.m_suffix
+    
 
 
 class MySpinBox(QSpinBox):
