@@ -9,9 +9,9 @@
 import sys
 import unicodedata
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QFont, QBrush, QColor, QKeyEvent, QMouseEvent, QTextCursor, QWheelEvent
+from PyQt5.QtGui import QFont, QBrush, QColor, QKeyEvent, QMouseEvent, QTextCursor, QWheelEvent, QPen
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel
+from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel, QRect, QPoint
 from PyQt5.QtWidgets import QWidget
 from gestor import WareProduct, wares_gestor, aws_s3, users_gestor
 from objects import ware, user
@@ -1299,7 +1299,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         # item = QtWidgets.QTableWidgetItem()
         # self.wareTableItemData.setHorizontalHeaderItem(6, item)
 
-        self.wareTableItemData.setColumnWidth(0,56)
+        self.wareTableItemData.setColumnWidth(0,72)
         self.wareTableItemData.setColumnWidth(1,51)
         self.wareTableItemData.setColumnWidth(2,56)
         self.wareTableItemData.setColumnWidth(3,86)
@@ -1332,20 +1332,33 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         horizontalHeader_ = self.wareTableItemData.horizontalHeader()
         horizontalHeader_.setFrameStyle(QFrame.Box | QFrame.Plain)
         horizontalHeader_.setLineWidth(1)
-        self.wareTableItemData.setHorizontalHeader(horizontalHeader_)
-        
+        # horizontalHeader_.setStyleSheet("QTableView {font-size: 20pt;}")
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(8)
+        horizontalHeader_.setFont(font)
+        # self.wareTableItemData.setHorizontalHeader(horizontalHeader_)
 
-        self.wareTableItemData.setRowCount(3)
-        self.wareTableItemData.setItem(0, 0, QtWidgets.QTableWidgetItem("Hola"))
-        self.wareTableItemData.setItem(1, 0, QtWidgets.QTableWidgetItem("Hola"))
-        self.wareTableItemData.setItem(2, 0, QtWidgets.QTableWidgetItem("Hola"))
+        self.wareTableItemData.setRowCount(5)
+        item = QTableWidgetItem("STA. CATALINA")
+        self.wareTableItemData.setItemDelegateForColumn(0,TestDelegate())
+        self.wareTableItemData.setItem(0, 0, item)
+        self.wareTableItemData.setItem(1, 0, QtWidgets.QTableWidgetItem("SANTIAGO"))
+        self.wareTableItemData.setItem(2, 0, QtWidgets.QTableWidgetItem("ALAYZA"))
+        self.wareTableItemData.setItem(3, 0, QtWidgets.QTableWidgetItem("MAGISTERIO"))
+        self.wareTableItemData.setItem(4, 0, QtWidgets.QTableWidgetItem("IVANROJAS"))
+
+        font = self.wareTableItemData.font()
+        font.setPointSize(8)
+        self.wareTableItemData.setFont(font)
+        # self.wareTableItemData.setStyleSheet("QTableWidget:item{border : 2px solid  rgb(0, 255, 255); color: rgb(0, 0, 0);}")
+        # self.wareTableItemData.setItemDelegate(TestDelegate())
+
         # self.wareTableItemData.setItem(0, 1, QtWidgets.QTableWidgetItem("Hola"))
 
         # item.setText(_translate("Dialog", "cod"))
         # item.setFont(font)
         # item.setForeground(QBrush(QColor(0,0,0)))
-
-
 
 
     def setupUi(self):
@@ -2156,6 +2169,18 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
        self.show()
 
 
+
+class TestDelegate(QStyledItemDelegate):
+    def paint(self, painter: QtGui.QPainter, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> None:
+        super().paint(painter, option, index)
+        painter.save()
+        pen = QPen(QColor("black"))
+        qr = QRect(option.rect)
+        qr.setWidth(pen.width())
+        qr.moveRight(69)
+        painter.setPen(pen)
+        painter.drawRect(qr)
+        painter.restore()
 
 
 class MySpinBox(QSpinBox):
