@@ -1003,8 +1003,16 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def closeEvent(self, event):
         self.saveEvent(False)
 
+    def firstCheckBoxChanged(self, state, row):
+        print("estado",state)
+        print("fila",row)
+
+    def make_callback(self, row):
+        return lambda x: self.firstCheckBoxChanged(x, row)
+
     def setDataFields(self, data: dict = None):
         #Si self.method : False (Metodo Editar) --- Si self.method : True (Metodo Metodo Nuevo Producto)
+        #self.method se setea cuando sea crea el objeto de la clase EditNewItemDialog
         #aqui es guardar el valor de data a variable prevData
         
         if bool(data): self.prevData = data
@@ -1027,6 +1035,49 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.cmbCategory3.setCurrentIndex(-1)
             self.cmbCategory3.setEditable(True)
             self.cmbCategory3.lineEdit().setPlaceholderText("NIVEL 3")
+            self.wareTableItemData.setRowCount(len(data["wares"]))
+            #en esta parte se llenan los widget de la tabla para condicion de crear new item
+            
+            for index, x in enumerate(data["wares"]): 
+                self.wareTableItemData.setVerticalHeaderItem(index, QTableWidgetItem(x[0]))
+                item = QCheckBox()
+                item.setStyleSheet("padding-left: 17px;")
+                item.stateChanged.connect(self.make_callback(index))
+                self.wareTableItemData.setCellWidget(index, 0, item)
+
+                item = QCheckBox(enabled = False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else QCheckBox(enabled = True)
+                item.setStyleSheet("padding-left: 17px;")
+                self.wareTableItemData.setCellWidget(index,1,item)
+
+                #virtual = 1, not Vitirual = 0
+                #aqui evalua que el primer checkbox este checked y tambien el tipo de ware, is virtual?
+                item = QLineEdit(enabled = False) if (bool(int(x[1])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else QLineEdit(enabled = True)
+                item.setPlaceholderText("MUEBLE ?, FILA ?")
+                item.setStyleSheet("Border: 0px")
+                self.wareTableItemData.setCellWidget(index,2,item)
+
+                item = MySpinBox(enabled = False) if (bool(int(x[1])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else MySpinBox(enabled = True) 
+                item.setFixedWidth(59)
+                item.setSuffix(" und")
+                item.setStyleSheet("Border: 0px")
+                self.wareTableItemData.setCellWidget(index,3,item)
+
+                flagChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable
+                flagNotChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|~QtCore.Qt.ItemIsEditable
+                item = QtWidgets.QTableWidgetItem("")
+                item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
+                self.wareTableItemData.setItem(index,4,item)
+
+                item = QtWidgets.QTableWidgetItem("")
+                item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
+                self.wareTableItemData.setItem(index,5,item)
+
+                item = MySpinBox(enabled=False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else MySpinBox(enabled=True)
+                item.setMaximum(100)
+                item.setSingleStep(5)
+                item.setSuffix(" %")
+                item.setStyleSheet("Border: 0px")
+                self.wareTableItemData.setCellWidget(index,6,item)
             self.setInitDefaultValues()
 
         elif bool(self.prevData) and not(self.method):
@@ -1332,56 +1383,11 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         font.setPointSize(8)
         self.wareTableItemData.setFont(font)
         
-        
-        self.wareTableItemData.setRowCount(5)
-        self.wareTableItemData.setVerticalHeaderItem(0, QTableWidgetItem("STA. CATALINA"))
-        self.wareTableItemData.setVerticalHeaderItem(1, QTableWidgetItem("SANTIAGO"))
-        self.wareTableItemData.setVerticalHeaderItem(2, QTableWidgetItem("ALAYZA"))
-        self.wareTableItemData.setVerticalHeaderItem(3, QTableWidgetItem("MAGISTERIO"))
-        self.wareTableItemData.setVerticalHeaderItem(4, QTableWidgetItem("IVANROJAS"))
-        
         tmp = PrefixDelegate()
         tmp.setSuffix(" %")
         tmp.setPrefix("S/. ")
         self.wareTableItemData.setItemDelegateForColumn(4,tmp)
         self.wareTableItemData.setItemDelegateForColumn(5,tmp)
-
-        # item = QtWidgets.QTableWidgetItem()
-        # item.setTextAlignment(Qt.AlignHCenter)
-        # item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-        # item.setCheckState(QtCore.Qt.Unchecked)
-        item = QCheckBox()
-        item.setStyleSheet("padding-left: 17px;")
-        self.wareTableItemData.setCellWidget(0,0,item)
-        item = QCheckBox()
-        item.setStyleSheet("padding-left: 17px;")
-        self.wareTableItemData.setCellWidget(0,1,item)
-    
-        item = QLineEdit()
-        item.setPlaceholderText("MUEBLE ?, FILA ?")
-        item.setStyleSheet("Border: 0px")
-        self.wareTableItemData.setCellWidget(0,2,item)
-        
-        item = MySpinBox()
-        item.setFixedWidth(59)
-        item.setSuffix(" und")
-        item.setStyleSheet("Border: 0px")
-        self.wareTableItemData.setCellWidget(0,3,item)
-
-        item = QtWidgets.QTableWidgetItem("")
-        item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
-        self.wareTableItemData.setItem(0,4,item)
-
-        item = QtWidgets.QTableWidgetItem("")
-        item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
-        self.wareTableItemData.setItem(0,5,item)
-
-        item = MySpinBox()
-        item.setMaximum(100)
-        item.setSingleStep(5)
-        item.setSuffix(" %")
-        item.setStyleSheet("Border: 0px")
-        self.wareTableItemData.setCellWidget(0,6,item)
 
     def setupUi(self):
         x_offset = 10
@@ -1545,7 +1551,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         # self.spinInitStock.setEnabled(False) if not(self.method) else self.spinInitStock.setEnabled(True)
         # # self.spinInitStock.clicked.connect(lambda: self.deactivateLineEdit("Stock"))
         # self.spinInitStock.setEnabled(False)
-
 
         # LABEL BOTTOM IMAGE
         self.lblImage_ = QLabel(self.tab_mainItemData)

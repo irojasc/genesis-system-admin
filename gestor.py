@@ -124,7 +124,7 @@ class wares_gestor:
 			return False
 
 	def getNextCodDB(self):
-		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, i.code FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl FROM genesisdb.category c;"
+		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, i.code FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl FROM genesisdb.category c UNION SELECT 'ware', null, `name`, cast(`isVirtual` as UNSIGNED) FROM genesisdb.ware w where w.enabled = 1;"
 		try:
 			self.connectDB()
 			self.cursor.execute(query)
@@ -135,7 +135,9 @@ class wares_gestor:
 			category1 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 1) else False, data))))
 			category2 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 2) else False, data))))
 			category3 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 3) else False, data))))
-			data_dict = {"next": nextCode, "items": items, "languages": languages,"category1": category1, "category2": category2, "category3": category3}
+			availableWares = list(map(lambda x: (x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ware') else False, data))))
+			print(availableWares)
+			data_dict = {"next": nextCode, "items": items, "languages": languages,"category1": category1, "category2": category2, "category3": category3, "wares": availableWares}
 			self.disconnectDB()
 			return True, data_dict
 		except Exception as error:
