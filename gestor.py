@@ -136,7 +136,6 @@ class wares_gestor:
 			category2 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 2) else False, data))))
 			category3 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 3) else False, data))))
 			availableWares = list(map(lambda x: (x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ware') else False, data))))
-			print(availableWares)
 			data_dict = {"next": nextCode, "items": items, "languages": languages,"category1": category1, "category2": category2, "category3": category3, "wares": availableWares}
 			self.disconnectDB()
 			return True, data_dict
