@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel, QRect
 from PyQt5.QtWidgets import QWidget
 from gestor import WareProduct, wares_gestor, aws_s3, users_gestor
-from objects import ware, user
+from objects import ware, user, product, ware_product
 from inout_dialog import Ui_inoutDialog
 from uiConfigurations import *
 from datetime import datetime
@@ -552,16 +552,17 @@ class Ui_Dialog(QtWidgets.QDialog):
             ui_NewItemDialog.cleanInputFields(True)
             ui_NewItemDialog.setDataFields(data)
             if ui_NewItemDialog.exec_() == QDialog.Accepted:
-                validator, dataAfter = ui_NewItemDialog.returnedVal
-                if validator:
-                    if self.userValidation():
-                        if(self.ware_gest.insertNewItemDB(dataAfter.copy(), self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter.copy(), self.currWare.cod)):
-                            QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
-                            #True: argumento para indicar que se esta creadno un nuevo item y index selected apunte al ultimo producto libro
-                            self.txtBusChanged(True)
-                            self.actualizar_img(self.ware_table.currentIndex().row())
-                        else:
-                            QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
+                print("Termino la operacion")
+                # validator, dataAfter = ui_NewItemDialog.returnedVal
+                # if validator:
+                #     if self.userValidation():
+                #         if(self.ware_gest.insertNewItemDB(dataAfter.copy(), self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter.copy(), self.currWare.cod)):
+                #             QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
+                #             #True: argumento para indicar que se esta creadno un nuevo item y index selected apunte al ultimo producto libro
+                #             self.txtBusChanged(True)
+                #             self.actualizar_img(self.ware_table.currentIndex().row())
+                #         else:
+                #             QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
 
     # -----------  load_table carga tabla inner desde DB, cuando se presiona icono de Actualizar tabla  -----------
     def load_table(self, event = None):
@@ -897,6 +898,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
     def saveEvent(self, btnConfirmation: bool = False):
         # se cambia los keys de los diccionarios segun titulos de base de datos
+        # self.method True para cuando se crea un nuevo item
         tmp_dict = {}
         self.returnedVal = (False, None)
 
@@ -917,29 +919,30 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.returnedVal = (False, None)
 
         elif btnConfirmation and self.method:
-            tmp_dict["id"] = int(self.txtId.text().strip())
+            objItem = product()
+            objItem.setId(int(self.txtId.text().strip()))
             if bool(len(self.txtTitle.text().strip())):
-                tmp_dict["title"] = self.txtTitle.text().strip()
+                objItem.setTitle(self.txtTitle.text().strip())
             if bool(len(self.txtAutor.text().strip())):
-                tmp_dict["autor"] = self.txtAutor.text().strip()
+                objItem.setAutor(self.txtAutor.text().strip())
             if bool(len(self.txtPublisher.text().strip())):
-                tmp_dict["publisher"] = self.txtPublisher.text().strip()
+                objItem.setPublisher(self.txtPublisher.text().strip())
             if bool(len(self.cmbItem.currentText().strip())):
-                tmp_dict["idItem"] = self.dataItems[self.cmbItem.currentIndex()]
-
-            if ("id" in tmp_dict) and ("title" in tmp_dict) and ("autor" in tmp_dict) and ("publisher" in tmp_dict) and ("idItem" in tmp_dict):
-                if bool(len(self.txtISBN.text().strip())): tmp_dict["isbn"] = self.txtISBN.text().strip()
-                if self.dateOutWidget.date().year() != 1752: tmp_dict["dateOut"] = self.dateOutWidget.date().toString("yyyy-MM-dd")
-                if bool(self.editionSpinBox.value()): tmp_dict["edition"] = self.editionSpinBox.value()
-                if bool(self.pagesSpinBox.value()): tmp_dict["pages"] = self.pagesSpinBox.value()
-                if bool(self.cmbIdiom.currentText()): tmp_dict["idLanguage"] = self.dataLanguages[self.cmbIdiom.currentIndex()]
-                if (self.cmbCover.currentIndex() >= 0): tmp_dict["cover"] = self.cmbCover.currentIndex()
-                if bool(self.widthSpinBox.value()): tmp_dict["width"] = self.widthSpinBox.value()
-                if bool(self.heightSpinBox.value()): tmp_dict["height"] = self.heightSpinBox.value()
-                #aqui falta la parte de categorias, esto revisar arquitectura base de datos
-                if bool(len(self.contentTxtEdit.toPlainText().strip())): tmp_dict["content"] = self.contentTxtEdit.toPlainText().strip()
-                # # if bool(self.spinInitStock.value()): tmp_dict["stock"] = self.spinInitStock.text().strip()
-                self.returnedVal = (True, tmp_dict)
+                objItem.setItemCategory(self.dataItems[self.cmbItem.currentIndex()][1])
+                
+            if bool(objItem.getId()) and bool(objItem.getTitle()) and bool(objItem.getAutor()) and bool(objItem.getPublisher()) and bool(objItem.getItemCategory()):
+                if bool(len(self.txtISBN.text().strip())): objItem.setISBN(self.txtISBN.text().strip())
+                if self.dateOutWidget.date().year() != 1752: objItem.setDateOut(self.dateOutWidget.date().toString("yyyy-MM-dd"))
+            #     if bool(self.editionSpinBox.value()): tmp_dict["edition"] = self.editionSpinBox.value()
+            #     if bool(self.pagesSpinBox.value()): tmp_dict["pages"] = self.pagesSpinBox.value()
+            #     if bool(self.cmbIdiom.currentText()): tmp_dict["idLanguage"] = self.dataLanguages[self.cmbIdiom.currentIndex()]
+            #     if (self.cmbCover.currentIndex() >= 0): tmp_dict["cover"] = self.cmbCover.currentIndex()
+            #     if bool(self.widthSpinBox.value()): tmp_dict["width"] = self.widthSpinBox.value()
+            #     if bool(self.heightSpinBox.value()): tmp_dict["height"] = self.heightSpinBox.value()
+            #     #aqui falta la parte de categorias, esto revisar arquitectura base de datos
+            #     if bool(len(self.contentTxtEdit.toPlainText().strip())): tmp_dict["content"] = self.contentTxtEdit.toPlainText().strip()
+                # self.returnedVal = (True, tmp_dict)
+                self.returnedVal = (True, None)
 
             else:
                 QMessageBox.information(self, 'Mensaje', "Llenar los campos obligatorios (*)", QMessageBox.Ok, QMessageBox.Ok)

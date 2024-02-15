@@ -79,9 +79,10 @@ class product:
 																																	self.pages, self.edition,
 																																	self.cover)
 
-	def __init__(self, itemCode: str = None, id: int = None, isbn: str = None, title: str = None, autor: str = None, publisher: str = None, dateOut: str = None,
-			  lang: str = None, pages: int = None, edition: int = None, cover: bool = None, width: int = None, height: int = None):
-		self.prdCode = '{0}_{1}'.format(itemCode, str(id))
+	def __init__(self, itemCode: str = None, id: int = None, isbn: str = None, title: str = None, autor: str = None,
+			   	publisher: str = None, dateOut: str = None, lang: str = None, pages: int = None, edition: int = None,
+				cover: bool = None, width: int = None, height: int = None, itemCategory: str = None):
+		self.prdCode = '{0}_{1}'.format(itemCode, str(id)) if itemCode != None else None
 		self.isbn = isbn
 		self.title = title
 		self.autor = autor
@@ -93,6 +94,8 @@ class product:
 		self.cover = "DURA" if bool(cover) else "BLANDA"
 		self.width = width
 		self.height = height
+		self.id = id
+		self.itemCategory = itemCategory #libro,artesania 
 	
 	def setActive(self, condition: bool):
 		self.active = condition
@@ -100,17 +103,47 @@ class product:
 	def setISBN(self, isbn: str):
 		self.isbn = isbn
 		
-	def setName(self, name: str):
-		self.name = name
+	def setTitle(self, title: str):
+		self.title = title
 	
 	def setAutor(self, autor: str):
 		self.autor = autor
 	
-	def setEditorial(self, editorial: str):
-		self.editorial = editorial
+	def setPublisher(self, publisher: str):
+		self.publisher = publisher
 	
 	def setPv(self, pv: float):
 		self.Pv = float(pv)
+	
+	def setId(self, id: int = None):
+		self.id = id
+
+	def setItemCategory(self, itemCategory: str = None):
+		self.itemCategory = itemCategory
+
+	def setDateOut(self, dateOut: str = None):
+		self.dateOut = dateOut
+
+	def setEdition(self, edition: int = None):
+		self.dateOut = dateOut
+
+	def getId(self)->int:
+		return self.id
+	
+	def getId(self)->int:
+		return self.id
+	
+	def getTitle(self)->str:
+		return self.title
+	
+	def getAutor(self)->str:
+		return self.autor
+
+	def getPublisher(self)->str:
+		return self.publisher
+	
+	def getItemCategory(self)->str:
+		return self.itemCategory
 
 class ware_product:
 	def __repr__(self):
