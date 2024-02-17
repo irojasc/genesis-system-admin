@@ -548,21 +548,21 @@ class Ui_Dialog(QtWidgets.QDialog):
         isAllowed, data = self.ware_gest.getNextCodDB()
         if isAllowed:
             #Argumento True en ui_EditNewItemDialog cuando se crea un nuevo producto
-            ui_NewItemDialog = ui_EditNewItemDialog(True)
-            ui_NewItemDialog.cleanInputFields(True)
-            ui_NewItemDialog.setDataFields(data)
-            if ui_NewItemDialog.exec_() == QDialog.Accepted:
-                print("Termino la operacion")
-                # validator, dataAfter = ui_NewItemDialog.returnedVal
-                # if validator:
-                #     if self.userValidation():
-                #         if(self.ware_gest.insertNewItemDB(dataAfter.copy(), self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter.copy(), self.currWare.cod)):
-                #             QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
-                #             #True: argumento para indicar que se esta creadno un nuevo item y index selected apunte al ultimo producto libro
-                #             self.txtBusChanged(True)
-                #             self.actualizar_img(self.ware_table.currentIndex().row())
-                #         else:
-                #             QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
+            with ui_EditNewItemDialog(True) as ui_NewItemDialog:
+                ui_NewItemDialog.cleanInputFields(True)
+                ui_NewItemDialog.setDataFields(data)
+                if ui_NewItemDialog.exec_() == QDialog.Accepted:
+                    validator, dataAfter = ui_NewItemDialog.returnedVal
+                    if validator:
+                        if self.userValidation():
+                            # if(self.ware_gest.insertNewItemDB(dataAfter, self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter, self.currWare.cod)):
+                            if(self.ware_gest.insertNewItemDB(dataAfter, self.currWare.cod)):
+                                QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
+                                #True: argumento para indicar que se esta creadno un nuevo item y index selected apunte al ultimo producto libro
+                                self.txtBusChanged(True)
+                                self.actualizar_img(self.ware_table.currentIndex().row())
+                            else:
+                                QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
 
     # -----------  load_table carga tabla inner desde DB, cuando se presiona icono de Actualizar tabla  -----------
     def load_table(self, event = None):
@@ -896,6 +896,17 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.returnedVal = (False, None)
         self.setupUi()
 
+    def __del__(self):
+        print("kill me")
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self,ext_type,exc_value,traceback):
+        del self
+        # if self.__fileHandle__ is not None:
+        #         self.__fileHandle__.close()
+
     def saveEvent(self, btnConfirmation: bool = False):
         # se cambia los keys de los diccionarios segun titulos de base de datos
         # self.method True para cuando se crea un nuevo item
@@ -933,21 +944,41 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             if bool(objItem.getId()) and bool(objItem.getTitle()) and bool(objItem.getAutor()) and bool(objItem.getPublisher()) and bool(objItem.getItemCategory()):
                 if bool(len(self.txtISBN.text().strip())): objItem.setISBN(self.txtISBN.text().strip())
                 if self.dateOutWidget.date().year() != 1752: objItem.setDateOut(self.dateOutWidget.date().toString("yyyy-MM-dd"))
-            #     if bool(self.editionSpinBox.value()): tmp_dict["edition"] = self.editionSpinBox.value()
-            #     if bool(self.pagesSpinBox.value()): tmp_dict["pages"] = self.pagesSpinBox.value()
-            #     if bool(self.cmbIdiom.currentText()): tmp_dict["idLanguage"] = self.dataLanguages[self.cmbIdiom.currentIndex()]
-            #     if (self.cmbCover.currentIndex() >= 0): tmp_dict["cover"] = self.cmbCover.currentIndex()
-            #     if bool(self.widthSpinBox.value()): tmp_dict["width"] = self.widthSpinBox.value()
-            #     if bool(self.heightSpinBox.value()): tmp_dict["height"] = self.heightSpinBox.value()
+                if bool(self.editionSpinBox.value()): objItem.setEdition(self.editionSpinBox.value())
+                if bool(self.pagesSpinBox.value()): objItem.setPages(self.pagesSpinBox.value())
+                if bool(self.cmbIdiom.currentText()): objItem.setLang(self.dataLanguages[self.cmbIdiom.currentIndex()][1])
+                if (self.cmbCover.currentIndex() >= -1): objItem.setCover(1 if self.cmbCover.currentIndex() == 0 else 2 if self.cmbCover.currentIndex() == 1 else None)
+                if bool(self.widthSpinBox.value()): objItem.setWidth(self.widthSpinBox.value())
+                if bool(self.heightSpinBox.value()): objItem.setHeight(self.heightSpinBox.value())
             #     #aqui falta la parte de categorias, esto revisar arquitectura base de datos
-            #     if bool(len(self.contentTxtEdit.toPlainText().strip())): tmp_dict["content"] = self.contentTxtEdit.toPlainText().strip()
-                # self.returnedVal = (True, tmp_dict)
-                self.returnedVal = (True, None)
-
+                if bool(len(self.contentTxtEdit.toPlainText().strip())): objItem.setContent(self.contentTxtEdit.toPlainText().strip())
+                # nwDict = {}
+                objWareProduct = ware_product(item=objItem, wareData={}.copy())
+                if bool(self.wareTableItemData.rowCount()):
+                    for index, i in enumerate(self.prevData["wares"]):
+                        if self.wareTableItemData.cellWidget(index, 0).isChecked():
+                            loc_ = self.wareTableItemData.cellWidget(index,2).text().upper() if self.wareTableItemData.cellWidget(index,2).text() != "" else "SIN UBICACION"
+                            min = self.wareTableItemData.cellWidget(index, 3).value()
+                            new = float(self.wareTableItemData.item(index, 4).text()) if self.wareTableItemData.item(index, 4).text() != "" else 0.0
+                            old = float(self.wareTableItemData.item(index, 5).text()) if self.wareTableItemData.item(index, 5).text() != "" else 0.0
+                            descuento = self.wareTableItemData.cellWidget(index, 6).value()
+                            enabled = True if self.wareTableItemData.cellWidget(index, 1).isChecked() else False
+                            exists = True if self.wareTableItemData.cellWidget(index, 0).isChecked() else False
+                            objWareProduct.addDataWareProduct(wareName=i[0], qtyNew=0,
+                                                                qtyOld=0, qtyMinimun=min,
+                                                                pvNew=new, pvOld=old, dsct=descuento,
+                                                                isEnabled=enabled, isExists=exists, loc=loc_, idWare=i[3])
+                    if not(bool(len(objWareProduct.wareData))):
+                        objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
+                
+                elif not(bool(self.wareTableItemData.rowCount())):
+                    objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
+                
+                print(objWareProduct)
+                self.returnedVal = (True, objWareProduct)
             else:
                 QMessageBox.information(self, 'Mensaje', "Llenar los campos obligatorios (*)", QMessageBox.Ok, QMessageBox.Ok)
                 self.returnedVal = (False, None)
-
         else:
             self.returnedVal = (False, None)
 
@@ -1137,8 +1168,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         #Si self.method : False (Metodo Editar) --- Si self.method : True (Metodo Metodo Nuevo Producto)
         #self.method se setea cuando sea crea el objeto de la clase EditNewItemDialog
         #aqui es guardar el valor de data a variable prevData
-        
-        if bool(data): self.prevData = data
+
+        if bool(data): self.prevData = data.copy()
 
         if bool(self.prevData) and self.method:
             self.dataItems = data["items"]
@@ -1163,30 +1194,30 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             
             for index, x in enumerate(data["wares"]): 
 
-                self.wareTableItemData.setVerticalHeaderItem(index, QTableWidgetItem(x[0]))
+                self.wareTableItemData.setVerticalHeaderItem(index, QTableWidgetItem(x[1]))
                 item = QCheckBox()
                 item.setStyleSheet("padding-left: 17px;")
-                item.stateChanged.connect(self.first_callback(index, bool(int(x[1]))))
+                item.stateChanged.connect(self.first_callback(index, bool(int(x[2]))))
                 self.wareTableItemData.setCellWidget(index, 0, item)
 
                 item = QCheckBox(enabled = False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else QCheckBox(enabled = True)
                 item.setStyleSheet("padding-left: 17px;")
-                item.stateChanged.connect(self.second_callback(index, bool(int(x[1]))))
+                item.stateChanged.connect(self.second_callback(index, bool(int(x[2]))))
                 self.wareTableItemData.setCellWidget(index,1,item)
 
                 #virtual = 1, not Vitirual = 0
                 #aqui evalua que el primer checkbox este checked y tambien el tipo de ware, is virtual?
-                item = QLineEdit(enabled = False) if (bool(int(x[1])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else QLineEdit(enabled = True)
+                item = QLineEdit(enabled = False) if (bool(int(x[2])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else QLineEdit(enabled = True)
                 item.setPlaceholderText("MUEBLE ?, FILA ?")
                 #background black when ware is virtual
-                item.setStyleSheet("QLineEdit{background-color: black; Border: 0px;}" if bool(int(x[1])) else "QLineEdit{Border: 0px;}")
+                item.setStyleSheet("QLineEdit{background-color: black; Border: 0px;}" if bool(int(x[2])) else "QLineEdit{Border: 0px;}")
                 item.editingFinished.connect(self.locationLineEditCallBack(index))
                 self.wareTableItemData.setCellWidget(index,2,item)
 
-                item = MySpinBox(enabled = False) if (bool(int(x[1])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else MySpinBox(enabled = True) 
+                item = MySpinBox(enabled = False) if (bool(int(x[2])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else MySpinBox(enabled = True) 
                 item.setFixedWidth(59)
                 item.setSuffix(" und")
-                item.setStyleSheet("QSpinBox{background-color: black; Border: 0px;}" if bool(int(x[1])) else "QSpinBox{Border: 0px;}")
+                item.setStyleSheet("QSpinBox{background-color: black; Border: 0px;}" if bool(int(x[2])) else "QSpinBox{Border: 0px;}")
                 self.wareTableItemData.setCellWidget(index,3,item)
 
                 #bloqueo cuando agregamos items
@@ -1205,7 +1236,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
                 self.wareTableItemData.blockSignals(False)
                 #>
-
                 item = MySpinBox(enabled=False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else MySpinBox(enabled=True)
                 item.setMaximum(100)
                 item.setSingleStep(5)

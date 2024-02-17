@@ -124,7 +124,7 @@ class wares_gestor:
 			return False
 
 	def getNextCodDB(self):
-		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, i.code FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl FROM genesisdb.category c UNION SELECT 'ware', null, `name`, cast(`isVirtual` as UNSIGNED) FROM genesisdb.ware w where w.enabled = 1;"
+		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, i.code, null FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl, null FROM genesisdb.category c UNION SELECT 'ware', `code`, `name`, cast(`isVirtual` as UNSIGNED), w.id FROM genesisdb.ware w where w.enabled = 1;"
 		try:
 			self.connectDB()
 			self.cursor.execute(query)
@@ -135,7 +135,8 @@ class wares_gestor:
 			category1 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 1) else False, data))))
 			category2 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 2) else False, data))))
 			category3 = list(map(lambda x: (x[1], x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ctgy' and int(x[3]) == 3) else False, data))))
-			availableWares = list(map(lambda x: (x[2], x[3]),list(filter(lambda x: True if (x[0] == 'ware') else False, data))))
+			#wares[1]: cod, wares[2]: name, wares[3]: isVirtual, wares[4]: id
+			availableWares = list(map(lambda x: (x[1], x[2], x[3], x[4]),list(filter(lambda x: True if (x[0] == 'ware') else False, data))))
 			data_dict = {"next": nextCode, "items": items, "languages": languages,"category1": category1, "category2": category2, "category3": category3, "wares": availableWares}
 			self.disconnectDB()
 			return True, data_dict
@@ -144,29 +145,46 @@ class wares_gestor:
 			self.disconnectDB()
 			return False, None
 
-	def insertNewItemDB(self, data: dict = None, currentWare: str = None):
+	def insertNewItemDB(self, data: ware_product = None, currentWare: str = None):
 
 		#anteriormente se lee el spinbox stock para ver si te tiene que agregar cantidad a nuevo producto
-		
-		if bool(len(data)) and bool(currentWare):
-			
+		if bool(data) and bool(currentWare):
 			#esta parte es para hacer las subconsultas
-			if "idItem" in data:
-				data["idItem"] = "(select id from genesisdb.item where item = '" + str(data["idItem"][1]) + "')"
-			if "idLanguage" in data:
-				data["idLanguage"] = "(select id from genesisdb.language where language = '" + data["idLanguage"][1] + "')"
+			idItemSubQuery = "(select id from genesisdb.item where item = '" + data.product.getItemCategory() + "')" if bool(data.product.getItemCategory()) else None
+			idLanguageSubQuery = "(select id from genesisdb.language where language = '" + data.product.getLang() + "')" if bool(data.product.getLang()) else None
+			# query_1 para hacer el insert principal de product
+			query_1 = "insert into genesisdb.product (id, idItem, isbn, title, autor, publisher, content, " + \
+			"dateOut, idLanguage, pages, edition, cover, width, height) values (%s, %s, %s, '%s', '%s', '%s', %s, %s, %s, %s, %s, %s, %s, %s);" % (str(data.product.getId()), idItemSubQuery, 
+			"'" + data.product.getISBN() + "'" if data.product.getISBN() else "NULL",
+			data.product.getTitle(), data.product.getAutor(), data.product.getPublisher(),
+			"'" + data.product.getContent() + "'" if data.product.getContent() else "NULL",
+			"'" + data.product.getDateOut() + "'" if data.product.getDateOut() else "NULL",
+			idLanguageSubQuery if idLanguageSubQuery else "NULL",
+			str(data.product.getPages()) if data.product.getPages() else "NULL",
+			str(data.product.getEdition()) if data.product.getEdition() else "NULL",
+			str(0 if data.product.getCover() == 1 else 1 if data.product.getCover() == 2 else 0) if data.product.getCover() else "NULL",
+			str(data.product.getWidth()) if data.product.getWidth() else "NULL",
+			str(data.product.getHeight()) if data.product.getHeight() else "NULL")
 
-			#esta parte para crear el string separado por comas
-			fieldsCSV = ",".join(tuple(data.keys()))
-			valuesCSV = ",".join(tuple("'" + value + "'" if (isinstance(value, str) and key !="idItem" and key != "idLanguage") else str(value) for key, value in data.items()))
-			query_1 = "insert into genesisdb.product (" + fieldsCSV + ") values (" + valuesCSV + ");"
+
+
 			
+
 			try:
 				self.connectDB()
 				self.cursor.execute(query_1)
+
+				# query_2 para hacer el insert de los ware_products
+				existsData = list(filter(lambda x: x["isExists"], data.wareData.values()))
+				# Data2Tuple = list(map(lambda x: (x["idWare"], str(data.product.getId()), str(x["qtyNew"]), str(x["qtyOld"]), str(x["pvNew"]), str(x["pvOld"]), x["loc"], str(x["dsct"]), str(x["qtyMinimun"]), x["isEnabled"]), existsData))
+				Data2Tuple = list(map(lambda x: (x["idWare"], data.product.getId(), x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"], x["loc"], x["dsct"], x["qtyMinimun"], x["isEnabled"]), existsData))
+				stmt = "insert into genesisdb.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, qtyMinimun, isEnabled) " + \
+				"values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+				
+				self.cursor.executemany(stmt, Data2Tuple)
 				self.mydb.commit()
 				self.disconnectDB()
-				return True
+				return False
 			except Exception as error:
 				print("Something wrong happen: ", error)
 				self.disconnectDB()

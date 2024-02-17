@@ -64,24 +64,25 @@ class daily_sale:
 class product:
 
 	def __repr__(self):
-		return '{{prdCode: {0}, isbn: {1}, title: {2}, autor: {3}, publisher: {4}, dateOut: {5}, lang: {6}, pages: {7}, edition: {8}, cover: {9}}}'.format(self.prdCode,
+		return '{{prdCode: {0}, isbn: {1}, title: {2}, autor: {3}, publisher: {4}, dateOut: {5}, lang: {6}, pages: {7}, edition: {8}, cover: {9}, id: {10}, width: {11}, height: {12}, content: {13}, itemCategory: {14}}}'.format(self.prdCode,
 																																	self.isbn, self.title,
 																																	self.autor, self.publisher,
 																																	self.dateOut, self.lang,
 																																	self.pages, self.edition,
-																																	self.cover)
+																																	self.cover, self.id, self.width, self.height)
 	
 	def __str__(self):
-		return "{{prdCode: {0}, isbn: {1}, title: {2}, autor: {3}, publisher: {4}, dateOut: {5}, lang: {6}, pages: {7}, edition: {8}, cover: {9}}}".format(self.prdCode,
+		return "{{prdCode: {0}, isbn: {1}, title: {2}, autor: {3}, publisher: {4}, dateOut: {5}, lang: {6}, pages: {7}, edition: {8}, cover: {9}, id: {10}, width: {11}, height:{12}, content: {13}, itemCategory: {14}}}".format(self.prdCode,
 																																	self.isbn, self.title,
 																																	self.autor, self.publisher,
 																																	self.dateOut, self.lang,
 																																	self.pages, self.edition,
-																																	self.cover)
+																																	self.cover, self.id, self.width,
+																																	self.height, self.content, self.itemCategory)
 
 	def __init__(self, itemCode: str = None, id: int = None, isbn: str = None, title: str = None, autor: str = None,
 			   	publisher: str = None, dateOut: str = None, lang: str = None, pages: int = None, edition: int = None,
-				cover: bool = None, width: int = None, height: int = None, itemCategory: str = None):
+				cover: bool = None, width: int = None, height: int = None, itemCategory: str = None, content: str = None):
 		self.prdCode = '{0}_{1}'.format(itemCode, str(id)) if itemCode != None else None
 		self.isbn = isbn
 		self.title = title
@@ -91,10 +92,12 @@ class product:
 		self.lang = lang
 		self.pages = pages
 		self.edition = edition
-		self.cover = "DURA" if bool(cover) else "BLANDA"
+		#cover: 1 blanda, 2 dura
+		self.cover = 2 if bool(cover) else 1
 		self.width = width
 		self.height = height
 		self.id = id
+		self.content = content
 		self.itemCategory = itemCategory #libro,artesania 
 	
 	def setActive(self, condition: bool):
@@ -125,13 +128,31 @@ class product:
 		self.dateOut = dateOut
 
 	def setEdition(self, edition: int = None):
-		self.dateOut = dateOut
+		self.edition = edition
+	
+	def setPages(self, pages: int = None):
+		self.pages = pages
+
+	def setLang(self, lang: str = None):
+		self.lang = lang
+	
+	def setCover(self, cover: int = None):
+		self.cover = cover
+
+	def setWidth(self, width: int = None):
+		self.width = width
+
+	def setHeight(self, height: int = None):
+		self.height = height
+
+	def setContent(self, content: str = None):
+		self.content = content	
 
 	def getId(self)->int:
 		return self.id
 	
-	def getId(self)->int:
-		return self.id
+	def getISBN(self)->str:
+		return self.isbn
 	
 	def getTitle(self)->str:
 		return self.title
@@ -144,7 +165,31 @@ class product:
 	
 	def getItemCategory(self)->str:
 		return self.itemCategory
+	
+	def getLang(self)->str:
+		return self.lang
+	
+	def getContent(self)->str:
+		return self.content
 
+	def getDateOut(self)->str:
+		return self.dateOut
+	
+	def getPages(self)->int:
+		return self.pages
+	
+	def getEdition(self)->int:
+		return self.edition
+	
+	def getCover(self)->int:
+		return self.cover
+	
+	def getWidth(self)->int:
+		return self.width
+	
+	def getHeight(self)->int:
+		return self.height
+	
 class ware_product:
 	def __repr__(self):
 		return "{{product: {0}, wareData: {1}}}".format(self.product,
@@ -161,7 +206,8 @@ class ware_product:
 		self.wareData = wareData
 
 	def addDataWareProduct(self, wareName:str = None, qtyNew: int = None, qtyOld: int = None, qtyMinimun: int = 1,
-						 pvNew: float = 0.0, pvOld: float = 0.0, dsct: int = 0, loc: str = None, isEnabled: bool = True):
+						pvNew: float = 0.0, pvOld: float = 0.0, dsct: int = 0, loc: str = None,
+						isEnabled: bool = True, isExists: bool = None, idWare: id = None):
 		dataTemp = {
 			"qtyNew": qtyNew,
 			"qtyOld": qtyOld,
@@ -170,7 +216,9 @@ class ware_product:
 			"pvOld": pvOld,
 			"dsct": dsct,
 			"loc": loc if loc != None else "SIN UBICACION",
-			"isEnabled": isEnabled
+			"isEnabled": isEnabled,
+			"isExists": isExists,
+			"idWare": idWare
 		}
 		self.wareData.update({wareName: dataTemp})
 
