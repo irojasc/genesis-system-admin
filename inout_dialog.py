@@ -274,8 +274,9 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             itemsFound = list(filter(lambda x: getattr(x.product, criterio).find(str.upper(patron)) >= 0, self.mainList))
             listLabels = list(map(lambda i: i.product.prdCode + " | " + i.product.isbn + " | " +
                                                    i.product.title[:27] + " | " + i.product.autor[:15] + " | " + i.product.publisher[:8]
-                                                   if bool(len(i.product.isbn)) else i.product.prdCode + " | " + i.product.isbn + " | " +
+                                                   if bool(i.product.isbn) else i.product.prdCode + " | " + "" + " | " +
                                                    i.product.title[:28] + " | " + i.product.autor[:12] + " | " + i.product.publisher[:12], itemsFound))
+            
             if bool(len(listLabels)):
                 self.searchList.addItems(listLabels)
 

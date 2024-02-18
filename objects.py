@@ -83,7 +83,8 @@ class product:
 	def __init__(self, itemCode: str = None, id: int = None, isbn: str = None, title: str = None, autor: str = None,
 			   	publisher: str = None, dateOut: str = None, lang: str = None, pages: int = None, edition: int = None,
 				cover: bool = None, width: int = None, height: int = None, itemCategory: str = None, content: str = None):
-		self.prdCode = '{0}_{1}'.format(itemCode, str(id)) if itemCode != None else None
+		self.itemCode = itemCode
+		self.prdCode = '{0}_{1}'.format(self.itemCode, str(id)) if itemCode != None else None
 		self.isbn = isbn
 		self.title = title
 		self.autor = autor
@@ -96,8 +97,8 @@ class product:
 		self.cover = 2 if bool(cover) else 1
 		self.width = width
 		self.height = height
-		self.id = id
 		self.content = content
+		self.id = id
 		self.itemCategory = itemCategory #libro,artesania 
 	
 	def setActive(self, condition: bool):
@@ -120,6 +121,7 @@ class product:
 	
 	def setId(self, id: int = None):
 		self.id = id
+		self.prdCode = '{0}_{1}'.format(self.itemCode, str(id)) if self.prdCode else self.prdCode
 
 	def setItemCategory(self, itemCategory: str = None):
 		self.itemCategory = itemCategory

@@ -555,8 +555,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                     validator, dataAfter = ui_NewItemDialog.returnedVal
                     if validator:
                         if self.userValidation():
-                            # if(self.ware_gest.insertNewItemDB(dataAfter, self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter, self.currWare.cod)):
-                            if(self.ware_gest.insertNewItemDB(dataAfter, self.currWare.cod)):
+                            if(self.ware_gest.insertNewItemDB(dataAfter, self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter, self.currWare.cod)):
                                 QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
                                 #True: argumento para indicar que se esta creadno un nuevo item y index selected apunte al ultimo producto libro
                                 self.txtBusChanged(True)
@@ -930,7 +929,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.returnedVal = (False, None)
 
         elif btnConfirmation and self.method:
-            objItem = product()
+            objItem = product(itemCode=self.dataItems[self.cmbItem.currentIndex()][2])
             objItem.setId(int(self.txtId.text().strip()))
             if bool(len(self.txtTitle.text().strip())):
                 objItem.setTitle(self.txtTitle.text().strip())
@@ -973,8 +972,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 
                 elif not(bool(self.wareTableItemData.rowCount())):
                     objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
-                
-                print(objWareProduct)
+                # print(objWareProduct)
                 self.returnedVal = (True, objWareProduct)
             else:
                 QMessageBox.information(self, 'Mensaje', "Llenar los campos obligatorios (*)", QMessageBox.Ok, QMessageBox.Ok)

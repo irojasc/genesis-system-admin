@@ -166,25 +166,20 @@ class wares_gestor:
 			str(data.product.getWidth()) if data.product.getWidth() else "NULL",
 			str(data.product.getHeight()) if data.product.getHeight() else "NULL")
 
-
-
-			
-
 			try:
 				self.connectDB()
 				self.cursor.execute(query_1)
-
 				# query_2 para hacer el insert de los ware_products
 				existsData = list(filter(lambda x: x["isExists"], data.wareData.values()))
 				# Data2Tuple = list(map(lambda x: (x["idWare"], str(data.product.getId()), str(x["qtyNew"]), str(x["qtyOld"]), str(x["pvNew"]), str(x["pvOld"]), x["loc"], str(x["dsct"]), str(x["qtyMinimun"]), x["isEnabled"]), existsData))
 				Data2Tuple = list(map(lambda x: (x["idWare"], data.product.getId(), x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"], x["loc"], x["dsct"], x["qtyMinimun"], x["isEnabled"]), existsData))
 				stmt = "insert into genesisdb.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, qtyMinimun, isEnabled) " + \
 				"values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-				
 				self.cursor.executemany(stmt, Data2Tuple)
 				self.mydb.commit()
 				self.disconnectDB()
-				return False
+				return True
+			
 			except Exception as error:
 				print("Something wrong happen: ", error)
 				self.disconnectDB()
@@ -392,23 +387,21 @@ class WareProduct:
 		except Exception as error:
 			return False
 
-	def insertInnerNewItem(self, data: dict = None, own_wares = None):
+	def insertInnerNewItem(self, data: ware_product = None, own_wares = None):
 		if bool(data):
-
-			objProduct = product(data["idItem"][2], 
-						data["id"], 
-						None if not("isbn" in data) else data["isbn"],
-						data["title"], data["autor"], data["publisher"], 
-						None if not("dateOut" in data) else data["dateOut"],
-						None if not("idLanguage" in data) else data["idLanguage"][1],
-						None if not("pages" in data) else data["pages"],
-						None if not("edition" in data) else data["edition"],
-						None if not("cover" in data) else data["cover"],
-						None if not("width" in data) else data["width"],
-						None if not("eight" in data) else data["height"])
-			
-			objwareBook = ware_product(objProduct)
-			self.innerWareList.append(objwareBook)
+			# objProduct = product(data["idItem"][2], 
+			# 			data["id"], 
+			# 			None if not("isbn" in data) else data["isbn"],
+			# 			data["title"], data["autor"], data["publisher"], 
+			# 			None if not("dateOut" in data) else data["dateOut"],
+			# 			None if not("idLanguage" in data) else data["idLanguage"][1],
+			# 			None if not("pages" in data) else data["pages"],
+			# 			None if not("edition" in data) else data["edition"],
+			# 			None if not("cover" in data) else data["cover"],
+			# 			None if not("width" in data) else data["width"],
+			# 			None if not("eight" in data) else data["height"])
+			# objwareBook = ware_product(objProduct)
+			self.innerWareList.append(data)
 			return True
 		else:
 			return False
