@@ -73,7 +73,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.txtBusqueda.clear()
         self.searchList.clear()
         self.tabWidget.setTabText(0, "NUEVO (0)")
-        self.tabWidget.setTabText(1, "ANTIGUO (0)")
+        self.tabWidget.setTabText(1, "SEGUNDA (0)")
         self.tabWidget.blockSignals(True)
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget.blockSignals(False)
@@ -338,7 +338,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             self.cantTitles = len(self.oldItems_table)
             
         self.lblTitle_cant.setText("Items: %d" % self.cantItems)
-        self.tabWidget.setTabText(0, "NUEVO (%d)" % self.cantItems) if not(self.tabWidget.currentIndex()) else self.tabWidget.setTabText(1, "ANTIGUO (%d)" % self.cantItems)
+        self.tabWidget.setTabText(0, "NUEVO (%d)" % self.cantItems) if not(self.tabWidget.currentIndex()) else self.tabWidget.setTabText(1, "SEGUNDA (%d)" % self.cantItems)
         self.lblCantidadTitulos.setText("Titulos: %d" % self.cantTitles)
 
     def aceptarEvent(self,event):
@@ -536,7 +536,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         
         # -----------  Old_tableWidget  -----------
         self.Old_tableWidget = QtWidgets.QTableWidget(self)
-        self.tabWidget.addTab(self.Old_tableWidget, "ANTIGUO (0)")
+        self.tabWidget.addTab(self.Old_tableWidget, "SEGUNDA (0)")
         self.tabWidget.blockSignals(False)
         self.Old_tableWidget.setGeometry(QtCore.QRect(0, 135, 640, 175))
         self.Old_tableWidget.setObjectName("Old_tableWidget")

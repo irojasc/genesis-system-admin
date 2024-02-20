@@ -95,19 +95,19 @@ class Ui_Dialog(QtWidgets.QDialog):
     def showWindow(self):
         self.show()
 
-    def upload_quantity(self):
-        if self.ui_dialog.button_condition == "aceptar" and self.ui_dialog.criterio == " + ":
-            for j in self.ui_dialog.main_table:
-                for i in self.gestWareProduct.ware_list:
-                    if i.book.cod == j["cod"]:
-                        i.almacen_quantity[1] += j["cantidad"]
+    # def upload_quantity(self):
+    #     if self.ui_dialog.button_condition == "aceptar" and self.ui_dialog.criterio == " + ":
+    #         for j in self.ui_dialog.main_table:
+    #             for i in self.gestWareProduct.ware_list:
+    #                 if i.book.cod == j["cod"]:
+    #                     i.almacen_quantity[1] += j["cantidad"]
 
-        elif self.ui_dialog.button_condition == "aceptar" and self.ui_dialog.criterio == " - ":
-            for j in self.ui_dialog.main_table:
-                for i in self.gestWareProduct.ware_list:
-                    if i.book.cod == j["cod"]:
-                        i.almacen_quantity[1] -= j["cantidad"]
-        self.txtBusChanged()
+    #     elif self.ui_dialog.button_condition == "aceptar" and self.ui_dialog.criterio == " - ":
+    #         for j in self.ui_dialog.main_table:
+    #             for i in self.gestWareProduct.ware_list:
+    #                 if i.book.cod == j["cod"]:
+    #                     i.almacen_quantity[1] -= j["cantidad"]
+    #     self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
 
     # -----------  close event configuration  -----------
     def keyPressEvent(self, event):
@@ -201,8 +201,8 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         return lenTableBooks
 
-    def txtBusChanged(self, currentLineText: str = None, method: bool = False):
-        #method: True # cuando se crea un nuevo item
+    def txtBusChanged(self, currentLineText: str = None, method: int = 0, keepCurrentIndex: int = 0):
+        #method: 2 es nuevo item, 1 es mantener current index y 0 es posicion en el primer item para method
         if str(self.cmbSearch.currentText()) == "" and self.txtSearch.text() != "":
             ret = QMessageBox.information(self, 'Aviso', "Ingresar criterio de busqueda")
 
@@ -211,20 +211,20 @@ class Ui_Dialog(QtWidgets.QDialog):
             if self.buscar("main") > 0:
                 #lstBookIndex: la posicion final del ultimo item de la categoria libros
                 lstBookIndex = self.loadData()
-                self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
+                self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(self.ware_table.selectedIndexes()[0].row(), 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
                 self.actualizar_img(0)
 
         elif self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() == "":
             if self.buscar("main") > 0:
                 lstBookIndex = self.loadData()
-                self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
+                self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
                 self.actualizar_img(0)
 
         else:
             if self.cmbSearch.currentText() == "cod":
                 if self.buscar("cod", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
                     self.actualizar_img(0)
                 else:
                     self.real_table.clear()
@@ -234,7 +234,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             elif self.cmbSearch.currentText() == "isbn":
                 if self.buscar("isbn", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
                     self.actualizar_img(0)
                     #self.txtSearch.setText("")
                 else:
@@ -246,7 +246,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             elif self.cmbSearch.currentText() == "titulo":
                 if self.buscar("titulo", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
                     self.actualizar_img(0)
                 else:
                     self.real_table.clear()
@@ -256,7 +256,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             elif self.cmbSearch.currentText() == "autor":
                 if self.buscar("autor", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
                     self.actualizar_img(0)
                 else:
                     self.real_table.clear()
@@ -266,7 +266,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             elif self.cmbSearch.currentText() == "editorial":
                 if self.buscar("editorial", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(0, 0) if not(method) else self.ware_table.setCurrentCell(lstBookIndex - 1, 0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
                     self.actualizar_img(0)
                 else:
                     self.real_table.clear()
@@ -416,19 +416,25 @@ class Ui_Dialog(QtWidgets.QDialog):
                 if self.ui_dialog.returned_val[3]:
                     self.gestWareProduct.update_backtablequantity(self.ui_dialog.returned_val[0], self.ui_dialog.returned_val[1], self.ui_dialog.returned_val[2], self.currWare.cod)
                     # self.updateRealTable()
-                    self.txtBusChanged()
+                    self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
                     self.actualizar_img(self.ware_table.currentIndex().row())
             # self.ui_dialog.show_window()
         else:
             QMessageBox.warning(self, 'Mensaje', "No tiene permisos para entrada/salida de productos", QMessageBox.Ok, QMessageBox.Ok)
 
-    def onCurrentIndexChanged(self):
+    def onCurrentWareIndexChanged(self):
         if self.cmbWares.currentIndex() == -1:
             self.ware_table.horizontalHeaderItem(6).setText("")
         elif self.cmbWares.currentIndex() != -1:
             self.ware_table.horizontalHeaderItem(6).setText("[" + self.cmbWares.currentText() + "]")
             #self.seColumn = str(self.cmbWares.currentText())
-            self.txtBusChanged()
+            if self.ware_table.selectedIndexes() != []:
+                #method 1: converva el current selected index
+                self.txtBusChanged(currentLineText=None, method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
+                self.actualizar_img(self.ware_table.currentIndex().row())
+            else:
+                self.txtBusChanged(method=0)
+                self.actualizar_img(0)
 
     def onCmbWarePriceIndexChanged(self):
         if self.cmbWarePrice.currentIndex() != -1:
@@ -558,7 +564,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                             if(self.ware_gest.insertNewItemDB(dataAfter, self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter, self.currWare.cod)):
                                 QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
                                 #True: argumento para indicar que se esta creadno un nuevo item y index selected apunte al ultimo producto libro
-                                self.txtBusChanged(True)
+                                self.txtBusChanged(method=2)
                                 self.actualizar_img(self.ware_table.currentIndex().row())
                             else:
                                 QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
@@ -570,7 +576,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.WareProdDate = datetime.now().date()
         # guarda el active index antiguo
         row = self.ware_table.currentIndex().row()
-        self.txtBusChanged()
+        self.txtBusChanged(method=1, keepCurrentIndex=row)
         # setea el index antiguo a la tabla actualizada
         self.ware_table.setCurrentCell(row, 0)
         self.actualizar_img(row)
@@ -728,7 +734,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         font.setWeight(75)
         self.cmbWares.setFont(font)
         self.cmbWares.setObjectName("cmWares")
-        self.cmbWares.currentIndexChanged.connect(self.onCurrentIndexChanged)
+        self.cmbWares.currentIndexChanged.connect(self.onCurrentWareIndexChanged)
         self.cmbWares.clear()
         #Dentro de esta parte se carga los datos de cmbwares
         self.cmbWares.addItems(self.getRestWare())
