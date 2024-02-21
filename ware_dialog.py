@@ -32,8 +32,8 @@ class Ui_Dialog(QtWidgets.QDialog):
         if(bool(currentUser) or bool(currentWare) or bool(restWare) or bool(WareProdDate) or bool(parent)):
             self.gestWareProduct = WareProduct()  ##se crea el objeto getWareProduct: Maneja la tabla ware -> WareProduct <- Product
             self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
-            self.ui_CustomInput = ui_CustomChangeLocation()
-            self.ui_operationDialog = ui_OperationDialog()
+            
+            
             self.ui_EditDialog = ui_EditNewItemDialog()
             self.objS3 = aws_s3()
             self.real_table = []
@@ -322,13 +322,14 @@ class Ui_Dialog(QtWidgets.QDialog):
         column_ = self.ware_table.currentIndex().column()
 
         # no permite el cambio de ubicacion si el item esta inactivo
-        itemSelected = list(filter(lambda x: x.product.prdCode == self.ware_table.item(row,0).text(), self.real_table))
+        # itemSelected = list(filter(lambda x: x.product.prdCode == self.ware_table.item(row,0).text(), self.real_table))
 
         # if self.currWare[2][1] == True and column_ == 0 and itemSelected[0].objBook.active:
+        if column_ == 0:
 
-        #         # validation: Cancel, Ok, Desactivar
-        #         validation = self.openOperationDialog(self.ware_table.item(row,column_).text(), self.ware_table.item(row,column_+2).text())
-
+                # validation: Cancel, Ok, Desactivar
+                validation = self.openOperationDialog(self.ware_table.item(row, 0).text(), self.ware_table.item(row, 2).text())
+        
         #         if (validation == "Desactivar"):
         #             if self.gestWareProduct.isZeroQuantity(self.ware_table.item(row,0).text()):
         #                 ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO ACTIVO::..\n¿Desea desactivar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -339,26 +340,17 @@ class Ui_Dialog(QtWidgets.QDialog):
         #             else:
         #                 QMessageBox.information(self, 'Mensaje', "El producto se encuentra en stock", QMessageBox.Ok, QMessageBox.Ok)
 
-        #         if (validation == "Ubicacion"):
-        #             ubicValidation, text = self.openUbicDialog(self.ware_table.item(row,column_).text(), self.ware_table.item(row,column_+2).text())
-
-        #             if (ubicValidation == "Ok"):
-        #                 try:
-        #                     if text.split(" ")[0].upper() == "MUEBLE" and text.split(" ")[2].upper() == "FILA":
-        #                         if self.userValidation() and self.gestWareProduct.changeItemLocation(self.ware_table.item(row,0).text(), text, self.currWare[0]):
-        #                             QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
-        #                             self.txtBusChanged()
-
-        #                     elif len(text) > 0:
-        #                         ret = QMessageBox.question(self, 'Alerta',
-        #                                                 "Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",
-        #                                                 QMessageBox.Ok, QMessageBox.Ok)
-        #                     elif (ubicValidation == "Ok") and len(text) == 0:
-        #                         ret = QMessageBox.question(self, 'Alerta',
-        #                                                 "Operación sin efecto",
-        #                                                 QMessageBox.Ok, QMessageBox.Ok)
-        #                 except:
-        #                     ret = QMessageBox.question(self, 'Alerta',"Debe seguir el siguiente formato:\nMUEBLE (Letra), FILA (Numero)",QMessageBox.Ok, QMessageBox.Ok)
+                if (validation == "Ubicacion"):
+                    #verifica que el item contenga el presente almacen
+                    if self.currWare.cod in self.real_table[row].wareData:
+                        ubicValidation, text = self.openUbicDialog(self.ware_table.item(row,column_).text(), self.ware_table.item(row,column_+2).text())
+                        if (ubicValidation == "Ok"):
+                            if self.userValidation() and self.gestWareProduct.changeItemLocation(str(self.real_table[row].product.getId()), text, self.currWare.cod) and self.gestWareProduct.changeInnerItemLocation(self.real_table[row].product.getId(), text, self.currWare.cod):
+                                print("todo conforme hasta aqui")
+                            #     QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
+                            #     self.txtBusChanged()
+                    else:
+                        QMessageBox.information(self, 'Información',"El presente almacén no registra el producto", QMessageBox.Ok, QMessageBox.Ok)
 
         #         if (validation == "Editar"):
         #             data = {"cod": self.ware_table.item(row,0).text(),
@@ -371,7 +363,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         #             if isUpdate and self.userValidation() and self.gestWareProduct.updateInnerItem(data["cod"], text) and self.ware_gest.updateDataItem(data["cod"], text):
         #                 QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
         #                 self.txtBusChanged()
-
+        
         # elif self.currWare[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
         #     ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         #     succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.gestWareProduct.activateItem(self.ware_table.item(row,0).text(), True))
@@ -386,8 +378,14 @@ class Ui_Dialog(QtWidgets.QDialog):
         # text: content
         text, isPressedOk = QInputDialog.getText(self, 'Validar usuario', 'Ingrese contraseña', QtWidgets.QLineEdit.Password)
         if(isPressedOk):
-            a = users_gestor() 
-            return a.checkPSW(text)[1] if a.checkPSW(text)[0] else False
+            with users_gestor() as a_:
+                if a_.checkPSW(text)[0]:
+                    tmpData = a_.checkPSW(text)[1]
+                    del a_ 
+                    return tmpData
+                else:
+                    del a_ 
+                    return False
         else:
             return False
 
@@ -517,15 +515,22 @@ class Ui_Dialog(QtWidgets.QDialog):
         return QtCore.QObject.event(source, event)
 
     def openUbicDialog(self, code: str = "", title: str = ""):
-        self.ui_CustomInput.cleanInputText()
-        self.ui_CustomInput.setItemData(code, title)
-        if self.ui_CustomInput.exec_() == QDialog.Accepted:
-            return self.ui_CustomInput.returnedVal
+        with ui_CustomChangeLocation() as ui_CustomInput:
+            ui_CustomInput.cleanInputText()
+            ui_CustomInput.setItemData(code, title)
+            if ui_CustomInput.exec_() == QDialog.Accepted:
+                tmpData = ui_CustomInput.returnedVal
+                del ui_CustomInput
+                return tmpData
 
     def openOperationDialog(self, code: str = "", title: str = ""):
-        self.ui_operationDialog.setItemData(code, title)
-        if self.ui_operationDialog.exec_() == QDialog.Accepted:
-            return self.ui_operationDialog.returnedVal
+        with ui_OperationDialog() as ui_operationDialog:
+            #code: codigo de item , title: titulo de item
+            ui_operationDialog.setItemData(code, title)
+            if ui_operationDialog.exec_() == QDialog.Accepted:
+                tmpData = ui_operationDialog.returnedVal
+                del ui_operationDialog
+                return tmpData
 
     def openEditItemDialog(self, data: dict = None):
         if bool(data):
@@ -2415,7 +2420,6 @@ class MyComboBox(QComboBox):
         self.clicked.emit()
         MyComboBox.mousePressEvent(self, event)
 
-    
 class MyComboBox_Pop(QComboBox):
     popupAboutToBeShown  = QtCore.pyqtSignal()
 
@@ -2481,10 +2485,34 @@ class ui_CustomChangeLocation(QtWidgets.QDialog):
         self.title = ""
         self.setupUi()
 
-    def returnValues(self, textButton: str = ""):
-        self.returnedVal = (textButton, self.txtUbic.text())
-        self.submitclose()
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
 
+    def returnValues(self, textButton: str = ""):
+        #textButton: Ok, Cancel
+        txtEvaluated = self.txtUbic.text().upper()
+        if txtEvaluated != "" and textButton == "Ok":
+            splitted = txtEvaluated.split(",")
+            if len(splitted) == 2:
+                stripSplitted = list(map(lambda x: x.strip(), splitted))
+                mueble = stripSplitted[0].split(" ")
+                fila = stripSplitted[1].split(" ")
+                if mueble[0] == "MUEBLE" and fila[0] == "FILA" and len(mueble) > 1 and len(fila) > 1:
+                    self.returnedVal = (textButton, self.txtUbic.text().upper())
+                    self.submitclose()
+                else:
+                    QMessageBox.information(self, "Alerta", "¡Seguir el formato correcto!\n>MUEBLE (A->Z), FILA (1->100)", buttons= QMessageBox.Ok)
+                    self.txtUbic.clear()
+            else:
+                QMessageBox.information(self, "Alerta", "¡Seguir el formato correcto!\n>MUEBLE (A->Z), FILA (1->100)", buttons= QMessageBox.Ok)
+                self.txtUbic.clear()
+        else:
+            self.returnedVal = (textButton, None)
+            self.submitclose()
+        
     def cleanInputText(self):
         self.txtUbic.setText("");
 
@@ -2551,6 +2579,12 @@ class ui_OperationDialog(QtWidgets.QDialog):
         self.code = ""
         self.title = ""
         self.setupUi()
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
 
     def returnValues(self, textButton: str = ""):
         self.returnedVal = textButton
@@ -2571,9 +2605,12 @@ class ui_OperationDialog(QtWidgets.QDialog):
         w2 = self.label3.frameGeometry().width()
         self.textWidth = ((w2>w1) and (w2 - w1))
         # self.txtUbic.setFixedWidth(self.textWidth)
-        self.btnDeactivate.move(5, 70)
-        self.btnLocation.move(self.btnDeactivate.frameGeometry().width() + 5, 70)
-        self.btnEdit.move(self.btnDeactivate.frameGeometry().width() + self.btnLocation.frameGeometry().width() + 5, 70)
+        # self.btnDeactivate.move(5, 70)
+        tmp_width = 0
+        # self.btnLocation.move(self.btnDeactivate.frameGeometry().width() + 5, 70)
+        self.btnLocation.move(tmp_width + 5, 70)
+        # self.btnEdit.move(self.btnDeactivate.frameGeometry().width() + self.btnLocation.frameGeometry().width() + 5, 70)
+        self.btnEdit.move(tmp_width + self.btnLocation.frameGeometry().width() + 5, 70)
         self.btnCancel.move(5, 95)
 
     def submitclose(self):
@@ -2607,17 +2644,17 @@ class ui_OperationDialog(QtWidgets.QDialog):
         self.btnLocation.adjustSize()
         self.btnLocation.clicked.connect(lambda: self.returnValues("Ubicacion"))
 
-        self.btnDeactivate = QPushButton('Desactivar', self)
-        self.btnDeactivate.adjustSize()
-        self.btnDeactivate.clicked.connect(lambda: self.returnValues('Desactivar'))
+        # self.btnDeactivate = QPushButton('Desactivar', self)
+        # self.btnDeactivate.adjustSize()
+        # self.btnDeactivate.clicked.connect(lambda: self.returnValues('Desactivar'))
 
         self.btnCancel = QPushButton('Cancelar', self)
         self.btnCancel.adjustSize()
         self.btnCancel.clicked.connect(lambda: self.returnValues("Cancelar"))
+        self.btnCancel.setDefault(True)
 
     def show_window(self):
         self.show()
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -328,17 +328,14 @@ class WareProduct:
 			self.disconnect_db()
 			return False
 		
-	def changeItemLocation(self, codBook: str = "", location: str= "SIN UBICACION", currentWare: str=""):
+	def changeItemLocation(self, iditem: str = "", location: str= "SIN UBICACION", currentWare: str="")->bool:
 		try:
-			if self.changeInnerItemLocation(codBook, location, currentWare):
-				self.connect_db()
-				query = ("update genesisDB.ware_books set genesisDB.ware_books.ubic_" + currentWare + " = '" + location.upper() + "' where genesisDB.ware_books.cod_book = '" + codBook + "';")
-				self.cursor.execute(query)
-				self.mydb.commit()
-				self.disconnect_db()
-				return True
-			else:
-				return False
+			self.connect_db()
+			query = ("update genesisdb.ware_product set loc = '" + location + "', editDate = '" + str(date.today()) + "' where idProduct=" + iditem + " and idWare=(select id from genesisdb.ware where code = '" + currentWare + "');")
+			self.cursor.execute(query)
+			self.mydb.commit()
+			self.disconnect_db()
+			return True
 		except Exception as error:
 			print("Location: Activating Item: ", error)
 			self.disconnect_db()
@@ -352,12 +349,14 @@ class WareProduct:
 		except Exception as error:
 			return False
 		
-	def changeInnerItemLocation(self, codBook: str = "", location: str= "SIN UBICACION", currentWare: str= ""):
+	def changeInnerItemLocation(self, idItem: int = "", location: str= "SIN UBICACION", currentWare: str= ""):
 		try:
-			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.innerWareList)))[0][0]
-			self.innerWareList[index].almacen_data["ubic_" + currentWare] = location.upper();
-			return True
+			# index = list(filter(lambda x, y: x.product.getId() == idItem, enumerate(self.innerWareList)))
+			# print(index)
+			# self.innerWareList[index].almacen_data["ubic_" + currentWare] = location.upper();
+			return False
 		except Exception as error:
+			print("error as", error)
 			return False
 	
 	def isZeroQuantity(self, codBook: str = ""):
@@ -423,6 +422,12 @@ class users_gestor:
 	def __init__(self):
 		self.userList = []
 		self.fill_users()
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		pass
 
 	def connectDB(self):
 		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
