@@ -351,10 +351,9 @@ class WareProduct:
 		
 	def changeInnerItemLocation(self, idItem: int = "", location: str= "SIN UBICACION", currentWare: str= ""):
 		try:
-			# index = list(filter(lambda x, y: x.product.getId() == idItem, enumerate(self.innerWareList)))
-			# print(index)
-			# self.innerWareList[index].almacen_data["ubic_" + currentWare] = location.upper();
-			return False
+			index = list(filter(lambda x: x[1].product.getId() == idItem, enumerate(self.innerWareList)))[0][0]
+			self.innerWareList[index].wareData[currentWare]["loc"] = location
+			return True
 		except Exception as error:
 			print("error as", error)
 			return False
