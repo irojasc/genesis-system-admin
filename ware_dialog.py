@@ -320,25 +320,11 @@ class Ui_Dialog(QtWidgets.QDialog):
         row = self.ware_table.currentIndex().row()
         column_ = self.ware_table.currentIndex().column()
 
-        # no permite el cambio de ubicacion si el item esta inactivo
-        # itemSelected = list(filter(lambda x: x.product.prdCode == self.ware_table.item(row,0).text(), self.real_table))
-
-        # if self.currWare[2][1] == True and column_ == 0 and itemSelected[0].objBook.active:
         if column_ == 0:
 
                 # validation: Cancel, Ok, Desactivar
                 validation = self.openOperationDialog(self.ware_table.item(row, 0).text(), self.ware_table.item(row, 2).text())
         
-        #         if (validation == "Desactivar"):
-        #             if self.gestWareProduct.isZeroQuantity(self.ware_table.item(row,0).text()):
-        #                 ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO ACTIVO::..\n¿Desea desactivar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        #                 succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.gestWareProduct.activateItem(self.ware_table.item(row,0).text(), False))
-        #                 if succes:
-        #                     QMessageBox.information(self, 'Mensaje', "Producto desactivado", QMessageBox.Ok, QMessageBox.Ok)
-        #                     self.txtBusChanged()
-        #             else:
-        #                 QMessageBox.information(self, 'Mensaje', "El producto se encuentra en stock", QMessageBox.Ok, QMessageBox.Ok)
-
                 if (validation == "Ubicacion"):
                     #verifica que el item se encuentre dentro del presente almacen
                     if self.currWare.cod in self.real_table[row].wareData:
@@ -350,25 +336,18 @@ class Ui_Dialog(QtWidgets.QDialog):
                     else:
                         QMessageBox.information(self, 'Información',"El presente almacén no registra el producto", QMessageBox.Ok, QMessageBox.Ok)
 
-        #         if (validation == "Editar"):
-        #             data = {"cod": self.ware_table.item(row,0).text(),
-        #                     "isbn": self.ware_table.item(row,1).text(),
-        #                     "title": self.ware_table.item(row,2).text(),
-        #                     "autor": self.ware_table.item(row,3).text(),
-        #                     "publisher": self.ware_table.item(row,4).text(),
-        #                     "price": str(self.real_table[row].objBook.Pv)}
-        #             isUpdate, text = self.openEditItemDialog(data)
-        #             if isUpdate and self.userValidation() and self.gestWareProduct.updateInnerItem(data["cod"], text) and self.ware_gest.updateDataItem(data["cod"], text):
-        #                 QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
-        #                 self.txtBusChanged()
-        
-        # elif self.currWare[2][1] == True and column_ == 0 and not(itemSelected[0].objBook.active):
-        #     ret = QMessageBox.question(self, 'Alerta',"..::PRODUCTO DESACTIVADO::..\n¿Desea activar el producto?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        #     succes = (ret == QMessageBox.Yes) and (self.userValidation() and self.gestWareProduct.activateItem(self.ware_table.item(row,0).text(), True))
-        #     if succes:
-        #         QMessageBox.information(self, 'Mensaje', "Producto activado", QMessageBox.Ok, QMessageBox.Ok)
-        #         self.txtBusChanged()
-        #     ##aqui falta actualizar la tabla del frond luego de actualizar la tabla del back
+                if (validation == "Editar"):
+                    self.gestWareProduct.getItemDataFromDB(self.real_table[row].product.getId())
+                    # data = {"cod": self.ware_table.item(row,0).text(),
+                    #         "isbn": self.ware_table.item(row,1).text(),
+                    #         "title": self.ware_table.item(row,2).text(),
+                    #         "autor": self.ware_table.item(row,3).text(),
+                    #         "publisher": self.ware_table.item(row,4).text(),
+                    #         "price": str(self.real_table[row].objBook.Pv)}
+                    # isUpdate, text = self.openEditItemDialog(None)
+                    # if isUpdate and self.userValidation() and self.gestWareProduct.updateInnerItem(data["cod"], text) and self.ware_gest.updateDataItem(data["cod"], text):
+                    #     QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
+                    #     self.txtBusChanged()
 
     # -----------  user validation  -----------
     def userValidation(self):

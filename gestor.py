@@ -11,8 +11,6 @@ import bcrypt
 
 # import traceback
 
-
-
 DOTENV_FILE = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
@@ -403,6 +401,50 @@ class WareProduct:
 			return True
 		else:
 			return False
+
+	def getItemDataFromDB(self, idProduct: int = None)-> bool:
+		query = ("select w.code, idWare, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from " + \
+				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
+				"from genesisdb.product p " + \
+				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
+				"inner join genesisdb.language l on l.id = p.idLanguage " + \
+				"inner join genesisdb.item i on i.id = p.idItem " + \
+				"where p.id = " + str(idProduct) + ") as s " + \
+				"left join genesisdb.ware w on w.id = s.idWare " + \
+				"union " + \
+				"select w.code, idWare, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from " + \
+				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
+				"from genesisdb.product p " + \
+				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
+				"inner join genesisdb.language l on l.id = p.idLanguage " + \
+				"inner join genesisdb.item i on i.id = p.idItem " + \
+				"where p.id = " + str(idProduct) + ") as s " + \
+				"right join genesisdb.ware w on w.id = s.idWare;") if idProduct else False
+		try:
+			self.connect_db()
+			self.cursor.execute(query)
+			item = self.cursor.fetchall()
+			if not(item[0][0]):
+				productLocal = product(itemCode=item[0][3], id=item[0][4], isbn=item[0][5], title=item[0][6], autor=item[0][7], publisher=item[0][8], dateOut=item[0][9], lang=item[0][10], pages=item[0][11], edition=item[0][12], cover=bool(item[0][13]), width=item[0][14], height=item[0][15], content=item[0][16], itemCategory=item[0][17])
+				wareProductLocal = ware_product(item = productLocal)
+				for i in item[1:]:
+					wareProductLocal.addDataWareProduct(wareName=i[0], isVirtual=bool(i[2]), flag=False)
+				print(wareProductLocal)
+
+		except mysql.connector.Error as error:
+			print("Error: {}".format(error))
+
+		except Exception as error:
+			print("An exception ocurred:", error)
+		
+		finally:
+			try:
+				if self.mydb.is_connected():
+					self.disconnect_db()
+					return True
+			except:
+				print("No se pudo conectar a DB en getItemData")
+				return False
 
 class users_gestor:
 	_pswHashed = "Ivan Rojas"

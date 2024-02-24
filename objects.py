@@ -209,20 +209,27 @@ class ware_product:
 
 	def addDataWareProduct(self, wareName:str = None, qtyNew: int = None, qtyOld: int = None, qtyMinimun: int = 1,
 						pvNew: float = 0.0, pvOld: float = 0.0, dsct: int = 0, loc: str = None,
-						isEnabled: bool = True, isExists: bool = None, idWare: id = None):
-		dataTemp = {
-			"qtyNew": qtyNew,
-			"qtyOld": qtyOld,
-			"qtyMinimun": qtyMinimun,
-			"pvNew": pvNew,
-			"pvOld": pvOld,
-			"dsct": dsct,
-			"loc": loc if loc != None else "SIN UBICACION",
-			"isEnabled": isEnabled,
-			"isExists": isExists,
-			"idWare": idWare
-		}
-		self.wareData.update({wareName: dataTemp})
+						isEnabled: bool = True, isExists: bool = None, idWare: id = None, flag: bool = True,
+						isVirtual: bool = None):
+		if flag:
+			dataTemp = {
+				"qtyNew": qtyNew,
+				"qtyOld": qtyOld,
+				"qtyMinimun": qtyMinimun,
+				"pvNew": pvNew,
+				"pvOld": pvOld,
+				"dsct": dsct,
+				"loc": loc if loc != None else "SIN UBICACION",
+				"isEnabled": isEnabled,
+				"isExists": isExists,
+				"idWare": idWare
+			}
+		else:
+			dataTemp = {
+				"isVirtual": isVirtual
+			}
+
+		self.wareData.update({wareName: dataTemp if wareName else None})
 
 class ware:
 	def __repr__(self):
