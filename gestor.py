@@ -429,8 +429,13 @@ class WareProduct:
 				wareProductLocal = ware_product(item = productLocal)
 				for i in item[1:]:
 					wareProductLocal.addDataWareProduct(wareName=i[0], isVirtual=bool(i[2]), flag=False)
-				print(wareProductLocal)
-
+			elif item[0][0]:
+				productLocal = product(itemCode=item[0][3], id=item[0][4], isbn=item[0][5], title=item[0][6], autor=item[0][7], publisher=item[0][8], dateOut=item[0][9], lang=item[0][10], pages=item[0][11], edition=item[0][12], cover=bool(item[0][13]), width = item[0][14], height=item[0][15], content=item[0][16], itemCategory=item[0][17])
+				wareProductLocal = ware_product(item=productLocal)
+				for obj in item:
+					if obj[0]:
+						wareProductLocal.addDataWareProduct(wareName=obj[0], qtyNew=obj[18], qtyOld=obj[19], qtyMinimun=obj[20], pvNew=obj[21], pvOld=obj[22], dsct=obj[23], loc=obj[24], isEnabled=bool(obj[25]), isExists=bool(obj[1]), idWare=obj[1], flag=True, isVirtual=bool(obj[2]))
+			
 		except mysql.connector.Error as error:
 			print("Error: {}".format(error))
 
@@ -441,10 +446,10 @@ class WareProduct:
 			try:
 				if self.mydb.is_connected():
 					self.disconnect_db()
-					return True
+					return True, wareProductLocal
 			except:
 				print("No se pudo conectar a DB en getItemData")
-				return False
+				return False, None
 
 class users_gestor:
 	_pswHashed = "Ivan Rojas"

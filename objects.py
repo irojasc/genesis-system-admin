@@ -207,7 +207,7 @@ class ware_product:
 		self.product = item
 		self.wareData = wareData
 
-	def addDataWareProduct(self, wareName:str = None, qtyNew: int = None, qtyOld: int = None, qtyMinimun: int = 1,
+	def addDataWareProduct(self, wareName:str = None, qtyNew: int = None, qtyOld: int = None, qtyMinimun: int = 0,
 						pvNew: float = 0.0, pvOld: float = 0.0, dsct: int = 0, loc: str = None,
 						isEnabled: bool = True, isExists: bool = None, idWare: id = None, flag: bool = True,
 						isVirtual: bool = None):
