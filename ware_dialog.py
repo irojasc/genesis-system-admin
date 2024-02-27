@@ -34,7 +34,8 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
             
             
-            self.ui_EditDialog = ui_EditNewItemDialog()
+
+
             self.objS3 = aws_s3()
             self.real_table = []
             self.ownUsers = currentUser
@@ -337,14 +338,10 @@ class Ui_Dialog(QtWidgets.QDialog):
                         QMessageBox.information(self, 'Información',"El presente almacén no registra el producto", QMessageBox.Ok, QMessageBox.Ok)
 
                 if (validation == "Editar"):
-                    self.gestWareProduct.getItemDataFromDB(self.real_table[row].product.getId())
-                    # data = {"cod": self.ware_table.item(row,0).text(),
-                    #         "isbn": self.ware_table.item(row,1).text(),
-                    #         "title": self.ware_table.item(row,2).text(),
-                    #         "autor": self.ware_table.item(row,3).text(),
-                    #         "publisher": self.ware_table.item(row,4).text(),
-                    #         "price": str(self.real_table[row].objBook.Pv)}
-                    # isUpdate, text = self.openEditItemDialog(None)
+                    #verification: bool, itemReturned(obj): ware_product
+                    verification, itemReturned = self.gestWareProduct.getItemDataFromDB(self.real_table[row].product.getId())
+                    isUpdate, text = self.openEditItemDialog(data=itemReturned) if verification else (None, None)
+                    
                     # if isUpdate and self.userValidation() and self.gestWareProduct.updateInnerItem(data["cod"], text) and self.ware_gest.updateDataItem(data["cod"], text):
                     #     QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                     #     self.txtBusChanged()
@@ -503,6 +500,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 return (None, None)
 
     def openOperationDialog(self, code: str = "", title: str = ""):
+        #operation data es para seleccionar la operacion editItem, changeLocation
         with ui_OperationDialog() as ui_operationDialog:
             #code: codigo de item , title: titulo de item
             ui_operationDialog.setItemData(code, title)
@@ -510,14 +508,23 @@ class Ui_Dialog(QtWidgets.QDialog):
                 tmpData = ui_operationDialog.returnedVal
                 del ui_operationDialog
                 return tmpData
+            else:
+                del ui_operationDialog
+                return None
 
-    def openEditItemDialog(self, data: dict = None):
+    def openEditItemDialog(self, data: ware_product = None):
         if bool(data):
-            self.ui_EditDialog.setDataFields(data)
-            self.ui_EditDialog.cleanInputFields()
-            if self.ui_EditDialog.exec_() == QDialog.Accepted:
-                return self.ui_EditDialog.returnedVal
-            return (False, None)
+            #method: False para editar
+            with ui_EditNewItemDialog(method=False) as ui_EditDialog:
+                ui_EditDialog.cleanInputFields()
+                ui_EditDialog.setDataFields(data)
+                if ui_EditDialog.exec_() == QDialog.Accepted:
+                    tmpData = ui_EditDialog.returnedVal
+                    del ui_EditDialog
+                    return tmpData
+                else:
+                    del ui_EditDialog
+                    return (False, None)
         else:
             return (False, None)
 
@@ -538,11 +545,12 @@ class Ui_Dialog(QtWidgets.QDialog):
         isAllowed, data = self.ware_gest.getNextCodDB()
         if isAllowed:
             #Argumento True en ui_EditNewItemDialog cuando se crea un nuevo producto
-            with ui_EditNewItemDialog(True) as ui_NewItemDialog:
+            with ui_EditNewItemDialog(method=True) as ui_NewItemDialog:
                 ui_NewItemDialog.cleanInputFields(True)
                 ui_NewItemDialog.setDataFields(data)
                 if ui_NewItemDialog.exec_() == QDialog.Accepted:
                     validator, dataAfter = ui_NewItemDialog.returnedVal
+                    del ui_NewItemDialog
                     if validator:
                         if self.userValidation():
                             if(self.ware_gest.insertNewItemDB(dataAfter, self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter, self.currWare.cod)):
@@ -552,6 +560,8 @@ class Ui_Dialog(QtWidgets.QDialog):
                                 self.actualizar_img(self.ware_table.currentIndex().row())
                             else:
                                 QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
+                else:
+                    del ui_NewItemDialog
 
     # -----------  load_table carga tabla inner desde DB, cuando se presiona icono de Actualizar tabla  -----------
     def load_table(self, event = None):
@@ -903,20 +913,21 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.returnedVal = (False, None)
 
         if btnConfirmation and not(self.method):
-            if self.innerEditData["isbn"] != self.txtISBN.text(): tmp_dict["isbn"] = self.txtISBN.text().strip()
-            if self.innerEditData["title"] != self.txtTitle.text() and bool(len(self.txtTitle.text().strip())):
-                tmp_dict["name"] = self.txtTitle.text().strip()
-            if self.innerEditData["autor"] != self.txtAutor.text() and bool(len(self.txtAutor.text().strip())):
-                tmp_dict["autor"] = self.txtAutor.text().strip()
-            if self.innerEditData["publisher"] != self.txtPublisher.text() and bool(len(self.txtPublisher.text().strip())):
-                tmp_dict["editorial"] = self.txtPublisher.text().strip()
+            self.returnedVal = (True, None)
+            # if self.innerEditData["isbn"] != self.txtISBN.text(): tmp_dict["isbn"] = self.txtISBN.text().strip()
+            # if self.innerEditData["title"] != self.txtTitle.text() and bool(len(self.txtTitle.text().strip())):
+            #     tmp_dict["name"] = self.txtTitle.text().strip()
+            # if self.innerEditData["autor"] != self.txtAutor.text() and bool(len(self.txtAutor.text().strip())):
+            #     tmp_dict["autor"] = self.txtAutor.text().strip()
+            # if self.innerEditData["publisher"] != self.txtPublisher.text() and bool(len(self.txtPublisher.text().strip())):
+            #     tmp_dict["editorial"] = self.txtPublisher.text().strip()
 
-            if bool(len(tmp_dict)):
-                self.returnedVal = (True, tmp_dict)
-            else:
-                QMessageBox.information(self, 'Mensaje', "No se efectuaron cambios o campos vacios.\n>Presione Ok, luego Cancelar", QMessageBox.Ok, QMessageBox.Ok)
-                self.setDataFields()
-                self.returnedVal = (False, None)
+            # if bool(len(tmp_dict)):
+            #     self.returnedVal = (True, tmp_dict)
+            # else:
+            #     QMessageBox.information(self, 'Mensaje', "No se efectuaron cambios o campos vacios.\n>Presione Ok, luego Cancelar", QMessageBox.Ok, QMessageBox.Ok)
+            #     self.setDataFields()
+            #     self.returnedVal = (False, None)
 
         elif btnConfirmation and self.method:
             objItem = product(itemCode=self.dataItems[self.cmbItem.currentIndex()][2])
@@ -1152,12 +1163,11 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def locationLineEditCallBack(self, row):
         return lambda : self.locationLineEdit(row)
     
-    def setDataFields(self, data: dict = None):
+    def setDataFields(self, data = None):
         #Si self.method : False (Metodo Editar) --- Si self.method : True (Metodo Metodo Nuevo Producto)
-        #self.method se setea cuando sea crea el objeto de la clase EditNewItemDialog
         #aqui es guardar el valor de data a variable prevData
 
-        if bool(data): self.prevData = data.copy()
+        if bool(data): self.prevData = data.copy() if isinstance(data, dict) else data
 
         if bool(self.prevData) and self.method:
             self.dataItems = data["items"]
@@ -1233,12 +1243,13 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.setInitDefaultValues()
 
         elif bool(self.prevData) and not(self.method):
-            self.innerEditData = self.prevData.copy()
-            self.txtId.setText(self.innerEditData["cod"])
-            self.txtISBN.setText(self.innerEditData["isbn"])
-            self.txtTitle.setText(self.innerEditData["title"])
-            self.txtAutor.setText(self.innerEditData["autor"])
-            self.txtPublisher.setText(self.innerEditData["publisher"])
+            pass
+            # self.innerEditData = self.prevData.copy()
+            # self.txtId.setText(self.innerEditData["cod"])
+            # self.txtISBN.setText(self.innerEditData["isbn"])
+            # self.txtTitle.setText(self.innerEditData["title"])
+            # self.txtAutor.setText(self.innerEditData["autor"])
+            # self.txtPublisher.setText(self.innerEditData["publisher"])
             
     def submitclose(self):
         self.accept()
