@@ -93,8 +93,12 @@ class product:
 		self.lang = lang
 		self.pages = pages
 		self.edition = edition
-		#cover: 1 blanda, 2 dura
-		self.cover = 2 if bool(cover) else 1
+		#cover: 0 blanda, 1 dura
+		try:
+			self.cover = cover
+		except:
+			self.cover = -1
+
 		self.width = width
 		self.height = height
 		self.content = content

@@ -32,10 +32,6 @@ class Ui_Dialog(QtWidgets.QDialog):
         if(bool(currentUser) or bool(currentWare) or bool(restWare) or bool(WareProdDate) or bool(parent)):
             self.gestWareProduct = WareProduct()  ##se crea el objeto getWareProduct: Maneja la tabla ware -> WareProduct <- Product
             self.ware_gest = wares_gestor("functions") #con esto solo estoy creando un objecto con solo funciones
-            
-            
-
-
             self.objS3 = aws_s3()
             self.real_table = []
             self.ownUsers = currentUser
@@ -528,17 +524,6 @@ class Ui_Dialog(QtWidgets.QDialog):
         else:
             return (False, None)
 
-    def loadImage(self):
-        row = self.ware_table.currentIndex().row()
-        if row >= 0:
-            validator, pathfile = self.objS3.get_ProductImage(self.ware_table.item(row,0).text().lower())
-            if validator:
-                self.lblImg.setPixmap(QtGui.QPixmap(pathfile))
-                self.lblImg.setScaledContents(True)
-            else:
-                self.lblImg.setPixmap(QtGui.QPixmap())
-                QMessageBox.information(self, 'Mensaje', "Error para cargar la imagen", QMessageBox.Ok, QMessageBox.Ok)
-
     def createNewItem(self, event = None):
         # isAllowed: bool
         # data: str
@@ -562,6 +547,17 @@ class Ui_Dialog(QtWidgets.QDialog):
                                 QMessageBox.information(self, 'Mensaje', "Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
                 else:
                     del ui_NewItemDialog
+    
+    def loadImage(self):
+        row = self.ware_table.currentIndex().row()
+        if row >= 0:
+            validator, pathfile = self.objS3.get_ProductImage(self.ware_table.item(row,0).text().lower())
+            if validator:
+                self.lblImg.setPixmap(QtGui.QPixmap(pathfile))
+                self.lblImg.setScaledContents(True)
+            else:
+                self.lblImg.setPixmap(QtGui.QPixmap())
+                QMessageBox.information(self, 'Mensaje', "Error para cargar la imagen", QMessageBox.Ok, QMessageBox.Ok)
 
     # -----------  load_table carga tabla inner desde DB, cuando se presiona icono de Actualizar tabla  -----------
     def load_table(self, event = None):
@@ -1243,7 +1239,21 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.setInitDefaultValues()
 
         elif bool(self.prevData) and not(self.method):
-            pass
+            print("ingresa a estar parte")
+            self.cmbItem.addItem(self.prevData.product.getItemCategory())
+            self.txtId.setText(str(self.prevData.product.getId()))
+            self.txtISBN.setText(self.prevData.product.getISBN())
+            self.txtTitle.setText(self.prevData.product.getTitle())
+            self.txtAutor.setText(self.prevData.product.getAutor())
+            self.txtPublisher.setText(self.prevData.product.getPublisher())
+            self.dateOutWidget.setDate(self.prevData.product.getDateOut()) if self.prevData.product.getDateOut() else None
+            self.editionSpinBox.setValue(self.prevData.product.getEdition()) if self.prevData.product.getEdition() else None
+            self.pagesSpinBox.setValue(self.prevData.product.getPages()) if self.prevData.product.getPages() else None
+            self.cmbCover.setCurrentIndex(self.prevData.product.getCover())
+            self.widthSpinBox.setValue(self.prevData.product.getWidth()) if self.prevData.product.getWidth() else None
+            self.heightSpinBox.setValue(self.prevData.product.getHeight()) if self.prevData.product.getHeight() else None
+            self.contentTxtEdit.setText(self.prevData.product.getContent()) if self.prevData.product.getContent() else None
+            
             # self.innerEditData = self.prevData.copy()
             # self.txtId.setText(self.innerEditData["cod"])
             # self.txtISBN.setText(self.innerEditData["isbn"])
