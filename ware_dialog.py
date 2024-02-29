@@ -335,8 +335,8 @@ class Ui_Dialog(QtWidgets.QDialog):
 
                 if (validation == "Editar"):
                     #verification: bool, itemReturned(obj): ware_product
-                    verification, itemReturned = self.gestWareProduct.getItemDataFromDB(self.real_table[row].product.getId())
-                    isUpdate, text = self.openEditItemDialog(data=itemReturned) if verification else (None, None)
+                    verification, languages, itemReturned = self.gestWareProduct.getItemDataFromDB(self.real_table[row].product.getId())
+                    isUpdate, text = self.openEditItemDialog(languages=languages ,data=itemReturned) if verification else (None, None)
                     
                     # if isUpdate and self.userValidation() and self.gestWareProduct.updateInnerItem(data["cod"], text) and self.ware_gest.updateDataItem(data["cod"], text):
                     #     QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
@@ -508,12 +508,12 @@ class Ui_Dialog(QtWidgets.QDialog):
                 del ui_operationDialog
                 return None
 
-    def openEditItemDialog(self, data: ware_product = None):
+    def openEditItemDialog(self, languages: list = None, data: ware_product = None):
         if bool(data):
             #method: False para editar
             with ui_EditNewItemDialog(method=False) as ui_EditDialog:
                 ui_EditDialog.cleanInputFields()
-                ui_EditDialog.setDataFields(data)
+                ui_EditDialog.setDataFields(languages ,data)
                 if ui_EditDialog.exec_() == QDialog.Accepted:
                     tmpData = ui_EditDialog.returnedVal
                     del ui_EditDialog
@@ -521,18 +521,19 @@ class Ui_Dialog(QtWidgets.QDialog):
                 else:
                     del ui_EditDialog
                     return (False, None)
+                del ui_EditDialog
         else:
             return (False, None)
 
     def createNewItem(self, event = None):
         # isAllowed: bool
         # data: str
-        isAllowed, data = self.ware_gest.getNextCodDB()
+        isAllowed, data_local = self.ware_gest.getNextCodDB()
         if isAllowed:
             #Argumento True en ui_EditNewItemDialog cuando se crea un nuevo producto
             with ui_EditNewItemDialog(method=True) as ui_NewItemDialog:
                 ui_NewItemDialog.cleanInputFields(True)
-                ui_NewItemDialog.setDataFields(data)
+                ui_NewItemDialog.setDataFields(data=data_local)
                 if ui_NewItemDialog.exec_() == QDialog.Accepted:
                     validator, dataAfter = ui_NewItemDialog.returnedVal
                     del ui_NewItemDialog
@@ -887,7 +888,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.code = ""
         self.title = ""
         self.PrevItemPvpOld = ""
-        # self.prevcurrentPlainText_ = ""
         self.returnedVal = (False, None)
         self.setupUi()
 
@@ -910,20 +910,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
         if btnConfirmation and not(self.method):
             self.returnedVal = (True, None)
-            # if self.innerEditData["isbn"] != self.txtISBN.text(): tmp_dict["isbn"] = self.txtISBN.text().strip()
-            # if self.innerEditData["title"] != self.txtTitle.text() and bool(len(self.txtTitle.text().strip())):
-            #     tmp_dict["name"] = self.txtTitle.text().strip()
-            # if self.innerEditData["autor"] != self.txtAutor.text() and bool(len(self.txtAutor.text().strip())):
-            #     tmp_dict["autor"] = self.txtAutor.text().strip()
-            # if self.innerEditData["publisher"] != self.txtPublisher.text() and bool(len(self.txtPublisher.text().strip())):
-            #     tmp_dict["editorial"] = self.txtPublisher.text().strip()
-
-            # if bool(len(tmp_dict)):
-            #     self.returnedVal = (True, tmp_dict)
-            # else:
-            #     QMessageBox.information(self, 'Mensaje', "No se efectuaron cambios o campos vacios.\n>Presione Ok, luego Cancelar", QMessageBox.Ok, QMessageBox.Ok)
-            #     self.setDataFields()
-            #     self.returnedVal = (False, None)
 
         elif btnConfirmation and self.method:
             objItem = product(itemCode=self.dataItems[self.cmbItem.currentIndex()][2])
@@ -1021,6 +1007,164 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         #isInit se utiliza cuando se hace cambio de tabs y no se quiere cambiar el index de los combos
         self.setInitDefaultValues() if bool(isInit) else False
     
+    def setDataFields(self, languages = None, data = None):
+        #Si self.method : False (Metodo Editar) --- Si self.method : True (Metodo Metodo Nuevo Producto)
+        #aqui es guardar el valor de data a variable prevData
+
+        if bool(data): self.prevData = (data.copy() if isinstance(data, dict) else data)
+
+        if bool(self.prevData) and not(self.method):
+            self.cmbItem.addItem(self.prevData.product.getItemCategory())
+            self.txtId.setText(str(self.prevData.product.getId()))
+            self.txtISBN.setText(self.prevData.product.getISBN())
+            self.txtTitle.setText(self.prevData.product.getTitle())
+            self.txtAutor.setText(self.prevData.product.getAutor())
+            self.txtPublisher.setText(self.prevData.product.getPublisher())
+            self.dateOutWidget.setDate(self.prevData.product.getDateOut()) if self.prevData.product.getDateOut() else None
+            self.editionSpinBox.setValue(self.prevData.product.getEdition()) if self.prevData.product.getEdition() else None
+            self.pagesSpinBox.setValue(self.prevData.product.getPages()) if self.prevData.product.getPages() else None
+            self.cmbIdiom.addItems(list(map(lambda x: x[1], languages)))
+            index = list(filter(lambda x: x[1] == self.prevData.product.getLang(), languages))
+            self.cmbIdiom.setCurrentIndex(int(index[0][0])-1)
+            self.cmbCover.setCurrentIndex(self.prevData.product.getCover())
+            self.widthSpinBox.setValue(self.prevData.product.getWidth()) if self.prevData.product.getWidth() else None
+            self.heightSpinBox.setValue(self.prevData.product.getHeight()) if self.prevData.product.getHeight() else None
+            self.contentTxtEdit.setText(self.prevData.product.getContent()) if self.prevData.product.getContent() else None
+            
+            #en esta parte se llenan los widget de la tabla ware product para condicion de editar nuevo 
+            self.wareTableItemData.setRowCount(len(self.prevData.wareData))
+            for index, i in enumerate(self.prevData.wareData):
+                self.wareTableItemData.setVerticalHeaderItem(index, QTableWidgetItem(i))
+                #Primer Widget
+                #>blocksignals
+                item = QCheckBox()
+                item.setStyleSheet("padding-left: 17px;")
+                if len(self.prevData.wareData[i]) > 1 and self.prevData.wareData[i]['idWare']:
+                    item.setChecked(True)
+                    item.setEnabled(False)
+                else:
+                    item.setChecked(False)
+                item.stateChanged.connect(self.first_callback(index, bool(self.prevData.wareData[i]['isVirtual'])))
+                self.wareTableItemData.setCellWidget(index, 0, item)
+                #>
+
+                #Segundo Widget
+                item = QCheckBox(enabled = False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else QCheckBox(enabled = True)
+                item.setStyleSheet("padding-left: 17px;")
+                item.stateChanged.connect(self.second_callback(index, None))
+                self.wareTableItemData.setCellWidget(index,1,item)
+
+                #virtual = 1, not Vitirual = 0
+                #aqui evalua que el primer checkbox este checked y tambien el tipo de ware, is virtual?
+                item = QLineEdit(enabled = False) if (bool(self.prevData.wareData[i]['isVirtual']) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else QLineEdit(enabled = True)
+                item.setPlaceholderText("MUEBLE ?, FILA ?")
+                #background black when ware is virtual
+                item.setStyleSheet("QLineEdit{background-color: black; Border: 0px;}" if self.prevData.wareData[i]['isVirtual'] else "QLineEdit{Border: 0px;}")
+                item.editingFinished.connect(self.locationLineEditCallBack(index))
+                self.wareTableItemData.setCellWidget(index,2,item)
+
+                item = MySpinBox(enabled = False) if (bool(self.prevData.wareData[i]['isVirtual']) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else MySpinBox(enabled = True) 
+                item.setFixedWidth(59)
+                item.setSuffix(" und")
+                item.setStyleSheet("QSpinBox{background-color: black; Border: 0px;}" if bool(self.prevData.wareData[i]['isVirtual']) else "QSpinBox{Border: 0px;}")
+                self.wareTableItemData.setCellWidget(index,3,item)
+
+                #bloqueo cuando agregamos items
+                #>
+                self.wareTableItemData.blockSignals(True)
+                flagChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable
+                flagNotChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|~QtCore.Qt.ItemIsEditable
+                item = QtWidgets.QTableWidgetItem("")
+                item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
+                self.wareTableItemData.setItem(index,4,item)
+                item = QtWidgets.QTableWidgetItem("")
+                item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
+                self.wareTableItemData.setItem(index,5,item)
+                self.wareTableItemData.blockSignals(False)
+                #>
+                item = MySpinBox(enabled=False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else MySpinBox(enabled=True)
+                item.setMaximum(100)
+                item.setSingleStep(5)
+                item.setSuffix(" %")
+                item.setStyleSheet("Border: 0px")
+                self.wareTableItemData.setCellWidget(index,6,item)
+      
+        elif bool(self.prevData) and self.method:
+            self.dataItems = data["items"]
+            self.dataLanguages = data["languages"]
+            self.txtId.setText(str(data["next"]))
+            self.cmbItem.addItems(list(map(lambda x: x[1], data["items"])))
+            self.cmbIdiom.addItems(list(map(lambda x: x[1], data["languages"])))
+            self.cmbCategory1.setModel(QStringListModel(list(map(lambda x: x[1], data["category1"]))))
+            self.cmbCategory1.setCurrentIndex(-1)
+            self.cmbCategory1.setEditable(True)
+            self.cmbCategory1.lineEdit().setPlaceholderText("NIVEL 1")
+            self.cmbCategory2.setModel(QStringListModel(list(map(lambda x: x[1], data["category2"]))))
+            self.cmbCategory2.setCurrentIndex(-1)
+            self.cmbCategory2.setEditable(True)
+            self.cmbCategory2.lineEdit().setPlaceholderText("NIVEL 2")
+            self.cmbCategory3.setModel(QStringListModel(list(map(lambda x: x[1], data["category3"]))))
+            self.cmbCategory3.setCurrentIndex(-1)
+            self.cmbCategory3.setEditable(True)
+            self.cmbCategory3.lineEdit().setPlaceholderText("NIVEL 3")
+
+            #en esta parte se llenan los widget de la tabla ware product para condicion de crear new item
+            self.wareTableItemData.setRowCount(len(data["wares"]))
+            for index, x in enumerate(data["wares"]): 
+
+                self.wareTableItemData.setVerticalHeaderItem(index, QTableWidgetItem(x[1]))
+
+                item = QCheckBox()
+                item.setStyleSheet("padding-left: 17px;")
+                item.stateChanged.connect(self.first_callback(index, bool(int(x[2]))))
+                self.wareTableItemData.setCellWidget(index, 0, item)
+
+                item = QCheckBox(enabled = False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else QCheckBox(enabled = True)
+                item.setStyleSheet("padding-left: 17px;")
+                item.stateChanged.connect(self.second_callback(index, None))
+                self.wareTableItemData.setCellWidget(index,1,item)
+
+                #virtual = 1, not Vitirual = 0
+                #aqui evalua que el primer checkbox este checked y tambien el tipo de ware, is virtual?
+                item = QLineEdit(enabled = False) if (bool(int(x[2])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else QLineEdit(enabled = True)
+                item.setPlaceholderText("MUEBLE ?, FILA ?")
+                #background black when ware is virtual
+                item.setStyleSheet("QLineEdit{background-color: black; Border: 0px;}" if bool(int(x[2])) else "QLineEdit{Border: 0px;}")
+                item.editingFinished.connect(self.locationLineEditCallBack(index))
+                self.wareTableItemData.setCellWidget(index,2,item)
+
+                item = MySpinBox(enabled = False) if (bool(int(x[2])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else MySpinBox(enabled = True) 
+                item.setFixedWidth(59)
+                item.setSuffix(" und")
+                item.setStyleSheet("QSpinBox{background-color: black; Border: 0px;}" if bool(int(x[2])) else "QSpinBox{Border: 0px;}")
+                self.wareTableItemData.setCellWidget(index,3,item)
+
+                #bloqueo cuando agregamos items
+                #>
+                self.wareTableItemData.blockSignals(True)
+
+                flagChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable
+                flagNotChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|~QtCore.Qt.ItemIsEditable
+                item = QtWidgets.QTableWidgetItem("")
+                item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
+                self.wareTableItemData.setItem(index,4,item)
+
+                item = QtWidgets.QTableWidgetItem("")
+                item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
+                self.wareTableItemData.setItem(index,5,item)
+
+                self.wareTableItemData.blockSignals(False)
+                #>
+                item = MySpinBox(enabled=False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else MySpinBox(enabled=True)
+                item.setMaximum(100)
+                item.setSingleStep(5)
+                item.setSuffix(" %")
+                item.setStyleSheet("Border: 0px")
+                self.wareTableItemData.setCellWidget(index,6,item)
+
+            self.setInitDefaultValues()
+    
+    
     def setInitDefaultValues(self):
         #currentIndex 1 para item de tipo libro
         self.cmbItem.setCurrentIndex(1)
@@ -1081,6 +1225,29 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.wareTableItemData.cellWidget(row, 6).setValue(0)
                 self.wareTableItemData.cellWidget(row, 6).setEnabled(False)
                 self.wareTableItemData.cellWidget(row, 6).setStyleSheet("QSpinBox{Border: 0;}")
+
+        if not(self.method): #EDITAR PRODUCTO
+            # state = 2: para cuando el primer checkBox is Checked
+            if state == 2:
+                self.wareTableItemData.cellWidget(row, 1).setEnabled(True)
+                if(not(isVirtual)):
+                    self.wareTableItemData.cellWidget(row, 2).setEnabled(True)
+                    self.wareTableItemData.cellWidget(row, 2).setStyleSheet("QLineEdit{Border: 0.5px solid rgb(220,220,220);}")
+                    self.wareTableItemData.cellWidget(row, 3).setEnabled(True)
+                    self.wareTableItemData.cellWidget(row, 3).setStyleSheet("QSpinBox{Border: 0.5px solid rgb(220,220,220);}")
+                #>blocking signals
+                self.wareTableItemData.blockSignals(True)
+                self.wareTableItemData.item(row,4).setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
+                self.wareTableItemData.item(row,5).setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
+                for i in range(self.wareTableItemData.rowCount()):
+                    if i != row and self.wareTableItemData.cellWidget(i, 0).isChecked():
+                        self.wareTableItemData.item(row,5).setText(self.wareTableItemData.item(i, 5).text())
+                        break
+                self.wareTableItemData.blockSignals(False)
+                #>
+                self.wareTableItemData.cellWidget(row, 6).setEnabled(True)
+                self.wareTableItemData.cellWidget(row, 6).setStyleSheet("QSpinBox{Border: 0.5px solid rgb(220,220,220);}")
+
 
     def secondCheckBoxChanged(self, state, row, isVirtual):
         pass
@@ -1147,8 +1314,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
     #almacena texto de item actual seleccionado
     def saveCurrentItemSelection(self):
-        self.PrevItemPvpNew = self.wareTableItemData.selectedItems()[0].text()
-        self.PrevItemPvpOld = self.wareTableItemData.selectedItems()[1].text()
+        if self.wareTableItemData.selectedItems():
+            self.PrevItemPvpNew = self.wareTableItemData.selectedItems()[0].text()
+            self.PrevItemPvpOld = self.wareTableItemData.selectedItems()[1].text()
 
     def first_callback(self, row, isVirtual):
         return lambda x: self.firstCheckBoxChanged(x, row, isVirtual)
@@ -1159,107 +1327,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def locationLineEditCallBack(self, row):
         return lambda : self.locationLineEdit(row)
     
-    def setDataFields(self, data = None):
-        #Si self.method : False (Metodo Editar) --- Si self.method : True (Metodo Metodo Nuevo Producto)
-        #aqui es guardar el valor de data a variable prevData
+    
 
-        if bool(data): self.prevData = data.copy() if isinstance(data, dict) else data
 
-        if bool(self.prevData) and self.method:
-            self.dataItems = data["items"]
-            self.dataLanguages = data["languages"]
-            self.txtId.setText(str(data["next"]))
-            self.cmbItem.addItems(list(map(lambda x: x[1], data["items"])))
-            self.cmbIdiom.addItems(list(map(lambda x: x[1], data["languages"])))
-            self.cmbCategory1.setModel(QStringListModel(list(map(lambda x: x[1], data["category1"]))))
-            self.cmbCategory1.setCurrentIndex(-1)
-            self.cmbCategory1.setEditable(True)
-            self.cmbCategory1.lineEdit().setPlaceholderText("NIVEL 1")
-            self.cmbCategory2.setModel(QStringListModel(list(map(lambda x: x[1], data["category2"]))))
-            self.cmbCategory2.setCurrentIndex(-1)
-            self.cmbCategory2.setEditable(True)
-            self.cmbCategory2.lineEdit().setPlaceholderText("NIVEL 2")
-            self.cmbCategory3.setModel(QStringListModel(list(map(lambda x: x[1], data["category3"]))))
-            self.cmbCategory3.setCurrentIndex(-1)
-            self.cmbCategory3.setEditable(True)
-            self.cmbCategory3.lineEdit().setPlaceholderText("NIVEL 3")
-            self.wareTableItemData.setRowCount(len(data["wares"]))
-            #en esta parte se llenan los widget de la tabla para condicion de crear new item
-            
-            for index, x in enumerate(data["wares"]): 
-
-                self.wareTableItemData.setVerticalHeaderItem(index, QTableWidgetItem(x[1]))
-                item = QCheckBox()
-                item.setStyleSheet("padding-left: 17px;")
-                item.stateChanged.connect(self.first_callback(index, bool(int(x[2]))))
-                self.wareTableItemData.setCellWidget(index, 0, item)
-
-                item = QCheckBox(enabled = False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else QCheckBox(enabled = True)
-                item.setStyleSheet("padding-left: 17px;")
-                item.stateChanged.connect(self.second_callback(index, bool(int(x[2]))))
-                self.wareTableItemData.setCellWidget(index,1,item)
-
-                #virtual = 1, not Vitirual = 0
-                #aqui evalua que el primer checkbox este checked y tambien el tipo de ware, is virtual?
-                item = QLineEdit(enabled = False) if (bool(int(x[2])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else QLineEdit(enabled = True)
-                item.setPlaceholderText("MUEBLE ?, FILA ?")
-                #background black when ware is virtual
-                item.setStyleSheet("QLineEdit{background-color: black; Border: 0px;}" if bool(int(x[2])) else "QLineEdit{Border: 0px;}")
-                item.editingFinished.connect(self.locationLineEditCallBack(index))
-                self.wareTableItemData.setCellWidget(index,2,item)
-
-                item = MySpinBox(enabled = False) if (bool(int(x[2])) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else MySpinBox(enabled = True) 
-                item.setFixedWidth(59)
-                item.setSuffix(" und")
-                item.setStyleSheet("QSpinBox{background-color: black; Border: 0px;}" if bool(int(x[2])) else "QSpinBox{Border: 0px;}")
-                self.wareTableItemData.setCellWidget(index,3,item)
-
-                #bloqueo cuando agregamos items
-                #>
-                self.wareTableItemData.blockSignals(True)
-
-                flagChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable
-                flagNotChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|~QtCore.Qt.ItemIsEditable
-                item = QtWidgets.QTableWidgetItem("")
-                item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
-                self.wareTableItemData.setItem(index,4,item)
-
-                item = QtWidgets.QTableWidgetItem("")
-                item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
-                self.wareTableItemData.setItem(index,5,item)
-
-                self.wareTableItemData.blockSignals(False)
-                #>
-                item = MySpinBox(enabled=False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else MySpinBox(enabled=True)
-                item.setMaximum(100)
-                item.setSingleStep(5)
-                item.setSuffix(" %")
-                item.setStyleSheet("Border: 0px")
-                self.wareTableItemData.setCellWidget(index,6,item)
-            self.setInitDefaultValues()
-
-        elif bool(self.prevData) and not(self.method):
-            print("ingresa a estar parte")
-            self.cmbItem.addItem(self.prevData.product.getItemCategory())
-            self.txtId.setText(str(self.prevData.product.getId()))
-            self.txtISBN.setText(self.prevData.product.getISBN())
-            self.txtTitle.setText(self.prevData.product.getTitle())
-            self.txtAutor.setText(self.prevData.product.getAutor())
-            self.txtPublisher.setText(self.prevData.product.getPublisher())
-            self.dateOutWidget.setDate(self.prevData.product.getDateOut()) if self.prevData.product.getDateOut() else None
-            self.editionSpinBox.setValue(self.prevData.product.getEdition()) if self.prevData.product.getEdition() else None
-            self.pagesSpinBox.setValue(self.prevData.product.getPages()) if self.prevData.product.getPages() else None
-            self.cmbCover.setCurrentIndex(self.prevData.product.getCover())
-            self.widthSpinBox.setValue(self.prevData.product.getWidth()) if self.prevData.product.getWidth() else None
-            self.heightSpinBox.setValue(self.prevData.product.getHeight()) if self.prevData.product.getHeight() else None
-            self.contentTxtEdit.setText(self.prevData.product.getContent()) if self.prevData.product.getContent() else None
-            
-            # self.innerEditData = self.prevData.copy()
-            # self.txtId.setText(self.innerEditData["cod"])
-            # self.txtISBN.setText(self.innerEditData["isbn"])
-            # self.txtTitle.setText(self.innerEditData["title"])
-            # self.txtAutor.setText(self.innerEditData["autor"])
-            # self.txtPublisher.setText(self.innerEditData["publisher"])
             
     def submitclose(self):
         self.accept()
@@ -1295,15 +1365,21 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.lblCaracterCount.adjustSize()
             self.prevcurrentPlainText_ = self.contentTxtEdit.toPlainText()[:600]
 
-
         elif length_ >= 601 and cursor.position() < 600:
             positionCursor = cursor.position()
-            self.contentTxtEdit.blockSignals(True)
-            self.contentTxtEdit.setText(self.prevcurrentPlainText_)
-            cursor = self.contentTxtEdit.textCursor()
-            cursor.setPosition(positionCursor - 1)
-            self.contentTxtEdit.setTextCursor(cursor)
-            self.contentTxtEdit.blockSignals(False)
+            if hasattr(self,'prevcurrentPlainText_'):
+                self.contentTxtEdit.blockSignals(True)
+                self.contentTxtEdit.setText(self.prevcurrentPlainText_)
+                cursor = self.contentTxtEdit.textCursor()
+                cursor.setPosition(positionCursor - 1)
+                self.contentTxtEdit.setTextCursor(cursor)
+                self.contentTxtEdit.blockSignals(False)
+            else:
+                self.contentTxtEdit.blockSignals(True)
+                self.contentTxtEdit.setText(self.contentTxtEdit.toPlainText()[:600])
+                self.contentTxtEdit.blockSignals(False)
+                self.lblCaracterCount.setText("CHARACTERS: %d" % 600)
+                self.lblCaracterCount.adjustSize()
 
             # cursor = self.contentTxtEdit.textCursor()
             # cursor.movePosition(11)

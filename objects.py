@@ -226,6 +226,7 @@ class ware_product:
 				"loc": loc if loc != None else "SIN UBICACION",
 				"isEnabled": isEnabled,
 				"isExists": isExists,
+				"isVirtual": isVirtual,
 				"idWare": idWare
 			}
 		else:

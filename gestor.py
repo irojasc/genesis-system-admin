@@ -385,25 +385,13 @@ class WareProduct:
 
 	def insertInnerNewItem(self, data: ware_product = None, own_wares = None):
 		if bool(data):
-			# objProduct = product(data["idItem"][2], 
-			# 			data["id"], 
-			# 			None if not("isbn" in data) else data["isbn"],
-			# 			data["title"], data["autor"], data["publisher"], 
-			# 			None if not("dateOut" in data) else data["dateOut"],
-			# 			None if not("idLanguage" in data) else data["idLanguage"][1],
-			# 			None if not("pages" in data) else data["pages"],
-			# 			None if not("edition" in data) else data["edition"],
-			# 			None if not("cover" in data) else data["cover"],
-			# 			None if not("width" in data) else data["width"],
-			# 			None if not("eight" in data) else data["height"])
-			# objwareBook = ware_product(objProduct)
 			self.innerWareList.append(data)
 			return True
 		else:
 			return False
 
 	def getItemDataFromDB(self, idProduct: int = None)-> bool:
-		query = ("select w.code, idWare, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from " + \
+		query = ("select w.code, idWare, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled, 'item' from " + \
 				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
 				"from genesisdb.product p " + \
 				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
@@ -412,29 +400,38 @@ class WareProduct:
 				"where p.id = " + str(idProduct) + ") as s " + \
 				"left join genesisdb.ware w on w.id = s.idWare " + \
 				"union " + \
-				"select w.code, idWare, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from " + \
+				"select w.code, idWare, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled, 'item' from " + \
 				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
 				"from genesisdb.product p " + \
 				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
 				"inner join genesisdb.language l on l.id = p.idLanguage " + \
 				"inner join genesisdb.item i on i.id = p.idItem " + \
 				"where p.id = " + str(idProduct) + ") as s " + \
-				"right join genesisdb.ware w on w.id = s.idWare;") if idProduct else False
+				"right join genesisdb.ware w on w.id = s.idWare " + \
+				"union select l.id, l.language, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 'lang' from genesisdb.language l;") if idProduct else False
 		try:
 			self.connect_db()
 			self.cursor.execute(query)
 			item = self.cursor.fetchall()
-			if not(item[0][0]):
+			if not(item[0][0]) and (item[0][26] == 'item'):
+				languages = []
 				productLocal = product(itemCode=item[0][3], id=item[0][4], isbn=item[0][5], title=item[0][6], autor=item[0][7], publisher=item[0][8], dateOut=item[0][9], lang=item[0][10], pages=item[0][11], edition=item[0][12], cover=bool(item[0][13]), width=item[0][14], height=item[0][15], content=item[0][16], itemCategory=item[0][17])
 				wareProductLocal = ware_product(item = productLocal)
 				for i in item[1:]:
-					wareProductLocal.addDataWareProduct(wareName=i[0], isVirtual=bool(i[2]), flag=False)
+					if i[26] == 'item':
+						wareProductLocal.addDataWareProduct(wareName=i[0], isVirtual=bool(i[2]), flag=False)
+					elif i[26] == 'lang':
+						languages.append((i[0], i[1]))
+						
 			elif item[0][0]:
+				languages = []
 				productLocal = product(itemCode=item[0][3], id=item[0][4], isbn=item[0][5], title=item[0][6], autor=item[0][7], publisher=item[0][8], dateOut=item[0][9], lang=item[0][10], pages=item[0][11], edition=item[0][12], cover=bool(item[0][13]), width = item[0][14], height=item[0][15], content=item[0][16], itemCategory=item[0][17])
 				wareProductLocal = ware_product(item=productLocal)
 				for obj in item:
-					if obj[0]:
+					if bool(obj[0]) and obj[26] == 'item':
 						wareProductLocal.addDataWareProduct(wareName=obj[0], qtyNew=obj[18], qtyOld=obj[19], qtyMinimun=obj[20], pvNew=obj[21], pvOld=obj[22], dsct=obj[23], loc=obj[24], isEnabled=bool(obj[25]), isExists=bool(obj[1]), idWare=obj[1], flag=True, isVirtual=bool(obj[2]))
+					elif bool(obj[0]) and obj[26] == 'lang':
+						languages.append((obj[0], obj[1]))
 			
 		except mysql.connector.Error as error:
 			print("Error: {}".format(error))
@@ -446,10 +443,10 @@ class WareProduct:
 			try:
 				if self.mydb.is_connected():
 					self.disconnect_db()
-					return True, wareProductLocal
+					return True, languages.copy(), wareProductLocal
 			except:
 				print("No se pudo conectar a DB en getItemData")
-				return False, None
+				return False, None, None
 
 class users_gestor:
 	_pswHashed = "Ivan Rojas"
