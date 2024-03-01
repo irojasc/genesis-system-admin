@@ -44,7 +44,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.txtBusChanged()
             # -----------  QDialog para ventana in/out  -----------
             self.dialog = QDialog()
-            self.ui_dialog = Ui_inoutDialog(self.ownUsers, self.currWare, self.dialog)
+            # self.ui_dialog = Ui_inoutDialog(self.ownUsers, self.currWare, self.dialog)
             self.init = 0
             # print(self.currWare, self.restWares)
             # print(currentUser)
@@ -91,20 +91,6 @@ class Ui_Dialog(QtWidgets.QDialog):
     ## Funcion que permite la apertura de ventana ware desde el main_
     def showWindow(self):
         self.show()
-
-    # def upload_quantity(self):
-    #     if self.ui_dialog.button_condition == "aceptar" and self.ui_dialog.criterio == " + ":
-    #         for j in self.ui_dialog.main_table:
-    #             for i in self.gestWareProduct.ware_list:
-    #                 if i.book.cod == j["cod"]:
-    #                     i.almacen_quantity[1] += j["cantidad"]
-
-    #     elif self.ui_dialog.button_condition == "aceptar" and self.ui_dialog.criterio == " - ":
-    #         for j in self.ui_dialog.main_table:
-    #             for i in self.gestWareProduct.ware_list:
-    #                 if i.book.cod == j["cod"]:
-    #                     i.almacen_quantity[1] -= j["cantidad"]
-    #     self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
 
     # -----------  close event configuration  -----------
     def keyPressEvent(self, event):
@@ -371,22 +357,22 @@ class Ui_Dialog(QtWidgets.QDialog):
         if self.ownUsers.auth["InOutProduct"]:
             self.change_state("in/out") # lo que hace esto es cambiar el color de waredialog cuando pasa a ingreso/salida
              
-            # separar solo items activos y enviar a in/out form
-            result_books = list(filter(lambda x: (self.currWare.cod in x.wareData) and (x.wareData[self.currWare.cod]["isEnabled"]), self.gestWareProduct.innerWareList.copy()))
-            
-            self.ui_dialog.mainList = result_books.copy()
+            with Ui_inoutDialog(self.ownUsers, self.currWare, self.dialog) as ui_dialog:
+                # separar solo items activos y enviar a in/out form
+                result_books = list(filter(lambda x: (self.currWare.cod in x.wareData) and (x.wareData[self.currWare.cod]["isEnabled"]), self.gestWareProduct.innerWareList.copy()))
+                ui_dialog.mainList = result_books.copy()
+                ui_dialog.init_condition()
 
-            self.ui_dialog.init_condition()
+                if ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                    self.change_state("ware")
+                    #returned_val[3]: generalFlag -> True cuando se tiene la intencion de agregar o quitar cantidades
+                    if ui_dialog.returned_val[3]:
+                        self.gestWareProduct.update_backtablequantity(ui_dialog.returned_val[0], ui_dialog.returned_val[1], ui_dialog.returned_val[2], self.currWare.cod)
+                        self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
+                        del ui_dialog
+                else:
+                    del ui_dialog
 
-            if self.ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
-                self.change_state("ware")
-                #returned_val[3]: generalFlag -> True cuando se tiene la intencion de agregar o quitar cantidades
-                if self.ui_dialog.returned_val[3]:
-                    self.gestWareProduct.update_backtablequantity(self.ui_dialog.returned_val[0], self.ui_dialog.returned_val[1], self.ui_dialog.returned_val[2], self.currWare.cod)
-                    # self.updateRealTable()
-                    self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
-                    # self.actualizar_img(self.ware_table.currentIndex().row())
-            # self.ui_dialog.show_window()
         else:
             QMessageBox.warning(self, 'Mensaje', "No tiene permisos para entrada/salida de productos", QMessageBox.Ok, QMessageBox.Ok)
 
@@ -902,8 +888,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     
     def __exit__(self,ext_type,exc_value,traceback):
         del self
-        # if self.__fileHandle__ is not None:
-        #         self.__fileHandle__.close()
+
 
     def setCurrentWare(self, currentWare: str = None):
         self.currentWare = currentWare
@@ -1054,6 +1039,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 else:
                     item.setChecked(False)
                 item.stateChanged.connect(self.first_callback(index, bool(self.prevData.wareData[i]['isVirtual'])))
+                #cambio
                 None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index, 0, item)
                 #>
@@ -1063,7 +1049,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setStyleSheet("padding-left: 17px;")
                 item.setChecked(self.prevData.wareData[i]['isEnabled']) if 'isEnabled' in self.prevData.wareData[i] else None
                 item.stateChanged.connect(self.second_callback(index, None))
-                print(isCurrentWare)
+                #cambio
                 None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,1,item)
 
@@ -1075,6 +1061,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setStyleSheet("QLineEdit{background-color: black; Border: 0px;}" if self.prevData.wareData[i]['isVirtual'] else "QLineEdit{Border: 0px;}")
                 (item.setText(self.prevData.wareData[i]['loc']) if not(self.prevData.wareData[i]['loc'] == 'SIN UBICACION') else None) if 'loc' in self.prevData.wareData[i] else None
                 item.editingFinished.connect(self.locationLineEditCallBack(index))
+                #cambio
+                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,2,item)
 
                 item = MySpinBox(enabled = False) if (bool(self.prevData.wareData[i]['isVirtual']) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else MySpinBox(enabled = True) 
@@ -1082,6 +1070,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setSuffix(" und")
                 item.setStyleSheet("QSpinBox{background-color: black; Border: 0px;}" if bool(self.prevData.wareData[i]['isVirtual']) else "QSpinBox{Border: 0px;}")
                 item.setValue(self.prevData.wareData[i]['qtyMinimun']) if 'qtyMinimun' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['qtyMinimun'])  else None
+                #cambio
+                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,3,item)
 
                 #bloqueo cuando agregamos items
@@ -1092,10 +1082,14 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 
                 item = QtWidgets.QTableWidgetItem(str(self.prevData.wareData[i]['pvNew']) if 'pvNew' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['pvNew']) else '0.0')
                 item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
+                #cambio
+                None if isCurrentWare == '_' else item.setFlags(flagNotChecked) if not(isCurrentWare) else None
                 self.wareTableItemData.setItem(index,4,item)
                 
                 item = QtWidgets.QTableWidgetItem(str(self.prevData.wareData[i]['pvOld']) if 'pvOld' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['pvOld']) else '0.0')
                 item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
+                #cambio
+                None if isCurrentWare == '_' else item.setFlags(flagNotChecked) if not(isCurrentWare) else None
                 self.wareTableItemData.setItem(index,5,item)
                 self.wareTableItemData.blockSignals(False)
                 #>
@@ -1106,6 +1100,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setSuffix(" %")
                 item.setStyleSheet("Border: 0px")
                 item.setValue(self.prevData.wareData[i]['dsct'] if ('dsct' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['dsct'])) else 0)
+                #cambio
+                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,6,item)
       
         elif bool(self.prevData) and self.method:

@@ -17,10 +17,6 @@ from gestor import WareProduct
 from objects import ware
 
 from functools import reduce
-import time
-import copy
-
-
 
 class Ui_inoutDialog(QtWidgets.QDialog):
     def __init__(self, data_users = None, data_wares: ware = None, parent=None):
@@ -36,6 +32,15 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.ware_in = WareProduct() #esto es para realizar el update
         self.setupUi()
         self.init_condition()
+
+    def __del__(self):
+        print("kill me")
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self,ext_type,exc_value,traceback):
+        del self
 
     #def show_window(self):
         #self.thread_.myValue = True
