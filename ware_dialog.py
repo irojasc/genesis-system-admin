@@ -1030,7 +1030,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.widthSpinBox.setValue(self.prevData.product.getWidth()) if self.prevData.product.getWidth() else None
             self.heightSpinBox.setValue(self.prevData.product.getHeight()) if self.prevData.product.getHeight() else None
             self.contentTxtEdit.setText(self.prevData.product.getContent()) if self.prevData.product.getContent() else None
-            
+
             #en esta parte se llenan los widget de la tabla ware product para condicion de editar nuevo 
             self.wareTableItemData.setRowCount(len(self.prevData.wareData))
             for index, i in enumerate(self.prevData.wareData):
@@ -1051,6 +1051,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 #Segundo Widget
                 item = QCheckBox(enabled = False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else QCheckBox(enabled = True)
                 item.setStyleSheet("padding-left: 17px;")
+                item.setChecked(self.prevData.wareData[i]['isEnabled']) if 'isEnabled' in self.prevData.wareData[i] else None
                 item.stateChanged.connect(self.second_callback(index, None))
                 self.wareTableItemData.setCellWidget(index,1,item)
 
@@ -1067,6 +1068,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setFixedWidth(59)
                 item.setSuffix(" und")
                 item.setStyleSheet("QSpinBox{background-color: black; Border: 0px;}" if bool(self.prevData.wareData[i]['isVirtual']) else "QSpinBox{Border: 0px;}")
+                item.setValue(self.prevData.wareData[i]['qtyMinimun']) if 'qtyMinimun' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['qtyMinimun'])  else None
                 self.wareTableItemData.setCellWidget(index,3,item)
 
                 #bloqueo cuando agregamos items
@@ -1074,19 +1076,23 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.wareTableItemData.blockSignals(True)
                 flagChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable
                 flagNotChecked = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|~QtCore.Qt.ItemIsEditable
-                item = QtWidgets.QTableWidgetItem("")
+                
+                item = QtWidgets.QTableWidgetItem(str(self.prevData.wareData[i]['pvNew']) if 'pvNew' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['pvNew']) else '0.0')
                 item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
                 self.wareTableItemData.setItem(index,4,item)
-                item = QtWidgets.QTableWidgetItem("")
+                
+                item = QtWidgets.QTableWidgetItem(str(self.prevData.wareData[i]['pvOld']) if 'pvOld' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['pvOld']) else '0.0')
                 item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
                 self.wareTableItemData.setItem(index,5,item)
                 self.wareTableItemData.blockSignals(False)
                 #>
+
                 item = MySpinBox(enabled=False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else MySpinBox(enabled=True)
                 item.setMaximum(100)
                 item.setSingleStep(5)
                 item.setSuffix(" %")
                 item.setStyleSheet("Border: 0px")
+                item.setValue(self.prevData.wareData[i]['dsct'] if ('dsct' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['dsct'])) else 0)
                 self.wareTableItemData.setCellWidget(index,6,item)
       
         elif bool(self.prevData) and self.method:
@@ -1179,7 +1185,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.saveEvent(False)
 
     def firstCheckBoxChanged(self, state, row, isVirtual):
-        if self.method: #NUEVO PRODUCTO
+        
+        if self.method or not(self.method): #NUEVO PRODUCTO y EDITAR PRODUCTO
             # state = 2: para cuando el primer checkBox is Checked
             if state == 2:
                 self.wareTableItemData.cellWidget(row, 1).setEnabled(True)
@@ -1225,29 +1232,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.wareTableItemData.cellWidget(row, 6).setValue(0)
                 self.wareTableItemData.cellWidget(row, 6).setEnabled(False)
                 self.wareTableItemData.cellWidget(row, 6).setStyleSheet("QSpinBox{Border: 0;}")
-
-        if not(self.method): #EDITAR PRODUCTO
-            # state = 2: para cuando el primer checkBox is Checked
-            if state == 2:
-                self.wareTableItemData.cellWidget(row, 1).setEnabled(True)
-                if(not(isVirtual)):
-                    self.wareTableItemData.cellWidget(row, 2).setEnabled(True)
-                    self.wareTableItemData.cellWidget(row, 2).setStyleSheet("QLineEdit{Border: 0.5px solid rgb(220,220,220);}")
-                    self.wareTableItemData.cellWidget(row, 3).setEnabled(True)
-                    self.wareTableItemData.cellWidget(row, 3).setStyleSheet("QSpinBox{Border: 0.5px solid rgb(220,220,220);}")
-                #>blocking signals
-                self.wareTableItemData.blockSignals(True)
-                self.wareTableItemData.item(row,4).setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
-                self.wareTableItemData.item(row,5).setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
-                for i in range(self.wareTableItemData.rowCount()):
-                    if i != row and self.wareTableItemData.cellWidget(i, 0).isChecked():
-                        self.wareTableItemData.item(row,5).setText(self.wareTableItemData.item(i, 5).text())
-                        break
-                self.wareTableItemData.blockSignals(False)
-                #>
-                self.wareTableItemData.cellWidget(row, 6).setEnabled(True)
-                self.wareTableItemData.cellWidget(row, 6).setStyleSheet("QSpinBox{Border: 0.5px solid rgb(220,220,220);}")
-
 
     def secondCheckBoxChanged(self, state, row, isVirtual):
         pass
