@@ -511,7 +511,8 @@ class Ui_Dialog(QtWidgets.QDialog):
     def openEditItemDialog(self, languages: list = None, data: ware_product = None):
         if bool(data):
             #method: False para editar
-            with ui_EditNewItemDialog(method=False) as ui_EditDialog:
+            #envias currentWare cuando quieres habilitar la fila del almacen que solo quieres editar
+            with ui_EditNewItemDialog(method=False, currentWare=self.currWare) as ui_EditDialog:
                 ui_EditDialog.cleanInputFields()
                 ui_EditDialog.setDataFields(languages ,data)
                 if ui_EditDialog.exec_() == QDialog.Accepted:
@@ -882,8 +883,10 @@ class Ui_Dialog(QtWidgets.QDialog):
 
 class ui_EditNewItemDialog(QtWidgets.QDialog):
     # Type: False: Edit , True: New
-    def __init__(self, method: bool = False, parent=None):
+    def __init__(self, method: bool = False, currentWare: str = None, parent=None):
         super(ui_EditNewItemDialog, self).__init__(parent)
+        
+        (self.setCurrentWare(currentWare=currentWare)) if (currentWare) else None
         self.method = method
         self.code = ""
         self.title = ""
@@ -901,6 +904,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         del self
         # if self.__fileHandle__ is not None:
         #         self.__fileHandle__.close()
+
+    def setCurrentWare(self, currentWare: str = None):
+        self.currentWare = currentWare
 
     def saveEvent(self, btnConfirmation: bool = False):
         # se cambia los keys de los diccionarios segun titulos de base de datos
@@ -1033,8 +1039,11 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
             #en esta parte se llenan los widget de la tabla ware product para condicion de editar nuevo 
             self.wareTableItemData.setRowCount(len(self.prevData.wareData))
+
             for index, i in enumerate(self.prevData.wareData):
                 self.wareTableItemData.setVerticalHeaderItem(index, QTableWidgetItem(i))
+                isCurrentWare = (self.wareTableItemData.verticalHeaderItem(index).text() == self.currentWare.cod) if hasattr(self, 'currentWare') else '_'
+                
                 #Primer Widget
                 #>blocksignals
                 item = QCheckBox()
@@ -1045,6 +1054,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 else:
                     item.setChecked(False)
                 item.stateChanged.connect(self.first_callback(index, bool(self.prevData.wareData[i]['isVirtual'])))
+                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index, 0, item)
                 #>
 
@@ -1053,6 +1063,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setStyleSheet("padding-left: 17px;")
                 item.setChecked(self.prevData.wareData[i]['isEnabled']) if 'isEnabled' in self.prevData.wareData[i] else None
                 item.stateChanged.connect(self.second_callback(index, None))
+                print(isCurrentWare)
+                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,1,item)
 
                 #virtual = 1, not Vitirual = 0
@@ -1061,6 +1073,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setPlaceholderText("MUEBLE ?, FILA ?")
                 #background black when ware is virtual
                 item.setStyleSheet("QLineEdit{background-color: black; Border: 0px;}" if self.prevData.wareData[i]['isVirtual'] else "QLineEdit{Border: 0px;}")
+                (item.setText(self.prevData.wareData[i]['loc']) if not(self.prevData.wareData[i]['loc'] == 'SIN UBICACION') else None) if 'loc' in self.prevData.wareData[i] else None
                 item.editingFinished.connect(self.locationLineEditCallBack(index))
                 self.wareTableItemData.setCellWidget(index,2,item)
 
