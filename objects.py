@@ -157,6 +157,9 @@ class product:
 	def getId(self)->int:
 		return self.id
 	
+	def getItemCode(self) -> str:
+		return self.itemCode
+	
 	def getISBN(self)->str:
 		return self.isbn
 	

@@ -34,7 +34,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.init_condition()
 
     def __del__(self):
-        print("kill me")
+        del self
+        # print("kill me")
     
     def __enter__(self):
         return self

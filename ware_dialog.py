@@ -902,7 +902,10 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         if btnConfirmation and not(self.method):
             self.returnedVal = (True, None)
 
+        
+        
         elif btnConfirmation and self.method:
+        ######
             objItem = product(itemCode=self.dataItems[self.cmbItem.currentIndex()][2])
             objItem.setId(int(self.txtId.text().strip()))
             if bool(len(self.txtTitle.text().strip())):
@@ -941,6 +944,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                                                                 qtyOld=0, qtyMinimun=min,
                                                                 pvNew=new, pvOld=old, dsct=descuento,
                                                                 isEnabled=enabled, isExists=exists, loc=loc_, idWare=i[3])
+                    #si no agrega ningun ware, entonces agrega un unico almacen None
                     if not(bool(len(objWareProduct.wareData))):
                         objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
                 
@@ -951,6 +955,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             else:
                 QMessageBox.information(self, 'Mensaje', "Llenar los campos obligatorios (*)", QMessageBox.Ok, QMessageBox.Ok)
                 self.returnedVal = (False, None)
+        ######
         else:
             self.returnedVal = (False, None)
 
@@ -1179,7 +1184,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
             self.setInitDefaultValues()
     
-    
     def setInitDefaultValues(self):
         #currentIndex 1 para item de tipo libro
         self.cmbItem.setCurrentIndex(1)
@@ -1320,10 +1324,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def locationLineEditCallBack(self, row):
         return lambda : self.locationLineEdit(row)
     
-    
-
-
-            
     def submitclose(self):
         self.accept()
 
@@ -2433,6 +2433,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
     def show_window(self):
        self.show()
+
 
 class TestDelegate(QStyledItemDelegate):
     def paint(self, painter: QtGui.QPainter, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> None:
