@@ -871,7 +871,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     # Type: False: Edit , True: New
     def __init__(self, method: bool = False, currentWare: str = None, parent=None):
         super(ui_EditNewItemDialog, self).__init__(parent)
-        
         (self.setCurrentWare(currentWare=currentWare)) if (currentWare) else None
         self.method = method
         self.code = ""
@@ -900,8 +899,83 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.returnedVal = (False, None)
 
         if btnConfirmation and not(self.method):
-            self.returnedVal = (True, None)
+            if len(self.txtISBN.text()) and self.prevData.product.getISBN() != self.txtISBN.text(): 
+                self.prevData.product.setISBN(self.txtISBN.text())
+            else:
+                self.prevData.product.setISBN(None)
+            #title, autor, publisher
+            if bool(self.txtTitle.text()) and self.prevData.product.getTitle() != self.txtTitle.text(): self.prevData.product.setTitle(self.txtTitle.text())
+            if bool(self.txtAutor.text()) and self.prevData.product.getAutor() != self.txtAutor.text(): self.prevData.product.setAutor(self.txtAutor.text())
+            if bool(self.txtPublisher.text()) and self.prevData.product.getPublisher() != self.txtPublisher.text(): self.prevData.product.setPublisher(self.txtPublisher.text())
+            
+            #dateOut
+            if (self.dateOutWidget.date().year() != 1752) and self.prevData.product.getDateOut() != self.dateOutWidget.date().toString("yyyy-MM-dd"): 
+                self.prevData.product.setDateOut(self.dateOutWidget.date().toString("yyyy-MM-dd"))
+            elif (self.dateOutWidget.date().year() == 1752): self.prevData.product.setDateOut(None)
+            
+            #edition
+            if (self.editionSpinBox.value() != 0) and self.prevData.product.getEdition() != self.editionSpinBox.value():
+                self.prevData.product.setEdition(self.editionSpinBox.value())
+            elif (self.editionSpinBox.value() == 0): self.prevData.product.setEdition(None)
+            
+            #pages
+            if (self.pagesSpinBox.value() != 0) and self.prevData.product.getPages() != self.pagesSpinBox.value():
+                self.prevData.product.setPages(self.pagesSpinBox.value())
+            elif (self.pagesSpinBox.value() == 0): self.prevData.product.setPages(None)
 
+            #languages
+            if (self.cmbIdiom.currentIndex() != -1) and self.prevData.product.getLang() != self.cmbIdiom.currentText():
+                self.prevData.product.setLang(self.cmbIdiom.currentText())
+            elif (self.cmbIdiom.currentIndex() == -1): self.prevData.product.setLang(None)
+
+            #cover
+            if (self.cmbCover.currentIndex() != -1) and self.prevData.product.getCover() != self.cmbCover.currentIndex():
+                self.prevData.product.setCover(self.cmbCover.currentIndex())
+            elif (self.cmbCover.currentIndex() == -1): self.prevData.product.setCover(-1)
+
+            #width
+            if (self.widthSpinBox.value() != 0) and self.prevData.product.getWidth() != self.widthSpinBox.value():
+                self.prevData.product.setWidth(self.widthSpinBox.value())
+            elif (self.widthSpinBox.value() == 0): self.prevData.product.setWidth(None)
+
+            #height
+            if (self.heightSpinBox.value() != 0) and self.prevData.product.getHeight() != self.heightSpinBox.value():
+                self.prevData.product.setHeight(self.heightSpinBox.value())
+            elif (self.heightSpinBox.value() == 0): self.prevData.product.setHeight(None)
+
+            #content
+            if len(self.contentTxtEdit.toPlainText().strip()) and self.contentTxtEdit.toPlainText().strip() != self.prevData.product.getContent():
+                self.prevData.product.setContent(self.contentTxtEdit.toPlainText().strip())
+            elif not(len(self.contentTxtEdit.toPlainText().strip())): self.prevData.product.setContent(None)
+            
+            #Aqui se limpia los datos de ware Data
+            self.prevData.clearWareData()
+
+            if bool(self.wareTableItemData.rowCount()):
+                # for index, i in enumerate(self.prevData["wares"]):
+                for index in range(self.wareTableItemData.rowCount()):
+                    print(self.wareTableItemData.verticalHeaderItem(index).text())
+            #         if self.wareTableItemData.cellWidget(index, 0).isChecked():
+            #             loc_ = self.wareTableItemData.cellWidget(index,2).text().upper() if self.wareTableItemData.cellWidget(index,2).text() != "" else "SIN UBICACION"
+            #             min = self.wareTableItemData.cellWidget(index, 3).value()
+            #             new = float(self.wareTableItemData.item(index, 4).text()) if self.wareTableItemData.item(index, 4).text() != "" else 0.0
+            #             old = float(self.wareTableItemData.item(index, 5).text()) if self.wareTableItemData.item(index, 5).text() != "" else 0.0
+            #             descuento = self.wareTableItemData.cellWidget(index, 6).value()
+            #             enabled = True if self.wareTableItemData.cellWidget(index, 1).isChecked() else False
+            #             exists = True if self.wareTableItemData.cellWidget(index, 0).isChecked() else False
+            #             objWareProduct.addDataWareProduct(wareName=i[0], qtyNew=0,
+            #                                                 qtyOld=0, qtyMinimun=min,
+            #                                                 pvNew=new, pvOld=old, dsct=descuento,
+            #                                                 isEnabled=enabled, isExists=exists, loc=loc_, idWare=i[3])
+            #     #si no agrega ningun ware, entonces agrega un unico almacen None
+            #     if not(bool(len(objWareProduct.wareData))):
+            #         objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
+                
+            # elif not(bool(self.wareTableItemData.rowCount())):
+            #         objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
+
+            print(self.prevData)
+            self.returnedVal = (True, None)
         
         
         elif btnConfirmation and self.method:
@@ -1406,6 +1480,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         # self.dateOutWidget = QDateEdit(QDate.currentDate(),self.tab_compItemData)
         self.dateOutWidget = MyDateEdit(self.tab_compItemData)
         self.dateOutWidget.setMaximumDate(QDate.currentDate().addYears(1))
+        self.dateOutWidget.setMinimumDate(QDate(1752,1,1))
         self.dateOutWidget.setDate(QDate(-2,1,1))
         self.dateOutWidget.move(x_offset + 155, y_offset + 16)
         self.dateOutWidget.setDisplayFormat("yyyy")
@@ -2433,7 +2508,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
     def show_window(self):
        self.show()
-
 
 class TestDelegate(QStyledItemDelegate):
     def paint(self, painter: QtGui.QPainter, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> None:

@@ -72,7 +72,7 @@ class product:
 																																	self.cover, self.id, self.width, self.height)
 	
 	def __str__(self):
-		return "{{prdCode: {0}, isbn: {1}, title: {2}, autor: {3}, publisher: {4}, dateOut: {5}, lang: {6}, pages: {7}, edition: {8}, cover: {9}, id: {10}, width: {11}, height:{12}, content: {13}, itemCategory: {14}}}".format(self.prdCode,
+		return "{{prdCode: {0}, isbn: {1}, title: {2}, autor: {3}, publisher: {4}, dateOut: {5}, lang: {6}, pages: {7}, edition: {8}, cover: {9}, id: {10}, width: {11}, height: {12}, content: {13}, itemCategory: {14}}}".format(self.prdCode,
 																																	self.isbn, self.title,
 																																	self.autor, self.publisher,
 																																	self.dateOut, self.lang,
@@ -82,7 +82,7 @@ class product:
 
 	def __init__(self, itemCode: str = None, id: int = None, isbn: str = None, title: str = None, autor: str = None,
 			   	publisher: str = None, dateOut: str = None, lang: str = None, pages: int = None, edition: int = None,
-				cover: bool = None, width: int = None, height: int = None, itemCategory: str = None, content: str = None):
+				cover: int = -1, width: int = None, height: int = None, itemCategory: str = None, content: str = None):
 		self.itemCode = itemCode
 		self.prdCode = '{0}_{1}'.format(self.itemCode, str(id)) if itemCode != None else None
 		self.isbn = isbn
@@ -238,6 +238,9 @@ class ware_product:
 			}
 
 		self.wareData.update({wareName: dataTemp if wareName else None})
+
+	def clearWareData(self):
+		self.wareData.clear()
 
 class ware:
 	def __repr__(self):
