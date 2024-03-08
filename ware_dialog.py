@@ -23,7 +23,6 @@ import copy
 import math
 ROOT = 'C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/'
 
-
 class Ui_Dialog(QtWidgets.QDialog):
     # -----------  constructor  -----------
     def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, WareProdDate: datetime.date = None, parent=None):
@@ -87,7 +86,6 @@ class Ui_Dialog(QtWidgets.QDialog):
         # result_books.sort(key=lambda z: int(z.objBook.cod.split("_")[1]))
         return len(result_books), result_books +  result_nobooks
         
-
     ## Funcion que permite la apertura de ventana ware desde el main_
     def showWindow(self):
         self.show()
@@ -185,7 +183,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         return lenTableBooks
 
     def txtBusChanged(self, method: int = 0, keepCurrentIndex: int = 0):
-        #method: 2 es nuevo item, 1 es mantener current index y 0 es posicion en el primer item para method
+        #method: 2 es nuevo item, 1 es mantener current index (No requiere KeepCurrentIndex) y 0 es posicion en el primer item para method
         if str(self.cmbSearch.currentText()) == "" and self.txtSearch.text() != "":
             ret = QMessageBox.information(self, 'Aviso', "Ingresar criterio de busqueda")
 
@@ -195,20 +193,20 @@ class Ui_Dialog(QtWidgets.QDialog):
                 #lstBookIndex: la posicion final del ultimo item de la categoria libros
                 lstBookIndex = self.loadData()
                 self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(self.ware_table.selectedIndexes()[0].row(), 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
-                self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(keepCurrentIndex) if method == 1 else self.actualizar_img(0)
+                self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(self.ware_table.selectedIndexes()[0].row()) if method == 1 else self.actualizar_img(0)
 
         elif self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() == "":
             if self.buscar("main") > 0:
                 lstBookIndex = self.loadData()
-                self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
-                self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(keepCurrentIndex) if method == 1 else self.actualizar_img(0)
+                self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(self.ware_table.selectedIndexes()[0].row(), 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
+                self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(self.ware_table.selectedIndexes()[0].row()) if method == 1 else self.actualizar_img(0)
 
         else:
             if self.cmbSearch.currentText() == "cod":
                 if self.buscar("cod", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
-                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(keepCurrentIndex) if method == 1 else self.actualizar_img(0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(self.ware_table.selectedIndexes()[0].row(), 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
+                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(self.ware_table.selectedIndexes()[0].row()) if method == 1 else self.actualizar_img(0)
                 else:
                     self.real_table.clear()
                     self.ware_table.clearContents()
@@ -217,8 +215,8 @@ class Ui_Dialog(QtWidgets.QDialog):
             elif self.cmbSearch.currentText() == "isbn":
                 if self.buscar("isbn", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
-                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(keepCurrentIndex) if method == 1 else self.actualizar_img(0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(self.ware_table.selectedIndexes()[0].row(), 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
+                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(self.ware_table.selectedIndexes()[0].row()) if method == 1 else self.actualizar_img(0)
                 else:
                     self.real_table.clear()
                     self.ware_table.clearContents()
@@ -228,8 +226,8 @@ class Ui_Dialog(QtWidgets.QDialog):
             elif self.cmbSearch.currentText() == "titulo":
                 if self.buscar("titulo", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
-                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(keepCurrentIndex) if method == 1 else self.actualizar_img(0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(self.ware_table.selectedIndexes()[0].row(), 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
+                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(self.ware_table.selectedIndexes()[0].row()) if method == 1 else self.actualizar_img(0)
                 else:
                     self.real_table.clear()
                     self.ware_table.clearContents()
@@ -238,8 +236,8 @@ class Ui_Dialog(QtWidgets.QDialog):
             elif self.cmbSearch.currentText() == "autor":
                 if self.buscar("autor", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
-                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(keepCurrentIndex) if method == 1 else self.actualizar_img(0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(self.ware_table.selectedIndexes()[0].row(), 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
+                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(self.ware_table.selectedIndexes()[0].row()) if method == 1 else self.actualizar_img(0)
                 else:
                     self.real_table.clear()
                     self.ware_table.clearContents()
@@ -248,8 +246,8 @@ class Ui_Dialog(QtWidgets.QDialog):
             elif self.cmbSearch.currentText() == "editorial":
                 if self.buscar("editorial", self.txtSearch.text()) > 0:
                     lstBookIndex = self.loadData()
-                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(keepCurrentIndex, 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
-                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(keepCurrentIndex) if method == 1 else self.actualizar_img(0)
+                    self.ware_table.setCurrentCell(lstBookIndex - 1, 0) if method == 2 else self.ware_table.setCurrentCell(self.ware_table.selectedIndexes()[0].row(), 0) if method == 1 else self.ware_table.setCurrentCell(0, 0)
+                    self.actualizar_img(lstBookIndex - 1) if method == 2 else self.actualizar_img(self.ware_table.selectedIndexes()[0].row()) if method == 1 else self.actualizar_img(0)
                 else:
                     self.real_table.clear()
                     self.ware_table.clearContents()
@@ -313,20 +311,27 @@ class Ui_Dialog(QtWidgets.QDialog):
                     if self.currWare.cod in self.real_table[row].wareData:
                         ubicValidation, text = self.openUbicDialog(self.ware_table.item(row,column_).text(), self.ware_table.item(row,column_+2).text())
                         if (ubicValidation == "Ok"):
-                            if self.userValidation() and self.gestWareProduct.changeItemLocation(str(self.real_table[row].product.getId()), text, self.currWare.cod) and self.gestWareProduct.changeInnerItemLocation(self.real_table[row].product.getId(), text, self.currWare.cod):
+                            if bool(text) and self.userValidation()[0] and self.gestWareProduct.changeItemLocation(str(self.real_table[row].product.getId()), text, self.currWare.cod) and self.gestWareProduct.changeInnerItemLocation(self.real_table[row].product.getId(), text, self.currWare.cod):
                                 QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                                 self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
+                            else:
+                                QMessageBox.warning(self, 'Alerta',"Operación sin efecto", QMessageBox.Ok, QMessageBox.Ok)
+
                     else:
                         QMessageBox.information(self, 'Información',"El presente almacén no registra el producto", QMessageBox.Ok, QMessageBox.Ok)
 
                 if (validation == "Editar"):
                     #verification: bool, itemReturned(obj): ware_product
                     verification, languages, itemReturned = self.gestWareProduct.getItemDataFromDB(self.real_table[row].product.getId())
-                    isUpdate, text = self.openEditItemDialog(languages=languages ,data=itemReturned) if verification else (None, None)
-                    
-                    # if isUpdate and self.userValidation() and self.gestWareProduct.updateInnerItem(data["cod"], text) and self.ware_gest.updateDataItem(data["cod"], text):
-                    #     QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
-                    #     self.txtBusChanged()
+                    isUpdate, data = self.openEditItemDialog(languages=languages ,data=itemReturned) if verification else (None, None)
+                    if isUpdate:
+                        bool_answer, text_answer = self.userValidation()
+                        # if isUpdate and self.userValidation() and self.gestWareProduct.updateInnerItem(data["cod"], text) and self.ware_gest.updateDBItem(data["cod"], text):
+                        if text_answer == "acepted" and self.gestWareProduct.updateInnerItem(data):
+                            QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
+                            self.txtBusChanged(method=1)
+                        elif text_answer == "denied":
+                            QMessageBox.warning(self, 'Alerta',"Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
 
     # -----------  user validation  -----------
     def userValidation(self):
@@ -336,14 +341,15 @@ class Ui_Dialog(QtWidgets.QDialog):
         if(isPressedOk):
             with users_gestor() as a_:
                 if a_.checkPSW(text)[0]:
-                    tmpData = a_.checkPSW(text)[1]
+                    # tmpData = a_.checkPSW(text)[1]
                     del a_ 
-                    return tmpData
-                else:
+                    # return tmpData, "acepted"
+                    return True, "acepted"
+                elif not(a_.checkPSW(text)[0]):
                     del a_ 
-                    return False
+                    return False, "denied"
         else:
-            return False
+            return False, "aborted"
 
     def change_state(self, state): #cambia el estado de self. state y color de los frames
         if state == "ware":
@@ -525,7 +531,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                     validator, dataAfter = ui_NewItemDialog.returnedVal
                     del ui_NewItemDialog
                     if validator:
-                        if self.userValidation():
+                        if self.userValidation()[0]:
                             if(self.ware_gest.insertNewItemDB(dataAfter, self.currWare.cod) and self.gestWareProduct.insertInnerNewItem(dataAfter, self.currWare.cod)):
                                 QMessageBox.information(self, 'Mensaje', "¡Operacion Exitosa!", QMessageBox.Ok, QMessageBox.Ok)
                                 #True: argumento para indicar que se esta creadno un nuevo item y index selected apunte al ultimo producto libro
@@ -888,7 +894,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def __exit__(self,ext_type,exc_value,traceback):
         del self
 
-
     def setCurrentWare(self, currentWare: str = None):
         self.currentWare = currentWare
 
@@ -899,9 +904,10 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.returnedVal = (False, None)
 
         if btnConfirmation and not(self.method):
+
             if len(self.txtISBN.text()) and self.prevData.product.getISBN() != self.txtISBN.text(): 
                 self.prevData.product.setISBN(self.txtISBN.text())
-            else:
+            elif not(len(self.txtISBN.text())):
                 self.prevData.product.setISBN(None)
             #title, autor, publisher
             if bool(self.txtTitle.text()) and self.prevData.product.getTitle() != self.txtTitle.text(): self.prevData.product.setTitle(self.txtTitle.text())
@@ -948,35 +954,44 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.prevData.product.setContent(self.contentTxtEdit.toPlainText().strip())
             elif not(len(self.contentTxtEdit.toPlainText().strip())): self.prevData.product.setContent(None)
             
-            #Aqui se limpia los datos de ware Data
-            self.prevData.clearWareData()
-
+            objCopied = copy.deepcopy(self.prevData)
+            
             if bool(self.wareTableItemData.rowCount()):
-                # for index, i in enumerate(self.prevData["wares"]):
-                for index in range(self.wareTableItemData.rowCount()):
-                    print(self.wareTableItemData.verticalHeaderItem(index).text())
-            #         if self.wareTableItemData.cellWidget(index, 0).isChecked():
-            #             loc_ = self.wareTableItemData.cellWidget(index,2).text().upper() if self.wareTableItemData.cellWidget(index,2).text() != "" else "SIN UBICACION"
-            #             min = self.wareTableItemData.cellWidget(index, 3).value()
-            #             new = float(self.wareTableItemData.item(index, 4).text()) if self.wareTableItemData.item(index, 4).text() != "" else 0.0
-            #             old = float(self.wareTableItemData.item(index, 5).text()) if self.wareTableItemData.item(index, 5).text() != "" else 0.0
-            #             descuento = self.wareTableItemData.cellWidget(index, 6).value()
-            #             enabled = True if self.wareTableItemData.cellWidget(index, 1).isChecked() else False
-            #             exists = True if self.wareTableItemData.cellWidget(index, 0).isChecked() else False
-            #             objWareProduct.addDataWareProduct(wareName=i[0], qtyNew=0,
-            #                                                 qtyOld=0, qtyMinimun=min,
-            #                                                 pvNew=new, pvOld=old, dsct=descuento,
-            #                                                 isEnabled=enabled, isExists=exists, loc=loc_, idWare=i[3])
-            #     #si no agrega ningun ware, entonces agrega un unico almacen None
-            #     if not(bool(len(objWareProduct.wareData))):
-            #         objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
-                
-            # elif not(bool(self.wareTableItemData.rowCount())):
-            #         objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
+                for index, value in enumerate(self.prevData.wareData):
+                    wareName = self.wareTableItemData.verticalHeaderItem(index).text()
+                    if self.wareTableItemData.cellWidget(index, 0).isChecked() and wareName == value:
+                        loc_ = self.wareTableItemData.cellWidget(index,2).text().upper() if self.wareTableItemData.cellWidget(index,2).text() != "" else "SIN UBICACION"
+                        min = self.wareTableItemData.cellWidget(index, 3).value()
+                        new = float(self.wareTableItemData.item(index, 4).text()) if self.wareTableItemData.item(index, 4).text() != "" else 0.0
+                        old = float(self.wareTableItemData.item(index, 5).text()) if self.wareTableItemData.item(index, 5).text() != "" else 0.0
+                        descuento = self.wareTableItemData.cellWidget(index, 6).value()
+                        enabled = True if self.wareTableItemData.cellWidget(index, 1).isChecked() else False
+                        exists = True if self.wareTableItemData.cellWidget(index, 0).isChecked() else False
+                        objCopied.addDataWareProduct(wareName=value, 
+                                                        qtyNew=0,
+                                                        qtyOld=0,
+                                                        qtyMinimun=min,
+                                                        pvNew=new,
+                                                        pvOld=old,
+                                                        dsct=descuento,
+                                                        isEnabled=enabled,
+                                                        isExists=exists,
+                                                        loc=loc_,
+                                                        idWare=self.prevData.wareData[value]["idWare"],
+                                                        isVirtual=self.prevData.wareData[value]["isVirtual"])
+                    elif not(self.wareTableItemData.cellWidget(index, 0).isChecked()) and wareName == value:
+                        objCopied.removePairKeyValue(value)
 
-            print(self.prevData)
-            self.returnedVal = (True, None)
-        
+                #si no agrega ningun ware, entonces agrega un unico almacen None
+                if not(bool(objCopied.getWareDataLen())):
+                    objCopied.clearWareData()
+                    objCopied.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
+                
+            elif not(bool(self.wareTableItemData.rowCount())):
+                    objCopied.clearWareData()
+                    objCopied.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
+
+            self.returnedVal = (True, objCopied)
         
         elif btnConfirmation and self.method:
         ######
@@ -1034,7 +1049,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.returnedVal = (False, None)
 
         self.submitclose() if self.returnedVal[0] else False
-
+    
     def cleanInputFields(self, isInit: str = None):
         self.cmbItem.setEnabled(False)
         self.txtISBN.setReadOnly(True)
@@ -1112,7 +1127,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 #>blocksignals
                 item = QCheckBox()
                 item.setStyleSheet("padding-left: 17px;")
-                if len(self.prevData.wareData[i]) > 1 and self.prevData.wareData[i]['idWare']:
+                if len(self.prevData.wareData[i]) > 1 and self.prevData.wareData[i]['isExists']:
                     item.setChecked(True)
                     item.setEnabled(False)
                 else:

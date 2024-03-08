@@ -101,7 +101,7 @@ class wares_gestor:
 			print("No se puede conectar a genesisDB")
 			self.disconnectDB()
 
-	def updateDataItem(self, cod: str = "", data: dict = None):
+	def updateDBItem(self, cod: str = "", data: dict = None):
 		init = "update genesisDB.books set "
 		for item in list(data.keys()):
 			if item != "pv":
@@ -371,14 +371,10 @@ class WareProduct:
 		except Exception as error:
 			return False
 
-	def updateInnerItem(self, codBook: str = "", data: dict = None):
+	def updateInnerItem(self, data: ware_product = None):
 		try:
-			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.innerWareList)))[0][0]
-			self.innerWareList[index].objBook.setISBN(data["isbn"]) if ("isbn" in data) else None
-			self.innerWareList[index].objBook.setName(data["name"]) if ("name" in data) else None
-			self.innerWareList[index].objBook.setAutor(data["autor"]) if ("autor" in data) else None
-			self.innerWareList[index].objBook.setEditorial(data["editorial"]) if ("editorial" in data) else None
-			self.innerWareList[index].objBook.setPv(data["pv"]) if ("pv" in data) else None
+			index = list(filter(lambda x: x[1].product.id == data.product.id, enumerate(self.innerWareList)))[0][0]
+			self.innerWareList[index] = data 
 			return True
 		except Exception as error:
 			return False
@@ -391,7 +387,7 @@ class WareProduct:
 			return False
 
 	def getItemDataFromDB(self, idProduct: int = None)-> bool:
-		query = ("select w.code, idWare, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled, 'item' from " + \
+		query = ("select w.code, w.id, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled, 'item' from " + \
 				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
 				"from genesisdb.product p " + \
 				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
@@ -400,7 +396,7 @@ class WareProduct:
 				"where p.id = " + str(idProduct) + ") as s " + \
 				"left join genesisdb.ware w on w.id = s.idWare " + \
 				"union " + \
-				"select w.code, idWare, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled, 'item' from " + \
+				"select w.code, w.id, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled, 'item' from " + \
 				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
 				"from genesisdb.product p " + \
 				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
@@ -419,7 +415,7 @@ class WareProduct:
 				wareProductLocal = ware_product(item = productLocal)
 				for i in item[1:]:
 					if i[26] == 'item':
-						wareProductLocal.addDataWareProduct(wareName=i[0], isVirtual=bool(i[2]), flag=False)
+						wareProductLocal.addDataWareProduct(wareName=i[0], isVirtual=bool(i[2]), idWare= i[1], isExists=False, flag=False)
 					elif i[26] == 'lang':
 						languages.append((i[0], i[1]))
 						
@@ -429,7 +425,7 @@ class WareProduct:
 				wareProductLocal = ware_product(item=productLocal)
 				for obj in item:
 					if bool(obj[0]) and obj[26] == 'item':
-						wareProductLocal.addDataWareProduct(wareName=obj[0], qtyNew=obj[18], qtyOld=obj[19], qtyMinimun=obj[20], pvNew=obj[21], pvOld=obj[22], dsct=obj[23], loc=obj[24], isEnabled=bool(obj[25]), isExists=bool(obj[1]), idWare=obj[1], flag=True, isVirtual=bool(obj[2]))
+						wareProductLocal.addDataWareProduct(wareName=obj[0], qtyNew=obj[18], qtyOld=obj[19], qtyMinimun=obj[20], pvNew=obj[21], pvOld=obj[22], dsct=obj[23], loc=obj[24], isEnabled=bool(obj[25]), isExists=bool(obj[3]), idWare=obj[1], flag=True, isVirtual=bool(obj[2]))
 					elif bool(obj[0]) and obj[26] == 'lang':
 						languages.append((obj[0], obj[1]))
 			
@@ -527,7 +523,7 @@ class users_gestor:
 		try:
 			if (isinstance(Password, str) and len(Password) > 0):
 				areMatched = bcrypt.checkpw(bytes(Password, "utf-8"), bytes(self.pswHashed, "utf-8"))
-				return True, areMatched
+				return areMatched, None
 			else:
 				return False, None
 		except Exception as e:

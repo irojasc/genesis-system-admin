@@ -234,13 +234,22 @@ class ware_product:
 			}
 		else:
 			dataTemp = {
-				"isVirtual": isVirtual
+				"isVirtual": isVirtual,
+				"isExists": isExists,
+				"idWare": idWare
 			}
 
 		self.wareData.update({wareName: dataTemp if wareName else None})
 
 	def clearWareData(self):
 		self.wareData.clear()
+	
+	def removePairKeyValue(self, key: str = None):
+		if key:
+			self.wareData.pop(key)
+
+	def getWareDataLen(self):
+		return len(self.wareData)
 
 class ware:
 	def __repr__(self):
