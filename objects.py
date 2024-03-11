@@ -93,9 +93,10 @@ class product:
 		self.lang = lang
 		self.pages = pages
 		self.edition = edition
+
 		#cover: 0 blanda, 1 dura
 		try:
-			self.cover = cover
+			self.cover = cover + 0
 		except:
 			self.cover = -1
 

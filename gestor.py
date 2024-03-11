@@ -101,25 +101,41 @@ class wares_gestor:
 			print("No se puede conectar a genesisDB")
 			self.disconnectDB()
 
-	def updateDBItem(self, cod: str = "", data: dict = None):
-		init = "update genesisDB.books set "
-		for item in list(data.keys()):
-			if item != "pv":
-				init = init + item + ' = "' + data[item] + '", '
-			else:
-				init = init + item + ' = ' + data[item] + ', '
-		init = init[:len(init)-2] + ' where cod = "'+ cod + '"'
-		query = (init)
+	def updateDBItem(self, data: ware_product = None):
+
+		query_product = "update genesisdb.product set"
+		query_parameters = []
+		query_parameters.append(" isbn = NULL ") if not(data.product.getISBN()) else query_parameters.append(" isbn = '" + data.product.getISBN() + "'")
+		None if not(data.product.getTitle()) else query_parameters.append(" title = '" + data.product.getTitle() + "'")
+		None if not(data.product.getAutor()) else query_parameters.append(" autor = '" + data.product.getAutor() + "'")
+		None if not(data.product.getPublisher()) else query_parameters.append(" publisher = '" + data.product.getPublisher() + "'")
+		query_parameters.append(" dateOut = NULL ") if not(data.product.getDateOut()) else query_parameters.append(" dateOut = '" + data.product.getDateOut() + "'")
+		query_parameters.append(" edition = NULL ") if not(data.product.getEdition()) else query_parameters.append(" edition = " + str(data.product.getEdition()))
+		query_parameters.append(" pages = NULL ") if not(data.product.getPages()) else query_parameters.append(" pages = " + str(data.product.getPages()))
+		query_parameters.append(" pages = NULL ") if not(data.product.getLang()) else query_parameters.append(" pages = " + str(data.product.getPages()))
+
+		
+		query_product = query_product + ", ".join(query_parameters) + " where id = " + str(data.product.getId()) + ";"
+
+		print(data.product.getLang())
+		# print(data.product.getId())
+		# print(data.product.getItemCode())
+		# print(data.product.getContent())
+
+		# query = (init)
+		
 		try:
-			self.connectDB()
-			self.cursor.execute(query)
-			self.mydb.commit()
-			self.disconnectDB()
-			return True
+			# self.connectDB()
+			# self.cursor.execute(query)
+			# self.mydb.commit()
+			# self.disconnectDB()
+			return False
 		except Exception as error:
 			print("Something wrong happen: ", error)
-			self.disconnectDB()
+			# self.disconnectDB()
 			return False
+
+
 
 	def getNextCodDB(self):
 		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, i.code, null FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl, null FROM genesisdb.category c UNION SELECT 'ware', `code`, `name`, cast(`isVirtual` as UNSIGNED), w.id FROM genesisdb.ware w where w.enabled = 1;"
@@ -261,7 +277,7 @@ class WareProduct:
 	
 	def loadInnerTable(self, updateDate: datetime.date = None):
 		
-		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id inner join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem order by p.id asc;") if updateDate == None else ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id inner join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem where p.creationDate >= '{0}' or p.editDate >= '{0}' or wp.editDate >= '{0}' or p.creationDate >= '{0}' order by p.id asc;".format(updateDate))
+		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id left join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem order by p.id asc;") if updateDate == None else ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id left join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem where p.creationDate >= '{0}' or p.editDate >= '{0}' or wp.editDate >= '{0}' or p.creationDate >= '{0}' order by p.id asc;".format(updateDate))
 
 		try:
 			# self.innerWareList.clear()
@@ -270,22 +286,26 @@ class WareProduct:
 			WareProductsRows = self.cursor.fetchall()
 			for WareProduct in WareProductsRows:
 				if not(len(self.innerWareList)):
-					item = product(WareProduct[1], WareProduct[2], WareProduct[3], WareProduct[4], WareProduct[5], WareProduct[6],
-					WareProduct[7], WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
+					item = product(itemCode=WareProduct[1], id=WareProduct[2], isbn=WareProduct[3], title=WareProduct[4], autor=WareProduct[5], publisher=WareProduct[6],
+					dateOut=WareProduct[7], lang=WareProduct[8], pages=WareProduct[9], edition=WareProduct[10], cover=WareProduct[11],
+					width=WareProduct[12], height=WareProduct[13])
 					wareproduct = ware_product(item, {})
-					wareproduct.addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
+					wareproduct.addDataWareProduct(WareProduct[0], qtyNew=WareProduct[14], qtyOld=WareProduct[15], qtyMinimun=WareProduct[16],
+					pvNew=WareProduct[17], pvOld=WareProduct[18], dsct=WareProduct[19], loc=WareProduct[20], isEnabled=WareProduct[21])
 					self.innerWareList.append(wareproduct)
 				else:
 					index = next((i for i, item in enumerate(self.innerWareList) if item.product.prdCode == '%s_%d' % (WareProduct[1], WareProduct[2])), None)
 					if isinstance(index, int):
 						if updateDate != None:
-							self.innerWareList[index].product = product(WareProduct[1], WareProduct[2], WareProduct[3], WareProduct[4], WareProduct[5], WareProduct[6],
-					WareProduct[7], WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
+							self.innerWareList[index].product = product(itemCode=WareProduct[1], id=WareProduct[2], isbn=WareProduct[3],
+							title=WareProduct[4], autor=WareProduct[5], publisher=WareProduct[6], dateOut=WareProduct[7], lang=WareProduct[8],
+							pages=WareProduct[9], edition=WareProduct[10], cover=WareProduct[11], width=WareProduct[12], height=WareProduct[13])
 						self.innerWareList[index].addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
 					else:
 						# print("[destructured]",WareProduct[1],WareProduct[2],WareProduct[3],WareProduct[4],WareProduct[5],WareProduct[6],WareProduct[7],WareProduct[8],WareProduct[9],WareProduct[10],WareProduct[11],WareProduct[12],WareProduct[13])
-						item = product(WareProduct[1], WareProduct[2], WareProduct[3], WareProduct[4], WareProduct[5], WareProduct[6],
-						WareProduct[7], WareProduct[8], WareProduct[9], WareProduct[10], WareProduct[11], WareProduct[12], WareProduct[13])
+						item = product(itemCode=WareProduct[1], id=WareProduct[2], isbn=WareProduct[3], title=WareProduct[4],
+						autor=WareProduct[5], publisher=WareProduct[6], dateOut=WareProduct[7], lang=WareProduct[8], pages=WareProduct[9],
+						edition=WareProduct[10], cover=WareProduct[11], width=WareProduct[12], height=WareProduct[13])
 						# print("[composed]", item)
 						wareproduct = ware_product(item, {})
 						wareproduct.addDataWareProduct(WareProduct[0], WareProduct[14], WareProduct[15], WareProduct[16], WareProduct[17], WareProduct[18], WareProduct[19], WareProduct[20], WareProduct[21])
@@ -411,7 +431,10 @@ class WareProduct:
 			item = self.cursor.fetchall()
 			if not(item[0][0]) and (item[0][26] == 'item'):
 				languages = []
-				productLocal = product(itemCode=item[0][3], id=item[0][4], isbn=item[0][5], title=item[0][6], autor=item[0][7], publisher=item[0][8], dateOut=item[0][9], lang=item[0][10], pages=item[0][11], edition=item[0][12], cover=bool(item[0][13]), width=item[0][14], height=item[0][15], content=item[0][16], itemCategory=item[0][17])
+				productLocal = product(	itemCode=item[0][3], id=item[0][4], isbn=item[0][5], title=item[0][6], 
+						   				autor=item[0][7], publisher=item[0][8], dateOut=item[0][9], lang=item[0][10],
+										pages=item[0][11], edition=item[0][12], cover=item[0][13], width=item[0][14],
+										height=item[0][15], content=item[0][16], itemCategory=item[0][17])
 				wareProductLocal = ware_product(item = productLocal)
 				for i in item[1:]:
 					if i[26] == 'item':
@@ -421,7 +444,10 @@ class WareProduct:
 						
 			elif item[0][0]:
 				languages = []
-				productLocal = product(itemCode=item[0][3], id=item[0][4], isbn=item[0][5], title=item[0][6], autor=item[0][7], publisher=item[0][8], dateOut=item[0][9], lang=item[0][10], pages=item[0][11], edition=item[0][12], cover=bool(item[0][13]), width = item[0][14], height=item[0][15], content=item[0][16], itemCategory=item[0][17])
+				productLocal = product(	itemCode=item[0][3], id=item[0][4], isbn=item[0][5], title=item[0][6],
+										autor=item[0][7], publisher=item[0][8], dateOut=item[0][9], lang=item[0][10],
+										pages=item[0][11], edition=item[0][12], cover=item[0][13], width=item[0][14],
+										height=item[0][15], content=item[0][16], itemCategory=item[0][17])
 				wareProductLocal = ware_product(item=productLocal)
 				for obj in item:
 					if bool(obj[0]) and obj[26] == 'item':
