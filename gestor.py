@@ -112,30 +112,24 @@ class wares_gestor:
 		query_parameters.append(" dateOut = NULL ") if not(data.product.getDateOut()) else query_parameters.append(" dateOut = '" + data.product.getDateOut() + "'")
 		query_parameters.append(" edition = NULL ") if not(data.product.getEdition()) else query_parameters.append(" edition = " + str(data.product.getEdition()))
 		query_parameters.append(" pages = NULL ") if not(data.product.getPages()) else query_parameters.append(" pages = " + str(data.product.getPages()))
-		query_parameters.append(" pages = NULL ") if not(data.product.getLang()) else query_parameters.append(" pages = " + str(data.product.getPages()))
-
-		
+		query_parameters.append(" idLanguage = NULL ") if not(data.product.getLang()) else query_parameters.append(" idLanguage = (select l.id from genesisdb.language as l where l.language = '" + data.product.getLang() + "')")
+		query_parameters.append(" cover = NULL ") if data.product.getCover() < 0 else query_parameters.append(" cover = " + str(data.product.getCover()))
+		query_parameters.append(" width = NULL ") if not(data.product.getWidth()) else query_parameters.append(" width = " + str(data.product.getWidth()))
+		query_parameters.append(" height = NULL ") if not(data.product.getHeight()) else query_parameters.append(" height = " + str(data.product.getHeight()))
+		query_parameters.append(" content = NULL ") if not(data.product.getContent()) else query_parameters.append(" content = '" + data.product.getContent() + "'")
 		query_product = query_product + ", ".join(query_parameters) + " where id = " + str(data.product.getId()) + ";"
-
-		print(data.product.getLang())
-		# print(data.product.getId())
-		# print(data.product.getItemCode())
-		# print(data.product.getContent())
-
-		# query = (init)
 		
 		try:
-			# self.connectDB()
-			# self.cursor.execute(query)
-			# self.mydb.commit()
-			# self.disconnectDB()
-			return False
+			self.connectDB()
+			self.cursor.execute(query_product)
+			self.mydb.commit()
+			self.disconnectDB()
+			return True
+		
 		except Exception as error:
 			print("Something wrong happen: ", error)
-			# self.disconnectDB()
+			self.disconnectDB()
 			return False
-
-
 
 	def getNextCodDB(self):
 		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, i.code, null FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl, null FROM genesisdb.category c UNION SELECT 'ware', `code`, `name`, cast(`isVirtual` as UNSIGNED), w.id FROM genesisdb.ware w where w.enabled = 1;"
@@ -160,12 +154,13 @@ class wares_gestor:
 			return False, None
 
 	def insertNewItemDB(self, data: ware_product = None, currentWare: str = None):
-
+		
 		#anteriormente se lee el spinbox stock para ver si te tiene que agregar cantidad a nuevo producto
 		if bool(data) and bool(currentWare):
 			#esta parte es para hacer las subconsultas
 			idItemSubQuery = "(select id from genesisdb.item where item = '" + data.product.getItemCategory() + "')" if bool(data.product.getItemCategory()) else None
 			idLanguageSubQuery = "(select id from genesisdb.language where language = '" + data.product.getLang() + "')" if bool(data.product.getLang()) else None
+			
 			# query_1 para hacer el insert principal de product
 			query_1 = "insert into genesisdb.product (id, idItem, isbn, title, autor, publisher, content, " + \
 			"dateOut, idLanguage, pages, edition, cover, width, height) values (%s, %s, %s, '%s', '%s', '%s', %s, %s, %s, %s, %s, %s, %s, %s);" % (str(data.product.getId()), idItemSubQuery, 
@@ -184,12 +179,13 @@ class wares_gestor:
 				self.connectDB()
 				self.cursor.execute(query_1)
 				# query_2 para hacer el insert de los ware_products
-				existsData = list(filter(lambda x: x["isExists"], data.wareData.values()))
-				# Data2Tuple = list(map(lambda x: (x["idWare"], str(data.product.getId()), str(x["qtyNew"]), str(x["qtyOld"]), str(x["pvNew"]), str(x["pvOld"]), x["loc"], str(x["dsct"]), str(x["qtyMinimun"]), x["isEnabled"]), existsData))
-				Data2Tuple = list(map(lambda x: (x["idWare"], data.product.getId(), x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"], x["loc"], x["dsct"], x["qtyMinimun"], x["isEnabled"]), existsData))
-				stmt = "insert into genesisdb.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, qtyMinimun, isEnabled) " + \
-				"values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-				self.cursor.executemany(stmt, Data2Tuple)
+				existsData = list(filter(lambda x: x["isExists"], data.wareData.values())) if not((len(data.wareData) == 1 and not(data.wareData[None]))) else None
+				if existsData:
+					# Data2Tuple = list(map(lambda x: (x["idWare"], str(data.product.getId()), str(x["qtyNew"]), str(x["qtyOld"]), str(x["pvNew"]), str(x["pvOld"]), x["loc"], str(x["dsct"]), str(x["qtyMinimun"]), x["isEnabled"]), existsData))
+					Data2Tuple = list(map(lambda x: (x["idWare"], data.product.getId(), x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"], x["loc"], x["dsct"], x["qtyMinimun"], x["isEnabled"]), existsData))
+					stmt = "insert into genesisdb.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, qtyMinimun, isEnabled) " + \
+					"values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+					self.cursor.executemany(stmt, Data2Tuple)
 				self.mydb.commit()
 				self.disconnectDB()
 				return True
@@ -411,7 +407,7 @@ class WareProduct:
 				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
 				"from genesisdb.product p " + \
 				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
-				"inner join genesisdb.language l on l.id = p.idLanguage " + \
+				"left join genesisdb.language l on l.id = p.idLanguage " + \
 				"inner join genesisdb.item i on i.id = p.idItem " + \
 				"where p.id = " + str(idProduct) + ") as s " + \
 				"left join genesisdb.ware w on w.id = s.idWare " + \
@@ -420,7 +416,7 @@ class WareProduct:
 				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
 				"from genesisdb.product p " + \
 				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
-				"inner join genesisdb.language l on l.id = p.idLanguage " + \
+				"left join genesisdb.language l on l.id = p.idLanguage " + \
 				"inner join genesisdb.item i on i.id = p.idItem " + \
 				"where p.id = " + str(idProduct) + ") as s " + \
 				"right join genesisdb.ware w on w.id = s.idWare " + \

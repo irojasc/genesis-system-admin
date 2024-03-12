@@ -325,8 +325,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                     isUpdate, data = self.openEditItemDialog(languages=languages ,data=itemReturned) if verification else (None, None)
                     if isUpdate:
                         bool_answer, text_answer = self.userValidation()
-                        if isUpdate and self.ware_gest.updateDBItem(data):
-                        # if text_answer == "acepted" and self.gestWareProduct.updateInnerItem(data):
+                        if text_answer == "acepted" and self.ware_gest.updateDBItem(data) and self.gestWareProduct.updateInnerItem(data):
                             QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                             self.txtBusChanged(method=1)
                         elif text_answer == "denied":
@@ -1110,7 +1109,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.cmbIdiom.addItems(list(map(lambda x: x[1], languages)))
             
             index = list(filter(lambda x: x[1] == self.prevData.product.getLang(), languages))
-            # self.cmbIdiom.setCurrentIndex(int(index[0][0])-1)
+            self.cmbIdiom.setCurrentIndex(int(index[0][0])-1) if index else self.cmbIdiom.setCurrentIndex(-1)
 
             self.cmbCover.setCurrentIndex(self.prevData.product.getCover())
             self.widthSpinBox.setValue(self.prevData.product.getWidth()) if self.prevData.product.getWidth() else None
@@ -1278,8 +1277,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         #currentIndex 1 para item de tipo libro
         self.cmbItem.setCurrentIndex(1)
         #esto por el momento va apuntar al primer idioma
-        self.cmbIdiom.setCurrentIndex(0)
-        self.cmbCover.setCurrentIndex(0)
+        self.cmbIdiom.setCurrentIndex(-1)
+        self.cmbCover.setCurrentIndex(-1)
         self.cmbCategory1.setCurrentIndex(-1)
         self.cmbCategory2.setCurrentIndex(-1)
         self.cmbCategory3.setCurrentIndex(-1)
