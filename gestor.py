@@ -102,7 +102,6 @@ class wares_gestor:
 			self.disconnectDB()
 
 	def updateDBItem(self, data: ware_product = None):
-
 		query_product = "update genesisdb.product set"
 		query_parameters = []
 		query_parameters.append(" isbn = NULL ") if not(data.product.getISBN()) else query_parameters.append(" isbn = '" + data.product.getISBN() + "'")
@@ -118,19 +117,88 @@ class wares_gestor:
 		query_parameters.append(" height = NULL ") if not(data.product.getHeight()) else query_parameters.append(" height = " + str(data.product.getHeight()))
 		query_parameters.append(" content = NULL ") if not(data.product.getContent()) else query_parameters.append(" content = '" + data.product.getContent() + "'")
 		query_product = query_product + ", ".join(query_parameters) + " where id = " + str(data.product.getId()) + ";"
-		
 		try:
 			self.connectDB()
 			self.cursor.execute(query_product)
-			self.mydb.commit()
-			self.disconnectDB()
-			return True
-		
-		except Exception as error:
-			print("Something wrong happen: ", error)
-			self.disconnectDB()
-			return False
+			# query_2 para hacer el insert de los ware_products
+			existsData = list(filter(lambda x: x["isExists"], data.wareData.values())) if not((len(data.wareData) == 1 and None in data.wareData)) else None
+			if existsData:
+				#La parte de update datos para datos ya existentes
+				Data2Update = list(map(lambda x: (x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"], x["loc"],
+									x["dsct"], x["qtyMinimun"], x["isEnabled"], x["idWare"],
+									data.product.getId(), x["idWare"], data.product.getId()), existsData))
+				stmt_update = "update genesisdb.ware_product wp set qtyNew = %s, qtyOld = %s, pvNew = %s, " + \
+					"pvOld = %s, loc = %s, dsct = %s, qtyMinimun = %s, isEnabled = %s, editDate = '" + str(date.today()) + "' " + \
+					"where wp.idWare = %s and wp.idProduct = %s and (select exists(select wp.qtyNew where wp.idWare = %s and wp.idProduct = %s))"
+				self.cursor.executemany(stmt_update, Data2Update)
 
+				#La parte de insert nuevos datos para ware_product
+				Data2Insert = list(map(lambda x: (x["idWare"], data.product.getId(), x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"],
+									x["loc"], x["dsct"], x["qtyMinimun"], x["isEnabled"], x["idWare"], data.product.getId()), existsData))
+				
+				stmt_insert = "insert into genesisdb.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, " + \
+							"qtyMinimun, isEnabled) (select %s, %s, %s, %s, %s, %s, %s, %s, %s, %s where not (select exists(select " + \
+							"genesisdb.ware_product.qtyNew from genesisdb.ware_product where idWare = %s and idProduct = %s)))"
+				self.cursor.executemany(stmt_insert, Data2Insert)
+
+			self.mydb.commit()
+		
+		except mysql.connector.Error as error:
+			print("Error: {}".format(error))
+
+		except Exception as error:
+			print("An exception ocurred:", error)
+		
+		finally:
+			try:
+				if self.mydb.is_connected():
+					self.disconnectDB()
+					return True
+			except:
+				print("No se pudo conectar a DB en getItemData")
+				return False
+
+	def insertNewItemDB(self, data: ware_product = None, currentWare: str = None):
+		#anteriormente se lee el spinbox stock para ver si te tiene que agregar cantidad a nuevo producto
+		if bool(data) and bool(currentWare):
+			#esta parte es para hacer las subconsultas
+			idItemSubQuery = "(select id from genesisdb.item where item = '" + data.product.getItemCategory() + "')" if bool(data.product.getItemCategory()) else None
+			idLanguageSubQuery = "(select id from genesisdb.language where language = '" + data.product.getLang() + "')" if bool(data.product.getLang()) else None
+			
+			# query_1 para hacer el insert principal de product
+			query_1 = "insert into genesisdb.product (id, idItem, isbn, title, autor, publisher, content, " + \
+			"dateOut, idLanguage, pages, edition, cover, width, height) values (%s, %s, %s, '%s', '%s', '%s', %s, %s, %s, %s, %s, %s, %s, %s);" % (str(data.product.getId()), idItemSubQuery, 
+			"'" + data.product.getISBN() + "'" if data.product.getISBN() else "NULL",
+			data.product.getTitle(), data.product.getAutor(), data.product.getPublisher(),
+			"'" + data.product.getContent() + "'" if data.product.getContent() else "NULL",
+			"'" + data.product.getDateOut() + "'" if data.product.getDateOut() else "NULL",
+			idLanguageSubQuery if idLanguageSubQuery else "NULL",
+			str(data.product.getPages()) if data.product.getPages() else "NULL",
+			str(data.product.getEdition()) if data.product.getEdition() else "NULL",
+			str(0 if data.product.getCover() == 1 else 1 if data.product.getCover() == 2 else 0) if data.product.getCover() else "NULL",
+			str(data.product.getWidth()) if data.product.getWidth() else "NULL",
+			str(data.product.getHeight()) if data.product.getHeight() else "NULL")
+			
+			try:
+				self.connectDB()
+				self.cursor.execute(query_1)
+				# query_2 para hacer el insert de los ware_products
+				existsData = list(filter(lambda x: x["isExists"], data.wareData.values())) if not((len(data.wareData) == 1 and not(data.wareData[None]))) else None
+				if existsData:
+					# Data2Tuple = list(map(lambda x: (x["idWare"], str(data.product.getId()), str(x["qtyNew"]), str(x["qtyOld"]), str(x["pvNew"]), str(x["pvOld"]), x["loc"], str(x["dsct"]), str(x["qtyMinimun"]), x["isEnabled"]), existsData))
+					Data2Tuple = list(map(lambda x: (x["idWare"], data.product.getId(), x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"], x["loc"], x["dsct"], x["qtyMinimun"], x["isEnabled"]), existsData))
+					stmt = "insert into genesisdb.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, qtyMinimun, isEnabled) " + \
+					"values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+					self.cursor.executemany(stmt, Data2Tuple)
+				self.mydb.commit()
+				self.disconnectDB()
+				return True
+			
+			except Exception as error:
+				print("Something wrong happen: ", error)
+				self.disconnectDB()
+				return False
+			
 	def getNextCodDB(self):
 		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, i.code, null FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl, null FROM genesisdb.category c UNION SELECT 'ware', `code`, `name`, cast(`isVirtual` as UNSIGNED), w.id FROM genesisdb.ware w where w.enabled = 1;"
 		try:
@@ -152,48 +220,6 @@ class wares_gestor:
 			print("Something wrong happen: ", error)
 			self.disconnectDB()
 			return False, None
-
-	def insertNewItemDB(self, data: ware_product = None, currentWare: str = None):
-		
-		#anteriormente se lee el spinbox stock para ver si te tiene que agregar cantidad a nuevo producto
-		if bool(data) and bool(currentWare):
-			#esta parte es para hacer las subconsultas
-			idItemSubQuery = "(select id from genesisdb.item where item = '" + data.product.getItemCategory() + "')" if bool(data.product.getItemCategory()) else None
-			idLanguageSubQuery = "(select id from genesisdb.language where language = '" + data.product.getLang() + "')" if bool(data.product.getLang()) else None
-			
-			# query_1 para hacer el insert principal de product
-			query_1 = "insert into genesisdb.product (id, idItem, isbn, title, autor, publisher, content, " + \
-			"dateOut, idLanguage, pages, edition, cover, width, height) values (%s, %s, %s, '%s', '%s', '%s', %s, %s, %s, %s, %s, %s, %s, %s);" % (str(data.product.getId()), idItemSubQuery, 
-			"'" + data.product.getISBN() + "'" if data.product.getISBN() else "NULL",
-			data.product.getTitle(), data.product.getAutor(), data.product.getPublisher(),
-			"'" + data.product.getContent() + "'" if data.product.getContent() else "NULL",
-			"'" + data.product.getDateOut() + "'" if data.product.getDateOut() else "NULL",
-			idLanguageSubQuery if idLanguageSubQuery else "NULL",
-			str(data.product.getPages()) if data.product.getPages() else "NULL",
-			str(data.product.getEdition()) if data.product.getEdition() else "NULL",
-			str(0 if data.product.getCover() == 1 else 1 if data.product.getCover() == 2 else 0) if data.product.getCover() else "NULL",
-			str(data.product.getWidth()) if data.product.getWidth() else "NULL",
-			str(data.product.getHeight()) if data.product.getHeight() else "NULL")
-
-			try:
-				self.connectDB()
-				self.cursor.execute(query_1)
-				# query_2 para hacer el insert de los ware_products
-				existsData = list(filter(lambda x: x["isExists"], data.wareData.values())) if not((len(data.wareData) == 1 and not(data.wareData[None]))) else None
-				if existsData:
-					# Data2Tuple = list(map(lambda x: (x["idWare"], str(data.product.getId()), str(x["qtyNew"]), str(x["qtyOld"]), str(x["pvNew"]), str(x["pvOld"]), x["loc"], str(x["dsct"]), str(x["qtyMinimun"]), x["isEnabled"]), existsData))
-					Data2Tuple = list(map(lambda x: (x["idWare"], data.product.getId(), x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"], x["loc"], x["dsct"], x["qtyMinimun"], x["isEnabled"]), existsData))
-					stmt = "insert into genesisdb.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, qtyMinimun, isEnabled) " + \
-					"values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-					self.cursor.executemany(stmt, Data2Tuple)
-				self.mydb.commit()
-				self.disconnectDB()
-				return True
-			
-			except Exception as error:
-				print("Something wrong happen: ", error)
-				self.disconnectDB()
-				return False
 
 # ware_gestor: maneja de items en almacen
 class WareProduct:
@@ -450,7 +476,7 @@ class WareProduct:
 						wareProductLocal.addDataWareProduct(wareName=obj[0], qtyNew=obj[18], qtyOld=obj[19], qtyMinimun=obj[20], pvNew=obj[21], pvOld=obj[22], dsct=obj[23], loc=obj[24], isEnabled=bool(obj[25]), isExists=bool(obj[3]), idWare=obj[1], flag=True, isVirtual=bool(obj[2]))
 					elif bool(obj[0]) and obj[26] == 'lang':
 						languages.append((obj[0], obj[1]))
-			
+		
 		except mysql.connector.Error as error:
 			print("Error: {}".format(error))
 

@@ -281,11 +281,10 @@ class Ui_Dialog(QtWidgets.QDialog):
 
             counter = 0
             pv = 0
-
             if not(None in self.real_table[tmp].wareData) and all(i["pvOld"] == list(self.real_table[tmp].wareData.values())[0]["pvOld"] for i in self.real_table[tmp].wareData.values()):
                 for key in self.real_table[tmp].wareData:
                     if self.real_table[tmp].wareData[key]["isEnabled"]:
-                        counter += int(self.real_table[tmp].wareData[key]["qtyOld"])
+                        counter += int(self.real_table[tmp].wareData[key]["qtyOld"]) if isinstance(self.real_table[tmp].wareData[key]["qtyOld"], str) else self.real_table[tmp].wareData[key]["qtyOld"]
                         pv = self.real_table[tmp].wareData[key]["pvOld"]
 
             if counter > 0 and pv > 0:
@@ -902,7 +901,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.returnedVal = (False, None)
 
         if btnConfirmation and not(self.method):
-
             if len(self.txtISBN.text()) and self.prevData.product.getISBN() != self.txtISBN.text(): 
                 self.prevData.product.setISBN(self.txtISBN.text())
             elif not(len(self.txtISBN.text())):
@@ -953,7 +951,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             elif not(len(self.contentTxtEdit.toPlainText().strip())): self.prevData.product.setContent(None)
             
             objCopied = copy.deepcopy(self.prevData)
-            
+
             if bool(self.wareTableItemData.rowCount()):
                 for index, value in enumerate(self.prevData.wareData):
                     wareName = self.wareTableItemData.verticalHeaderItem(index).text()
@@ -965,9 +963,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                         descuento = self.wareTableItemData.cellWidget(index, 6).value()
                         enabled = True if self.wareTableItemData.cellWidget(index, 1).isChecked() else False
                         exists = True if self.wareTableItemData.cellWidget(index, 0).isChecked() else False
-                        objCopied.addDataWareProduct(wareName=value, 
-                                                        qtyNew=0,
-                                                        qtyOld=0,
+                        objCopied.updateWareFields(wareName=value, 
                                                         qtyMinimun=min,
                                                         pvNew=new,
                                                         pvOld=old,
@@ -977,6 +973,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                                                         loc=loc_,
                                                         idWare=self.prevData.wareData[value]["idWare"],
                                                         isVirtual=self.prevData.wareData[value]["isVirtual"])
+                    
                     elif not(self.wareTableItemData.cellWidget(index, 0).isChecked()) and wareName == value:
                         objCopied.removePairKeyValue(value)
 
@@ -1037,7 +1034,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 
                 elif not(bool(self.wareTableItemData.rowCount())):
                     objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
-                # print(objWareProduct)
                 self.returnedVal = (True, objWareProduct)
             else:
                 QMessageBox.information(self, 'Mensaje', "Llenar los campos obligatorios (*)", QMessageBox.Ok, QMessageBox.Ok)

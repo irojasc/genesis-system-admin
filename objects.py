@@ -248,6 +248,39 @@ class ware_product:
 	def removePairKeyValue(self, key: str = None):
 		if key:
 			self.wareData.pop(key)
+	
+	def updateWareFields(self, wareName: str = None, qtyMinimun: int = None, pvNew: float = None, pvOld: float = None,
+					dsct: int = None, loc: str = None, isEnabled: bool = None, isExists: bool = None, isVirtual: bool = None,
+					idWare: int = None):
+		
+		if wareName:
+			if "qtyNew" in self.wareData[wareName]:
+				try:
+					self.wareData[wareName]["qtyNew"] = self.wareData[wareName]["qtyNew"] + 0
+				except:
+					self.wareData[wareName]["qtyNew"] = 0
+
+			elif not("qtyNew" in self.wareData[wareName]):
+				self.wareData[wareName]["qtyNew"] = 0
+
+			if "qtyOld" in self.wareData[wareName]:
+				try:
+					self.wareData[wareName]["qtyOld"] = self.wareData[wareName]["qtyOld"] + 0
+				except:
+					self.wareData[wareName]["qtyOld"] = 0
+
+			elif not("qtyOld" in self.wareData[wareName]):
+				self.wareData[wareName]["qtyOld"] = 0
+
+			self.wareData[wareName]["qtyMinimun"] = qtyMinimun
+			self.wareData[wareName]["pvNew"] = pvNew
+			self.wareData[wareName]["pvOld"] = pvOld
+			self.wareData[wareName]["dsct"] = dsct
+			self.wareData[wareName]["loc"] = loc
+			self.wareData[wareName]["isEnabled"] = isEnabled
+			self.wareData[wareName]["isExists"] = isExists
+			self.wareData[wareName]["isVirtual"] = isVirtual
+			self.wareData[wareName]["idWare"] = idWare
 
 	def getWareDataLen(self):
 		return len(self.wareData)
