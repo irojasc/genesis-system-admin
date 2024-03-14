@@ -1116,6 +1116,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
             self.wareTableItemData.setRowCount(len(self.prevData.wareData))
 
             for index, i in enumerate(self.prevData.wareData):
+
                 self.wareTableItemData.setVerticalHeaderItem(index, QTableWidgetItem(i))
                 isCurrentWare = (self.wareTableItemData.verticalHeaderItem(index).text() == self.currentWare.cod) if hasattr(self, 'currentWare') else '_'
                 
@@ -1138,7 +1139,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item = QCheckBox(enabled = False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else QCheckBox(enabled = True)
                 item.setStyleSheet("padding-left: 17px;")
                 item.setChecked(self.prevData.wareData[i]['isEnabled']) if 'isEnabled' in self.prevData.wareData[i] else None
-                item.stateChanged.connect(self.second_callback(index, None))
+                item.stateChanged.connect(self.second_callback(i, (self.prevData.wareData[i]["qtyNew"], self.prevData.wareData[i]["qtyOld"])))
                 #cambio
                 None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,1,item)
@@ -1226,7 +1227,6 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
 
                 item = QCheckBox(enabled = False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else QCheckBox(enabled = True)
                 item.setStyleSheet("padding-left: 17px;")
-                item.stateChanged.connect(self.second_callback(index, None))
                 self.wareTableItemData.setCellWidget(index,1,item)
 
                 #virtual = 1, not Vitirual = 0
@@ -1332,8 +1332,9 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.wareTableItemData.cellWidget(row, 6).setEnabled(False)
                 self.wareTableItemData.cellWidget(row, 6).setStyleSheet("QSpinBox{Border: 0;}")
 
-    def secondCheckBoxChanged(self, state, row, isVirtual):
-        pass
+    def secondCheckBoxChanged(self, state: int = None, wareCode: str = None, qtyNewOld: tuple = None):
+        #aqui se tiene que tabajar
+        print(state, wareCode, qtyNewOld)
 
     def locationLineEdit(self, row):
         txtEvaluated = self.wareTableItemData.cellWidget(row, 2).text().upper()
@@ -1404,8 +1405,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def first_callback(self, row, isVirtual):
         return lambda x: self.firstCheckBoxChanged(x, row, isVirtual)
 
-    def second_callback(self, row, isVirtual):
-        return lambda x: self.secondCheckBoxChanged(x, row, isVirtual)
+    def second_callback(self, wareCode, qtyNewOld):
+        return lambda x: self.secondCheckBoxChanged(state=x, wareCode=wareCode, qtyNewOld=qtyNewOld)
 
     def locationLineEditCallBack(self, row):
         return lambda : self.locationLineEdit(row)
