@@ -1139,7 +1139,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item = QCheckBox(enabled = False) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else QCheckBox(enabled = True)
                 item.setStyleSheet("padding-left: 17px;")
                 item.setChecked(self.prevData.wareData[i]['isEnabled']) if 'isEnabled' in self.prevData.wareData[i] else None
-                item.stateChanged.connect(self.second_callback(i, (self.prevData.wareData[i]["qtyNew"], self.prevData.wareData[i]["qtyOld"])))
+                item.toggled.connect(self.second_callback(row=index, wareCode=i, qtyNewOld=(self.prevData.wareData[i]["qtyNew"], self.prevData.wareData[i]["qtyOld"])))
                 #cambio
                 None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,1,item)
@@ -1332,9 +1332,13 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 self.wareTableItemData.cellWidget(row, 6).setEnabled(False)
                 self.wareTableItemData.cellWidget(row, 6).setStyleSheet("QSpinBox{Border: 0;}")
 
-    def secondCheckBoxChanged(self, state: int = None, wareCode: str = None, qtyNewOld: tuple = None):
-        #aqui se tiene que tabajar
-        print(state, wareCode, qtyNewOld)
+    def secondCheckBoxChanged(self, state: int = None, row: int = None, wareCode: str = None, qtyNewOld: tuple = None):
+        #se verifica que los valores qty no sean None
+        if qtyNewOld[0] is not None and qtyNewOld[1] is not None:
+            #se verifica cantidades mayores a 0, tanto para si es para old o para new
+            if (not self.wareTableItemData.cellWidget(row,1).isChecked()) and (qtyNewOld[0] > 0 or qtyNewOld[1] > 0):
+                msg = QMessageBox.information(self, "Advertencia", "Cantidades existentes en almacen.\n>¡Reducir a 0 unidades¡", QMessageBox.Ok)
+                self.wareTableItemData.cellWidget(row,1).setChecked(True)
 
     def locationLineEdit(self, row):
         txtEvaluated = self.wareTableItemData.cellWidget(row, 2).text().upper()
@@ -1405,8 +1409,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def first_callback(self, row, isVirtual):
         return lambda x: self.firstCheckBoxChanged(x, row, isVirtual)
 
-    def second_callback(self, wareCode, qtyNewOld):
-        return lambda x: self.secondCheckBoxChanged(state=x, wareCode=wareCode, qtyNewOld=qtyNewOld)
+    def second_callback(self, row: int = None, wareCode: str = None, qtyNewOld: tuple = None):
+        return lambda x: self.secondCheckBoxChanged(state=x, row=row, wareCode=wareCode, qtyNewOld=qtyNewOld)
 
     def locationLineEditCallBack(self, row):
         return lambda : self.locationLineEdit(row)
