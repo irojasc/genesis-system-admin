@@ -116,7 +116,7 @@ class wares_gestor:
 		query_parameters.append(" width = NULL ") if not(data.product.getWidth()) else query_parameters.append(" width = " + str(data.product.getWidth()))
 		query_parameters.append(" height = NULL ") if not(data.product.getHeight()) else query_parameters.append(" height = " + str(data.product.getHeight()))
 		query_parameters.append(" content = NULL ") if not(data.product.getContent()) else query_parameters.append(" content = '" + data.product.getContent() + "'")
-		query_product = query_product + ", ".join(query_parameters) + " where id = " + str(data.product.getId()) + ";"
+		query_product = query_product + ", ".join(query_parameters) + ", editDate = '" + str(date.today()) + "' where id = " + str(data.product.getId()) + ";"
 		try:
 			self.connectDB()
 			self.cursor.execute(query_product)

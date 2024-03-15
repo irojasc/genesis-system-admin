@@ -321,14 +321,18 @@ class Ui_Dialog(QtWidgets.QDialog):
                 if (validation == "Editar"):
                     #verification: bool, itemReturned(obj): ware_product
                     verification, languages, itemReturned = self.gestWareProduct.getItemDataFromDB(self.real_table[row].product.getId())
-                    isUpdate, data = self.openEditItemDialog(languages=languages ,data=itemReturned) if verification else (None, None)
-                    if isUpdate:
-                        bool_answer, text_answer = self.userValidation()
-                        if text_answer == "acepted" and self.ware_gest.updateDBItem(data) and self.gestWareProduct.updateInnerItem(data):
+                    isUpdate, data, isCancel = self.openEditItemDialog(languages=languages ,data=itemReturned) if verification else (None, None)
+                    
+                    if isUpdate and isCancel == 'salvar':
+                        if self.ware_gest.updateDBItem(data) and self.gestWareProduct.updateInnerItem(data):
                             QMessageBox.question(self, 'Alerta',"Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                             self.txtBusChanged(method=1)
-                        elif text_answer == "denied":
-                            QMessageBox.warning(self, 'Alerta',"Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
+                        
+                    elif isUpdate and isCancel == 'cancelar':
+                        if self.gestWareProduct.updateInnerItem(data):
+                            self.txtBusChanged(method=1)
+                            print("¡inner dataProduct updated!")
+                        
 
     # -----------  user validation  -----------
     def userValidation(self):
@@ -510,7 +514,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                     return tmpData
                 else:
                     del ui_EditDialog
-                    return (False, None)
+                    return (False, None, None)
                 del ui_EditDialog
         else:
             return (False, None)
@@ -520,12 +524,12 @@ class Ui_Dialog(QtWidgets.QDialog):
         # data: str
         isAllowed, data_local = self.ware_gest.getNextCodDB()
         if isAllowed:
-            #Argumento True en ui_EditNewItemDialog cuando se crea un nuevo producto
+            #Argumento True en ui_EditNewItemDialog() cuando se crea un nuevo producto
             with ui_EditNewItemDialog(method=True) as ui_NewItemDialog:
                 ui_NewItemDialog.cleanInputFields(True)
                 ui_NewItemDialog.setDataFields(data=data_local)
                 if ui_NewItemDialog.exec_() == QDialog.Accepted:
-                    validator, dataAfter = ui_NewItemDialog.returnedVal
+                    validator, dataAfter, isCancel = ui_NewItemDialog.returnedVal
                     del ui_NewItemDialog
                     if validator:
                         if self.userValidation()[0]:
@@ -879,11 +883,11 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.code = ""
         self.title = ""
         self.PrevItemPvpOld = ""
-        self.returnedVal = (False, None)
+        self.returnedVal = (False, None, None)
         self.setupUi()
 
     def __del__(self):
-        print("kill me")
+        print("getting out from edit/new form ")
     
     def __enter__(self):
         return self
@@ -894,99 +898,107 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def setCurrentWare(self, currentWare: str = None):
         self.currentWare = currentWare
 
+    def saveDataFieldsAt(self):
+        if len(self.txtISBN.text()) and self.prevData.product.getISBN() != self.txtISBN.text(): 
+            self.prevData.product.setISBN(self.txtISBN.text())
+        elif not(len(self.txtISBN.text())):
+            self.prevData.product.setISBN(None)
+        #title, autor, publisher
+        if bool(self.txtTitle.text()) and self.prevData.product.getTitle() != self.txtTitle.text(): self.prevData.product.setTitle(self.txtTitle.text())
+        if bool(self.txtAutor.text()) and self.prevData.product.getAutor() != self.txtAutor.text(): self.prevData.product.setAutor(self.txtAutor.text())
+        if bool(self.txtPublisher.text()) and self.prevData.product.getPublisher() != self.txtPublisher.text(): self.prevData.product.setPublisher(self.txtPublisher.text())
+
+        #dateOut
+        if (self.dateOutWidget.date().year() != 1752) and self.prevData.product.getDateOut() != self.dateOutWidget.date().toString("yyyy-MM-dd"): 
+            self.prevData.product.setDateOut(self.dateOutWidget.date().toString("yyyy-MM-dd"))
+        elif (self.dateOutWidget.date().year() == 1752): self.prevData.product.setDateOut(None)
+
+        #edition
+        if (self.editionSpinBox.value() != 0) and self.prevData.product.getEdition() != self.editionSpinBox.value():
+            self.prevData.product.setEdition(self.editionSpinBox.value())
+        elif (self.editionSpinBox.value() == 0): self.prevData.product.setEdition(None)
+
+        #pages
+        if (self.pagesSpinBox.value() != 0) and self.prevData.product.getPages() != self.pagesSpinBox.value():
+            self.prevData.product.setPages(self.pagesSpinBox.value())
+        elif (self.pagesSpinBox.value() == 0): self.prevData.product.setPages(None)
+
+        #languages
+        if (self.cmbIdiom.currentIndex() != -1) and self.prevData.product.getLang() != self.cmbIdiom.currentText():
+            self.prevData.product.setLang(self.cmbIdiom.currentText())
+        elif (self.cmbIdiom.currentIndex() == -1): self.prevData.product.setLang(None)
+
+        #cover
+        if (self.cmbCover.currentIndex() != -1) and self.prevData.product.getCover() != self.cmbCover.currentIndex():
+            self.prevData.product.setCover(self.cmbCover.currentIndex())
+        elif (self.cmbCover.currentIndex() == -1): self.prevData.product.setCover(-1)
+
+        #width
+        if (self.widthSpinBox.value() != 0) and self.prevData.product.getWidth() != self.widthSpinBox.value():
+            self.prevData.product.setWidth(self.widthSpinBox.value())
+        elif (self.widthSpinBox.value() == 0): self.prevData.product.setWidth(None)
+
+        #height
+        if (self.heightSpinBox.value() != 0) and self.prevData.product.getHeight() != self.heightSpinBox.value():
+            self.prevData.product.setHeight(self.heightSpinBox.value())
+        elif (self.heightSpinBox.value() == 0): self.prevData.product.setHeight(None)
+
+        #content
+        if len(self.contentTxtEdit.toPlainText().strip()) and self.contentTxtEdit.toPlainText().strip() != self.prevData.product.getContent():
+            self.prevData.product.setContent(self.contentTxtEdit.toPlainText().strip())
+        elif not(len(self.contentTxtEdit.toPlainText().strip())): self.prevData.product.setContent(None)
+
+        objCopied = copy.deepcopy(self.prevData)
+
+        if bool(self.wareTableItemData.rowCount()):
+            for index, value in enumerate(self.prevData.wareData):
+                wareName = self.wareTableItemData.verticalHeaderItem(index).text()
+                if self.wareTableItemData.cellWidget(index, 0).isChecked() and wareName == value:
+                    loc_ = self.wareTableItemData.cellWidget(index,2).text().upper() if self.wareTableItemData.cellWidget(index,2).text() != "" else "SIN UBICACION"
+                    min = self.wareTableItemData.cellWidget(index, 3).value()
+                    new = float(self.wareTableItemData.item(index, 4).text()) if self.wareTableItemData.item(index, 4).text() != "" else 0.0
+                    old = float(self.wareTableItemData.item(index, 5).text()) if self.wareTableItemData.item(index, 5).text() != "" else 0.0
+                    descuento = self.wareTableItemData.cellWidget(index, 6).value()
+                    enabled = True if self.wareTableItemData.cellWidget(index, 1).isChecked() else False
+                    exists = True if self.wareTableItemData.cellWidget(index, 0).isChecked() else False
+                    objCopied.updateWareFields(wareName=value, 
+                                                    qtyMinimun=min,
+                                                    pvNew=new,
+                                                    pvOld=old,
+                                                    dsct=descuento,
+                                                    isEnabled=enabled,
+                                                    isExists=exists,
+                                                    loc=loc_,
+                                                    idWare=self.prevData.wareData[value]["idWare"],
+                                                    isVirtual=self.prevData.wareData[value]["isVirtual"])
+                
+                elif not(self.wareTableItemData.cellWidget(index, 0).isChecked()) and wareName == value:
+                    objCopied.removePairKeyValue(value)
+
+            #si no agrega ningun ware, entonces agrega un unico almacen None
+            if not(bool(objCopied.getWareDataLen())):
+                objCopied.clearWareData()
+                objCopied.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
+            
+        elif not(bool(self.wareTableItemData.rowCount())):
+                objCopied.clearWareData()
+                objCopied.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
+
+
+        return objCopied
+
     def saveEvent(self, btnConfirmation: bool = False):
+        #isCancel sirve para indicar que la operacion es de cancelar solo durante operacione editar
         # se cambia los keys de los diccionarios segun titulos de base de datos
         # self.method True para cuando se crea un nuevo item
         tmp_dict = {}
-        self.returnedVal = (False, None)
 
         if btnConfirmation and not(self.method):
-            if len(self.txtISBN.text()) and self.prevData.product.getISBN() != self.txtISBN.text(): 
-                self.prevData.product.setISBN(self.txtISBN.text())
-            elif not(len(self.txtISBN.text())):
-                self.prevData.product.setISBN(None)
-            #title, autor, publisher
-            if bool(self.txtTitle.text()) and self.prevData.product.getTitle() != self.txtTitle.text(): self.prevData.product.setTitle(self.txtTitle.text())
-            if bool(self.txtAutor.text()) and self.prevData.product.getAutor() != self.txtAutor.text(): self.prevData.product.setAutor(self.txtAutor.text())
-            if bool(self.txtPublisher.text()) and self.prevData.product.getPublisher() != self.txtPublisher.text(): self.prevData.product.setPublisher(self.txtPublisher.text())
-            
-            #dateOut
-            if (self.dateOutWidget.date().year() != 1752) and self.prevData.product.getDateOut() != self.dateOutWidget.date().toString("yyyy-MM-dd"): 
-                self.prevData.product.setDateOut(self.dateOutWidget.date().toString("yyyy-MM-dd"))
-            elif (self.dateOutWidget.date().year() == 1752): self.prevData.product.setDateOut(None)
-            
-            #edition
-            if (self.editionSpinBox.value() != 0) and self.prevData.product.getEdition() != self.editionSpinBox.value():
-                self.prevData.product.setEdition(self.editionSpinBox.value())
-            elif (self.editionSpinBox.value() == 0): self.prevData.product.setEdition(None)
-            
-            #pages
-            if (self.pagesSpinBox.value() != 0) and self.prevData.product.getPages() != self.pagesSpinBox.value():
-                self.prevData.product.setPages(self.pagesSpinBox.value())
-            elif (self.pagesSpinBox.value() == 0): self.prevData.product.setPages(None)
-
-            #languages
-            if (self.cmbIdiom.currentIndex() != -1) and self.prevData.product.getLang() != self.cmbIdiom.currentText():
-                self.prevData.product.setLang(self.cmbIdiom.currentText())
-            elif (self.cmbIdiom.currentIndex() == -1): self.prevData.product.setLang(None)
-
-            #cover
-            if (self.cmbCover.currentIndex() != -1) and self.prevData.product.getCover() != self.cmbCover.currentIndex():
-                self.prevData.product.setCover(self.cmbCover.currentIndex())
-            elif (self.cmbCover.currentIndex() == -1): self.prevData.product.setCover(-1)
-
-            #width
-            if (self.widthSpinBox.value() != 0) and self.prevData.product.getWidth() != self.widthSpinBox.value():
-                self.prevData.product.setWidth(self.widthSpinBox.value())
-            elif (self.widthSpinBox.value() == 0): self.prevData.product.setWidth(None)
-
-            #height
-            if (self.heightSpinBox.value() != 0) and self.prevData.product.getHeight() != self.heightSpinBox.value():
-                self.prevData.product.setHeight(self.heightSpinBox.value())
-            elif (self.heightSpinBox.value() == 0): self.prevData.product.setHeight(None)
-
-            #content
-            if len(self.contentTxtEdit.toPlainText().strip()) and self.contentTxtEdit.toPlainText().strip() != self.prevData.product.getContent():
-                self.prevData.product.setContent(self.contentTxtEdit.toPlainText().strip())
-            elif not(len(self.contentTxtEdit.toPlainText().strip())): self.prevData.product.setContent(None)
-            
-            objCopied = copy.deepcopy(self.prevData)
-
-            if bool(self.wareTableItemData.rowCount()):
-                for index, value in enumerate(self.prevData.wareData):
-                    wareName = self.wareTableItemData.verticalHeaderItem(index).text()
-                    if self.wareTableItemData.cellWidget(index, 0).isChecked() and wareName == value:
-                        loc_ = self.wareTableItemData.cellWidget(index,2).text().upper() if self.wareTableItemData.cellWidget(index,2).text() != "" else "SIN UBICACION"
-                        min = self.wareTableItemData.cellWidget(index, 3).value()
-                        new = float(self.wareTableItemData.item(index, 4).text()) if self.wareTableItemData.item(index, 4).text() != "" else 0.0
-                        old = float(self.wareTableItemData.item(index, 5).text()) if self.wareTableItemData.item(index, 5).text() != "" else 0.0
-                        descuento = self.wareTableItemData.cellWidget(index, 6).value()
-                        enabled = True if self.wareTableItemData.cellWidget(index, 1).isChecked() else False
-                        exists = True if self.wareTableItemData.cellWidget(index, 0).isChecked() else False
-                        objCopied.updateWareFields(wareName=value, 
-                                                        qtyMinimun=min,
-                                                        pvNew=new,
-                                                        pvOld=old,
-                                                        dsct=descuento,
-                                                        isEnabled=enabled,
-                                                        isExists=exists,
-                                                        loc=loc_,
-                                                        idWare=self.prevData.wareData[value]["idWare"],
-                                                        isVirtual=self.prevData.wareData[value]["isVirtual"])
-                    
-                    elif not(self.wareTableItemData.cellWidget(index, 0).isChecked()) and wareName == value:
-                        objCopied.removePairKeyValue(value)
-
-                #si no agrega ningun ware, entonces agrega un unico almacen None
-                if not(bool(objCopied.getWareDataLen())):
-                    objCopied.clearWareData()
-                    objCopied.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
-                
-            elif not(bool(self.wareTableItemData.rowCount())):
-                    objCopied.clearWareData()
-                    objCopied.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
-
-            self.returnedVal = (True, objCopied)
+            bool_answer, text_answer = self.userValidation()
+            if bool_answer and text_answer == 'acepted':
+                self.returnedVal = (True, self.saveDataFieldsAt(), 'salvar')
+            elif not(bool_answer) and text_answer == 'denied':
+                QMessageBox.warning(self, 'Alerta',"Error durante operación", QMessageBox.Ok, QMessageBox.Ok)
         
         elif btnConfirmation and self.method:
         ######
@@ -1034,13 +1046,13 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 
                 elif not(bool(self.wareTableItemData.rowCount())):
                     objWareProduct.addDataWareProduct(wareName=None, qtyNew=None, qtyOld=None, qtyMinimun=None, pvNew=None, pvOld=None, dsct=None, loc="SIN UBICACION", isEnabled=None, isExists=None)
-                self.returnedVal = (True, objWareProduct)
+                self.returnedVal = (True, objWareProduct, None)
             else:
                 QMessageBox.information(self, 'Mensaje', "Llenar los campos obligatorios (*)", QMessageBox.Ok, QMessageBox.Ok)
-                self.returnedVal = (False, None)
+                self.returnedVal = (False, None, None)
         ######
         else:
-            self.returnedVal = (False, None)
+            self.returnedVal = (False, None, None)
 
         self.submitclose() if self.returnedVal[0] else False
     
@@ -1195,6 +1207,8 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,6,item)
       
+            self.returnedVal = (True, self.saveDataFieldsAt(), 'cancelar')
+
         elif bool(self.prevData) and self.method:
             self.dataItems = data["items"]
             self.dataLanguages = data["languages"]
@@ -1418,6 +1432,10 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
     def submitclose(self):
         self.accept()
 
+    def closeEvent(self, event):
+        self.accept()
+        # event.accept()
+    
     def txtEditSignal(self):
         cursor = self.contentTxtEdit.textCursor()
         length_ = len(self.contentTxtEdit.toPlainText())
@@ -1725,6 +1743,25 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.wareTableItemData.setItemDelegateForColumn(4,tmp)
         self.wareTableItemData.setItemDelegateForColumn(5,tmp)
 
+        # -----------  user validation  -----------
+    
+    def userValidation(self):
+        # isPressedOk: True or False
+        # text: content
+        text, isPressedOk = QInputDialog.getText(self, 'Validar usuario', 'Ingrese contraseña', QtWidgets.QLineEdit.Password)
+        if(isPressedOk):
+            with users_gestor() as a_:
+                if a_.checkPSW(text)[0]:
+                    # tmpData = a_.checkPSW(text)[1]
+                    del a_ 
+                    # return tmpData, "acepted"
+                    return True, "acepted"
+                elif not(a_.checkPSW(text)[0]):
+                    del a_ 
+                    return False, "denied"
+        else:
+            return False, "aborted"
+    
     def setupUi(self):
         x_offset = 10
         y_offset = 10
@@ -1760,7 +1797,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.btnCancel = QPushButton("Cancelar", self)
         self.btnCancel.setAutoDefault(False)
         self.btnSave.clicked.connect(lambda: self.saveEvent(True))
-        self.btnCancel.clicked.connect(lambda: self.submitclose())
+        self.btnCancel.clicked.connect(lambda: self.close())
 
         self.main_layout.addWidget(self.tabItem, 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
         self.main_layout.addWidget(self.btnSave, 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
