@@ -237,7 +237,9 @@ class ware_product:
 			dataTemp = {
 				"isVirtual": isVirtual,
 				"isExists": isExists,
-				"idWare": idWare
+				"idWare": idWare,
+				"qtyNew": 0,
+				"qtyOld": 0
 			}
 
 		self.wareData.update({wareName: dataTemp if wareName else None})
