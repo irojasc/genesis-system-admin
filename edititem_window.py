@@ -6,7 +6,6 @@ from gestor import users_gestor
 import copy
 import math
 
-
 class ui_EditNewItemDialog(QtWidgets.QDialog):
     # Type: False: Edit , True: New
     def __init__(self, method: bool = False, currentWare: str = None, parent=None):

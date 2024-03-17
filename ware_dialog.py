@@ -550,6 +550,12 @@ class Ui_Dialog(QtWidgets.QDialog):
                 else:
                     del ui_NewItemDialog
     
+    #esta funcion se utiliza para contrastar dos almacenes segun stock minimos
+    def compareItemWares(self):
+        # FromWare = self.currWare
+        # ToWare =
+        pass
+    
     def loadImage(self):
         row = self.ware_table.currentIndex().row()
         if row >= 0:
@@ -561,8 +567,8 @@ class Ui_Dialog(QtWidgets.QDialog):
                 self.lblImg.setPixmap(QtGui.QPixmap())
                 QMessageBox.information(self, 'Mensaje', "Error para cargar la imagen", QMessageBox.Ok, QMessageBox.Ok)
 
-    # -----------  load_table carga tabla inner desde DB, cuando se presiona icono de Actualizar tabla  -----------
-    def load_table(self, event = None):
+    # -----------  updateWareTable carga tabla inner desde DB, cuando se presiona icono de Actualizar tabla  -----------
+    def updateWareTable(self, event = None):
         #si retorna true debe actualizar la fecha con la ultima actualizada
         if self.gestWareProduct.loadInnerTable(self.WareProdDate):
             self.WareProdDate = datetime.now().date()
@@ -572,14 +578,6 @@ class Ui_Dialog(QtWidgets.QDialog):
         # setea el index antiguo a la tabla actualizada
         self.ware_table.setCurrentCell(row, 0)
         self.actualizar_img(row)
-        # self.loadData()
-        # if self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() != "":
-        #     self.txtBusChanged()
-        # elif self.cmbSearch.currentIndex() == -1 and self.txtSearch.text() == "":
-        #     self.txtBusChanged()
-        # elif self.cmbSearch.currentIndex() != -1 and self.txtSearch.text() == "":
-        #     self.ware_table.setCurrentCell(0, 0)
-        #     self.actualizar_img(0)
 
     def setupUi(self):
         self.setObjectName("Dialog")
@@ -632,6 +630,39 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.cmbSearch.setFont(font)
         self.cmbSearch.setObjectName("cmbSearch")
         self.cmbSearch.currentIndexChanged.connect(self.CmbIndexChanged)
+        
+        # -----------  compareBox TwoWares Configuration  -----------
+        self.compare_Frame = QtWidgets.QGroupBox(self.top_frame)
+        self.compare_Frame.setGeometry(QtCore.QRect(532, 25, 87, 51))
+        font = QFont("Open Sans Semibold", 9, 65, False)
+        self.compare_Frame.setFont(font)
+        self.compare_Frame.setPalette(getPalette())
+        self.compare_Frame.setObjectName("compare_Frame")
+
+        # -----------  label wareFrom Compare  -----------
+        self.lblWareFrom = QtWidgets.QLabel(self.compare_Frame)
+        self.lblWareFrom.setGeometry(QtCore.QRect(5,24,20,20))
+        self.lblWareFrom.setStyleSheet("background-color: rgba(255, 255, 255, 0); font-weight: bold;")
+        self.lblWareFrom.setText("ALYZ")
+        self.lblWareFrom.adjustSize()
+        self.lblWareFrom.setPalette(getPalette())
+        self.lblWareFrom.setObjectName("lblWareFrom")
+
+        # -----------  label wareTo Compare  -----------
+        self.lblWareTo = QtWidgets.QLabel(self.compare_Frame)
+        self.lblWareTo.setGeometry(QtCore.QRect(54,24,20,20))
+        self.lblWareTo.setStyleSheet("background-color: rgba(255, 255, 255, 0); font-weight: bold;")
+        self.lblWareTo.setText("ALYZ")
+        self.lblWareTo.adjustSize()
+        self.lblWareTo.setPalette(getPalette())
+        self.lblWareTo.setObjectName("lblWareTo")
+        
+        # -----------  comparecheckBox Configuration  -----------
+        self.compareCheckBox = QtWidgets.QCheckBox(self.compare_Frame)
+        self.compareCheckBox.setGeometry(38, 24, 13, 13)
+        self.compareCheckBox.setStyleSheet("background-color: rgb(170, 255, 0);")
+        self.compareCheckBox.setObjectName("compareCheckBox")
+        # self.compareCheckBox.toggled.connect(self.checkBoxChangedAction)
 
         # -----------  label in/out configuration  -----------
         self.lblInOut = QtWidgets.QLabel(self.top_frame)
@@ -663,7 +694,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.lblLoadTable.setPixmap(QtGui.QPixmap(ROOT + "imgs/load_.png"))
         self.lblLoadTable.setScaledContents(True)
         self.lblLoadTable.setObjectName("lblLoadTable")
-        self.lblLoadTable.mousePressEvent = self.load_table
+        self.lblLoadTable.mousePressEvent = self.updateWareTable
         self.lblLoadTable.setCursor(Qt.PointingHandCursor)
 
 
@@ -832,6 +863,8 @@ class Ui_Dialog(QtWidgets.QDialog):
             _translate = QtCore.QCoreApplication.translate
             self.setWindowTitle(_translate("Dialog", "Genesis - [Museo del libro]"))
             self.search_box.setTitle(_translate("Dialog", "Cuadro de busqueda"))
+            self.compare_Frame.setTitle(_translate("Dialog", "Comparar"))
+            self.compare_Frame.setAlignment(5)
             self.cmbSearch.setItemText(1, _translate("Dialog", "cod"))
             self.cmbSearch.setItemText(2, _translate("Dialog", "isbn"))
             self.cmbSearch.setItemText(3, _translate("Dialog", "titulo"))
@@ -1069,17 +1102,21 @@ if __name__ == '__main__':
     #     "autor": "INCA GARCILASO DE VEGA",
     #     "publisher": "EL LECTOR",
     #     "price": "65.0"}
-    ui = ui_EditNewItemDialog(True)
-    # ui = Ui_Dialog()
+    # ui = ui_EditNewItemDialog(True)
+    ui = Ui_Dialog()
+    ui.setupUi()
+    ui.retranslateUi()
     # ui.setDataFields(data)
     # ui.setDataFields("GN_2025")
-    ui.cleanInputFields(True)
+    # ui.cleanInputFields(True)
     # ui = ui_OperationDialog(Dialog)
     # ui.setItemData("", "")
     # ui.init_condition()
     # ui.showWindow()
-    ui.show_window()
+    ui.show()
     # ui.exec_()
     sys.exit(app.exec_())
+
+    
 
 
