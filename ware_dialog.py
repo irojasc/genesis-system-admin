@@ -72,6 +72,19 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.cmbWarePrice.addItems([self.currWare.cod] + self.getRestWare(True)) if self.ownUsers.auth["ckWarePrice"] else self.cmbWarePrice.addItems([self.currWare.cod])
         self.cmbWarePrice.setEnabled(True) if self.ownUsers.auth["ckWarePrice"] else self.cmbWarePrice.setEnabled(False)
         self.cmbSearch.setCurrentIndex(-1)
+        
+        #activa condiciones iniciales fuera del proceso comparativo
+        self.search_box.setEnabled(True)
+        self.compareCheckBox.setChecked(False)
+
+        self.lblWareFrom.setText(self.currWare.getWareCode())
+        self.lblWareFrom.adjustSize()
+        self.lblWareFrom.move( 34 - self.lblWareFrom.width(), self.lblWareFrom.y())
+
+        self.lblWareTo.setText(self.cmbWares.currentText())
+        self.lblWareTo.adjustSize()
+        self.lblWareTo.move(55, self.lblWareTo.y())
+
         # las dos lineas de abajo actualizan los datos de precio con el item de la primera fila
         # self.txtBusChanged() es una funcion que actua segun las condiciones de los inputs
         self.txtBusChanged()
@@ -391,7 +404,8 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.ware_table.horizontalHeaderItem(6).setText("")
         elif self.cmbWares.currentIndex() != -1:
             self.ware_table.horizontalHeaderItem(6).setText("[" + self.cmbWares.currentText() + "]")
-            #self.seColumn = str(self.cmbWares.currentText())
+            self.lblWareTo.setText(self.cmbWares.currentText())
+            self.lblWareTo.adjustSize()
             if self.ware_table.selectedIndexes() != []:
                 #method 1: converva el current selected index
                 self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
@@ -552,9 +566,26 @@ class Ui_Dialog(QtWidgets.QDialog):
     
     #esta funcion se utiliza para contrastar dos almacenes segun stock minimos
     def compareItemWares(self):
-        # FromWare = self.currWare
-        # ToWare =
-        pass
+        
+        if self.compareCheckBox.isChecked():
+            boolValidation, textAnswer = self.userValidation()
+
+            if boolValidation and textAnswer == 'acepted':
+                QMessageBox.information(self, 'Mensaje', "Usuario Validado", QMessageBox.Ok, QMessageBox.Ok)
+                self.txtSearch.setText("")
+                self.cmbSearch.setCurrentIndex(-1)
+                self.search_box.setEnabled(False)
+                self.updateWareTable(updWareTableAfterInner=False)
+
+            elif not boolValidation and textAnswer == 'denied':
+                QMessageBox.information(self, 'Mensaje', "Usuario Denegado", QMessageBox.Ok, QMessageBox.Ok)
+                self.compareCheckBox.setChecked(False)
+            elif not boolValidation and textAnswer == 'aborted':
+                QMessageBox.information(self, 'Mensaje', "Operacion abortada", QMessageBox.Ok, QMessageBox.Ok)
+                self.compareCheckBox.setChecked(False)
+        elif not self.compareCheckBox.isChecked():
+            self.search_box.setEnabled(True)
+
     
     def loadImage(self):
         row = self.ware_table.currentIndex().row()
@@ -568,16 +599,19 @@ class Ui_Dialog(QtWidgets.QDialog):
                 QMessageBox.information(self, 'Mensaje', "Error para cargar la imagen", QMessageBox.Ok, QMessageBox.Ok)
 
     # -----------  updateWareTable carga tabla inner desde DB, cuando se presiona icono de Actualizar tabla  -----------
-    def updateWareTable(self, event = None):
+    def updateWareTable(self, event = None, updWareTableAfterInner: bool = True):
         #si retorna true debe actualizar la fecha con la ultima actualizada
         if self.gestWareProduct.loadInnerTable(self.WareProdDate):
             self.WareProdDate = datetime.now().date()
+            if updWareTableAfterInner:
+                self.txtBusChanged(method=1)
+
         # guarda el active index antiguo
-        row = self.ware_table.currentIndex().row()
-        self.txtBusChanged(method=1, keepCurrentIndex=row)
+        # row = self.ware_table.currentIndex().row()
+        # self.txtBusChanged(method=1, keepCurrentIndex=row)
         # setea el index antiguo a la tabla actualizada
-        self.ware_table.setCurrentCell(row, 0)
-        self.actualizar_img(row)
+        # self.ware_table.setCurrentCell(row, 0)
+        # self.actualizar_img(row)
 
     def setupUi(self):
         self.setObjectName("Dialog")
@@ -633,7 +667,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         
         # -----------  compareBox TwoWares Configuration  -----------
         self.compare_Frame = QtWidgets.QGroupBox(self.top_frame)
-        self.compare_Frame.setGeometry(QtCore.QRect(532, 25, 87, 51))
+        self.compare_Frame.setGeometry(QtCore.QRect(532, 25, 88, 51))
         font = QFont("Open Sans Semibold", 9, 65, False)
         self.compare_Frame.setFont(font)
         self.compare_Frame.setPalette(getPalette())
@@ -641,18 +675,15 @@ class Ui_Dialog(QtWidgets.QDialog):
 
         # -----------  label wareFrom Compare  -----------
         self.lblWareFrom = QtWidgets.QLabel(self.compare_Frame)
-        self.lblWareFrom.setGeometry(QtCore.QRect(5,24,20,20))
+        self.lblWareFrom.setGeometry(QtCore.QRect(38,24,20,20))
         self.lblWareFrom.setStyleSheet("background-color: rgba(255, 255, 255, 0); font-weight: bold;")
-        self.lblWareFrom.setText("ALYZ")
-        self.lblWareFrom.adjustSize()
         self.lblWareFrom.setPalette(getPalette())
         self.lblWareFrom.setObjectName("lblWareFrom")
 
         # -----------  label wareTo Compare  -----------
         self.lblWareTo = QtWidgets.QLabel(self.compare_Frame)
-        self.lblWareTo.setGeometry(QtCore.QRect(54,24,20,20))
+        self.lblWareTo.setGeometry(QtCore.QRect(52,24,20,20))
         self.lblWareTo.setStyleSheet("background-color: rgba(255, 255, 255, 0); font-weight: bold;")
-        self.lblWareTo.setText("ALYZ")
         self.lblWareTo.adjustSize()
         self.lblWareTo.setPalette(getPalette())
         self.lblWareTo.setObjectName("lblWareTo")
@@ -662,7 +693,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.compareCheckBox.setGeometry(38, 24, 13, 13)
         self.compareCheckBox.setStyleSheet("background-color: rgb(170, 255, 0);")
         self.compareCheckBox.setObjectName("compareCheckBox")
-        # self.compareCheckBox.toggled.connect(self.checkBoxChangedAction)
+        self.compareCheckBox.toggled.connect(self.compareItemWares)
 
         # -----------  label in/out configuration  -----------
         self.lblInOut = QtWidgets.QLabel(self.top_frame)

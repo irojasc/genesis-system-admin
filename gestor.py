@@ -302,7 +302,6 @@ class WareProduct:
 		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id left join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem order by p.id asc;") if updateDate == None else ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id left join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem where p.creationDate >= '{0}' or p.editDate >= '{0}' or wp.editDate >= '{0}' or p.creationDate >= '{0}' order by p.id asc;".format(updateDate))
 
 		try:
-			# self.innerWareList.clear()
 			self.connect_db()
 			self.cursor.execute(query)
 			WareProductsRows = self.cursor.fetchall()

@@ -298,3 +298,6 @@ class ware:
 		self.id = id
 		self.cod = cod
 		self.auth = auth
+
+	def getWareCode(self) -> str:
+		return self.cod
