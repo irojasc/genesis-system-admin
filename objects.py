@@ -287,6 +287,9 @@ class ware_product:
 	def getWareDataLen(self):
 		return len(self.wareData)
 
+	def getWareData(self):
+		return self.wareData
+	
 class ware:
 	def __repr__(self):
 		return "{{id: {0}, cod: {1}, auth: {2}}}".format(self.id, self.cod, self.auth)

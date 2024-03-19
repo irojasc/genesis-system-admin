@@ -205,7 +205,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             ret = QMessageBox.information(self, 'Aviso', "Ingresar criterio de busqueda")
 
         elif str(self.cmbSearch.currentText()) == "" and self.txtSearch.text() == "":
-            # self.loadData(): para copiar toda la lista inner to frond
+            # self.buscar(): para copiar toda la lista inner to frond
             if self.buscar("main") > 0:
                 #lstBookIndex: la posicion final del ultimo item de la categoria libros
                 lstBookIndex = self.loadData()
@@ -571,21 +571,39 @@ class Ui_Dialog(QtWidgets.QDialog):
             boolValidation, textAnswer = self.userValidation()
 
             if boolValidation and textAnswer == 'acepted':
-                QMessageBox.information(self, 'Mensaje', "Usuario Validado", QMessageBox.Ok, QMessageBox.Ok)
+                # QMessageBox.information(self, 'Mensaje', "Usuario Validado", QMessageBox.Ok, QMessageBox.Ok)
                 self.txtSearch.setText("")
                 self.cmbSearch.setCurrentIndex(-1)
+                self.lblNewItem.setEnabled(False)
+                self.lblLoadTable.setEnabled(False)
                 self.search_box.setEnabled(False)
+                self.ware_table.blockSignals(True)
                 self.updateWareTable(updWareTableAfterInner=False)
+                self.real_table = self.gestWareProduct.compareTwoItemsWare(FromWare=self.lblWareFrom.text(), ToWare=self.lblWareTo.text())
+                self.loadData()
+                self.ware_table.setCurrentCell(0, 0)
+                self.actualizar_img(0)
+                self.cmbWares.setEnabled(False)
 
             elif not boolValidation and textAnswer == 'denied':
                 QMessageBox.information(self, 'Mensaje', "Usuario Denegado", QMessageBox.Ok, QMessageBox.Ok)
+                self.compareCheckBox.blockSignals(True)
                 self.compareCheckBox.setChecked(False)
+                self.compareCheckBox.blockSignals(False)
+            
             elif not boolValidation and textAnswer == 'aborted':
                 QMessageBox.information(self, 'Mensaje', "Operacion abortada", QMessageBox.Ok, QMessageBox.Ok)
+                self.compareCheckBox.blockSignals(True)
                 self.compareCheckBox.setChecked(False)
+                self.compareCheckBox.blockSignals(False)
+        
         elif not self.compareCheckBox.isChecked():
             self.search_box.setEnabled(True)
-
+            self.lblNewItem.setEnabled(True)
+            self.lblLoadTable.setEnabled(True)
+            self.ware_table.blockSignals(False)
+            self.cmbWares.setEnabled(True)
+            self.txtBusChanged(method=0)
     
     def loadImage(self):
         row = self.ware_table.currentIndex().row()

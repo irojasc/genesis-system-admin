@@ -491,6 +491,18 @@ class WareProduct:
 				print("No se pudo conectar a DB en getItemData")
 				return False, None, None
 
+	def compareEvaluation(self, wareDataItem, fromWare, toWare):
+		#falta el tema del habilitado y desabilitado
+		if (fromWare in wareDataItem) and (toWare in wareDataItem) and ('isEnabled' in wareDataItem[fromWare]) and ('isEnabled' in wareDataItem[toWare]):
+			if (wareDataItem[fromWare]["qtyNew"] > wareDataItem[fromWare]["qtyMinimun"]) and (wareDataItem[toWare]["qtyNew"] <= wareDataItem[toWare]["qtyMinimun"]) and bool(wareDataItem[fromWare]['isEnabled']) and bool(wareDataItem[toWare]['isEnabled']):
+				return True
+		else:
+			return False
+	
+	def compareTwoItemsWare(self, FromWare: str = None, ToWare: str = None) -> list:
+		tmp_list = list(filter(lambda x: self.compareEvaluation(wareDataItem=x.getWareData(), fromWare=FromWare, toWare=ToWare), self.innerWareList))
+		return tmp_list
+
 class users_gestor:
 	_pswHashed = "Ivan Rojas"
 
