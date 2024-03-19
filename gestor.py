@@ -501,6 +501,8 @@ class WareProduct:
 	
 	def compareTwoItemsWare(self, FromWare: str = None, ToWare: str = None) -> list:
 		tmp_list = list(filter(lambda x: self.compareEvaluation(wareDataItem=x.getWareData(), fromWare=FromWare, toWare=ToWare), self.innerWareList))
+		dict_form = list(map(lambda x: {'loc': x.wareData[FromWare]['loc'], 'cod': x.product.getPrdCode(), 'isbn': x.product.getISBN(), 'title': x.product.getTitle(), 'qtyNew': 1, 'qtyOld': None}, tmp_list))
+		print(dict_form)
 		return tmp_list
 
 class users_gestor:

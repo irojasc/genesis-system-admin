@@ -23,6 +23,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         super(Ui_inoutDialog, self).__init__(parent)
         self.ownUsers = data_users
         self.ownWares = data_wares
+        #mainList es la lista de todos los items activos
         self.mainList = []
         self.newItems_table = []
         self.oldItems_table = []
@@ -51,12 +52,14 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         #self.cmbCriterio.setCurrentIndex(-1)
         #self.show()
 
-    def init_condition(self):
+    def init_condition(self, isTransfer: bool = False):
         # -----------  set item conditions  -----------
         # ----------- condiciones inicales para ubicacion -----------
         self.txtProductLocation.setEnabled(False)
         self.txtProductLocation.clear()
         self.checkBox.setChecked(False)
+        
+
 
         self.newItems_table.clear()
         self.oldItems_table.clear()
@@ -83,6 +86,10 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.tabWidget.blockSignals(True)
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget.blockSignals(False)
+        if isTransfer:
+            self.update_table()
+            self.New_tableWidget.setCurrentCell(0, 0)
+            self.updateTotalItems()
 
     def add_item(self, cod: str = ""): #Se envia el codigo del item que se quiere agregar a lista nuevos
         highlightedRow = 0
@@ -399,6 +406,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     def onTabChanged(self, index):
         self.updateTotalItems()
+
+
 
     @property
     def returned_val(self):
