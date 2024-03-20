@@ -52,15 +52,12 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         #self.cmbCriterio.setCurrentIndex(-1)
         #self.show()
 
-    def init_condition(self, isTransfer: bool = False):
+    def init_condition(self, isTransfer: bool = False, preSelectedItems: list = None, DestinationWare: str = None):
         # -----------  set item conditions  -----------
         # ----------- condiciones inicales para ubicacion -----------
         self.txtProductLocation.setEnabled(False)
         self.txtProductLocation.clear()
         self.checkBox.setChecked(False)
-        
-
-
         self.newItems_table.clear()
         self.oldItems_table.clear()
         self.cantItems = 0
@@ -86,7 +83,18 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.tabWidget.blockSignals(True)
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget.blockSignals(False)
+        self.lblWareDestination.setVisible(False)
         if isTransfer:
+            self.gbLocation.setVisible(False)
+            self.checkBox.setVisible(False)
+            self.txtProductLocation.setVisible(False)
+            self.lblLocationAdvice.setVisible(False)
+            self.cmbOperacion.setVisible(False)
+            self.lblWareDestination.setVisible(True)
+            self.lblWareDestination.setText("ALMACEN DESTINO:\n>%s"%(DestinationWare)) if DestinationWare else False
+            self.gbBottom.setFixedWidth(110)
+            self.btnAceptar.setText("Trasladar")
+            self.newItems_table = preSelectedItems if bool(preSelectedItems) else []
             self.update_table()
             self.New_tableWidget.setCurrentCell(0, 0)
             self.updateTotalItems()
@@ -354,7 +362,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.tabWidget.setTabText(0, "NUEVO (%d)" % self.cantItems) if not(self.tabWidget.currentIndex()) else self.tabWidget.setTabText(1, "SEGUNDA (%d)" % self.cantItems)
         self.lblCantidadTitulos.setText("Titulos: %d" % self.cantTitles)
 
-    def aceptarEvent(self,event):
+    def acceptPressed(self,event):
         if event.button() == QtCore.Qt.LeftButton:
             if self.cmbOperacion.currentIndex() != -1:
                 self.operacion = "aceptar"
@@ -392,7 +400,6 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                 self.Old_tableWidget.clearContents()
                 self.Old_tableWidget.setRowCount(0)
                 self.generalFlag = False
-                self.accept()
                 event.accept()
             else:
                 event.ignore()
@@ -406,8 +413,6 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     def onTabChanged(self, index):
         self.updateTotalItems()
-
-
 
     @property
     def returned_val(self):
@@ -461,32 +466,6 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         #self.txtBusqueda.mousePressEvent = self.holaMundo
         self.txtBusqueda.textChanged.connect(self.txtBusquedaChanged)
         self.txtBusqueda.keyPressEvent = self.txtbusquedaAcept
-
-        # -----------  btnBuscar configuration  -----------
-        #self.btnBuscar = QtWidgets.QPushButton(self.gbCriterio)
-        #self.btnBuscar.setGeometry(QtCore.QRect(390, 23, 71, 30))
-        #font = QtGui.QFont()
-        #font.setFamily("Open Sans Semibold")
-        #font.setPointSize(10)
-        #font.setBold(True)
-        #font.setWeight(75)
-        #self.btnBuscar.setFont(font)
-        #self.btnBuscar.setStyleSheet("background-color: rgb(240, 240, 240);")
-        #self.btnBuscar.setObjectName("btnBuscar")
-        #self.btnBuscar.clicked.connect(self.btnBuscarEvent)
-
-        #self.btnBuscar.clicked.connect(self.btnBuscarEvent)
-
-        #self.cmbCriterio = QtWidgets.QComboBox(self.gbCriterio)
-        #self.cmbCriterio.setGeometry(QtCore.QRect(20, 23, 141, 30))
-        #self.cmbCriterio.setStyleSheet("background-color: rgb(170, 255, 0);")
-        #font = QFont()
-        #font.setFamily("Open Sans Semibold")
-        #font.setPointSize(10)
-        #font.setBold(True)
-        #font.setWeight(75)
-        #self.cmbCriterio.setFont(font)
-        #self.cmbCriterio.setObjectName("cmbCriterio")
 
         # -----------  qlist configuration  -----------
         self.searchList = QtWidgets.QListWidget(self)
@@ -634,7 +613,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.btnAceptar.setStyleSheet("background-color: rgb(240, 240, 240);")
         self.btnAceptar.setObjectName("btnAceptar")
         self.btnAceptar.setAutoExclusive(True)
-        self.btnAceptar.mousePressEvent = self.aceptarEvent
+        self.btnAceptar.mousePressEvent = self.acceptPressed
 
         # -----------  QComboBox configuration  -----------
         self.cmbOperacion = QtWidgets.QComboBox(self.gbBottom)
@@ -674,6 +653,18 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.txtProductLocation.setClearButtonEnabled(True)
         self.txtProductLocation.setPlaceholderText("Nueva Ubicación de Todo")
         self.txtProductLocation.setObjectName("txtProductLocation")
+
+        # -----------  Destination Ware Name  -----------
+        font = QFont("Calibri")
+        font.setPointSize(9)
+        font.setBold(True)
+        font.setFamily("Open Sans Semibold")
+        self.lblWareDestination = QtWidgets.QLabel(self.frame)
+        self.lblWareDestination.setGeometry(QtCore.QRect(130, 8, 145, 35))
+        self.lblWareDestination.setFont(font)
+        self.lblWareDestination.setStyleSheet("QLabel{background-color: green; color: rgb(255,255,255);}")
+        self.lblWareDestination.setWordWrap(True)
+        self.lblWareDestination.setObjectName("lblWareDestination")
 
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -860,7 +851,6 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.gbCriterio.setFont(font)
         self.gbBottom.setPalette(palette)
         self.gbBottom.setFont(font)
-
 
 
 if __name__ == '__main__':

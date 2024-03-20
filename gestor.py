@@ -493,6 +493,7 @@ class WareProduct:
 
 	def compareEvaluation(self, wareDataItem, fromWare, toWare):
 		#falta el tema del habilitado y desabilitado
+		#la comparacion solo se realiza con lo items nuevos, ¡NO APLICA PARA ANTIGUOS!
 		if (fromWare in wareDataItem) and (toWare in wareDataItem) and ('isEnabled' in wareDataItem[fromWare]) and ('isEnabled' in wareDataItem[toWare]):
 			if (wareDataItem[fromWare]["qtyNew"] > wareDataItem[fromWare]["qtyMinimun"]) and (wareDataItem[toWare]["qtyNew"] <= wareDataItem[toWare]["qtyMinimun"]) and bool(wareDataItem[fromWare]['isEnabled']) and bool(wareDataItem[toWare]['isEnabled']):
 				return True
@@ -501,9 +502,8 @@ class WareProduct:
 	
 	def compareTwoItemsWare(self, FromWare: str = None, ToWare: str = None) -> list:
 		tmp_list = list(filter(lambda x: self.compareEvaluation(wareDataItem=x.getWareData(), fromWare=FromWare, toWare=ToWare), self.innerWareList))
-		dict_form = list(map(lambda x: {'loc': x.wareData[FromWare]['loc'], 'cod': x.product.getPrdCode(), 'isbn': x.product.getISBN(), 'title': x.product.getTitle(), 'qtyNew': 1, 'qtyOld': None}, tmp_list))
-		print(dict_form)
-		return tmp_list
+		data_tranfer = list(map(lambda x: {'loc': x.wareData[FromWare]['loc'], 'cod': x.product.getPrdCode(), 'isbn': x.product.getISBN(), 'title': x.product.getTitle(), 'qtyNew': 1, 'qtyOld': None}, tmp_list))
+		return (tmp_list, data_tranfer) if bool(tmp_list) and bool(data_tranfer) else (None, None)
 
 class users_gestor:
 	_pswHashed = "Ivan Rojas"

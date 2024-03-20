@@ -40,6 +40,9 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.currWare = currentWare
             self.restWares = restWare
             self.WareProdDate = WareProdDate
+            self.transferMode = False
+            #esta variable es la lista de productos que pasan a inout dialog como preselecionados
+            self.data_transfer = None
             self.setupUi()
             # -----------  cargar datos en tabla  -----------
             self.gestWareProduct.loadInnerTable() ##para cargar la tabla principal del gestor
@@ -376,15 +379,31 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.top_frame.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0.298507 rgba(22, 136, 126, 255), stop:1 rgba(56, 110, 142, 255));")
             self.frame_2.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0.298507 rgba(22, 136, 126, 255), stop:1 rgba(56, 110, 142, 255));")
 
-    def inout_operation(self,event): # funcion para abrir el dialog in/out
+    def inout_operation(self, event): # funcion para abrir el dialog in/out
         if self.ownUsers.auth["InOutProduct"]:
             self.change_state("in/out") # lo que hace esto es cambiar el color de waredialog cuando pasa a ingreso/salida
              
             with Ui_inoutDialog(self.ownUsers, self.currWare, self.dialog) as ui_dialog:
-                # separar solo items activos y enviar a in/out form
-                result_books = list(filter(lambda x: (self.currWare.cod in x.wareData) and (x.wareData[self.currWare.cod]["isEnabled"]), self.gestWareProduct.innerWareList.copy()))
-                ui_dialog.mainList = result_books.copy()
-                ui_dialog.init_condition()
+      
+                #Si es en modo traspaso
+                if self.transferMode:
+                    result_books = list(filter(lambda x: 
+                    (self.currWare.cod in x.wareData) and 
+                    (x.wareData[self.currWare.cod]["isEnabled"]) and 
+                    (self.cmbWares.currentText() in x.wareData) and
+                    (x.wareData[self.cmbWares.currentText()]["isEnabled"])
+                    , self.gestWareProduct.innerWareList.copy()))
+                    ui_dialog.mainList = result_books.copy()
+                    
+                    if QMessageBox.Ok == QMessageBox.question(self, 'Consulta',"¿Desea cargar items preseleccionados?", QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok):
+                        ui_dialog.init_condition(isTransfer=True, preSelectedItems=self.data_transfer, DestinationWare=self.cmbWares.currentText())
+                    else:
+                        ui_dialog.init_condition(isTransfer=True, preSelectedItems=None, DestinationWare=self.cmbWares.currentText())
+                else:
+                    # separar solo items activos y enviar a in/out form
+                    result_books = list(filter(lambda x: (self.currWare.cod in x.wareData) and (x.wareData[self.currWare.cod]["isEnabled"]), self.gestWareProduct.innerWareList.copy()))
+                    ui_dialog.mainList = result_books.copy()
+                    ui_dialog.init_condition()
 
                 if ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     self.change_state("ware")
@@ -394,6 +413,8 @@ class Ui_Dialog(QtWidgets.QDialog):
                         self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
                         del ui_dialog
                 else:
+                    self.change_state("ware")
+                    self.compareCheckBox.setChecked(False)
                     del ui_dialog
 
         else:
@@ -572,18 +593,20 @@ class Ui_Dialog(QtWidgets.QDialog):
 
             if boolValidation and textAnswer == 'acepted':
                 # QMessageBox.information(self, 'Mensaje', "Usuario Validado", QMessageBox.Ok, QMessageBox.Ok)
+                self.lblInOut.setPixmap(QtGui.QPixmap(ROOT + "imgs/move_items.png"))
                 self.txtSearch.setText("")
                 self.cmbSearch.setCurrentIndex(-1)
                 self.lblNewItem.setEnabled(False)
                 self.lblLoadTable.setEnabled(False)
                 self.search_box.setEnabled(False)
                 self.ware_table.blockSignals(True)
+                self.cmbWares.setEnabled(False)
                 self.updateWareTable(updWareTableAfterInner=False)
-                self.real_table = self.gestWareProduct.compareTwoItemsWare(FromWare=self.lblWareFrom.text(), ToWare=self.lblWareTo.text())
+                self.real_table, self.data_transfer = self.gestWareProduct.compareTwoItemsWare(FromWare=self.lblWareFrom.text(), ToWare=self.lblWareTo.text())
                 self.loadData()
                 self.ware_table.setCurrentCell(0, 0)
                 self.actualizar_img(0)
-                self.cmbWares.setEnabled(False)
+                self.transferMode = True
 
             elif not boolValidation and textAnswer == 'denied':
                 QMessageBox.information(self, 'Mensaje', "Usuario Denegado", QMessageBox.Ok, QMessageBox.Ok)
@@ -598,11 +621,14 @@ class Ui_Dialog(QtWidgets.QDialog):
                 self.compareCheckBox.blockSignals(False)
         
         elif not self.compareCheckBox.isChecked():
+            self.lblInOut.setPixmap(QtGui.QPixmap(ROOT + "imgs/in_out.png"))
             self.search_box.setEnabled(True)
             self.lblNewItem.setEnabled(True)
             self.lblLoadTable.setEnabled(True)
             self.ware_table.blockSignals(False)
             self.cmbWares.setEnabled(True)
+            self.transferMode = False
+            self.data_transfer = None
             self.txtBusChanged(method=0)
     
     def loadImage(self):
