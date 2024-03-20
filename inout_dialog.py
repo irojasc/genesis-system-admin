@@ -23,6 +23,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         super(Ui_inoutDialog, self).__init__(parent)
         self.ownUsers = data_users
         self.ownWares = data_wares
+        self.isTransfer = False
         #mainList es la lista de todos los items activos
         self.mainList = []
         self.newItems_table = []
@@ -53,6 +54,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         #self.show()
 
     def init_condition(self, isTransfer: bool = False, preSelectedItems: list = None, DestinationWare: str = None):
+        self.isTransfer = isTransfer
         # -----------  set item conditions  -----------
         # ----------- condiciones inicales para ubicacion -----------
         self.txtProductLocation.setEnabled(False)
@@ -84,7 +86,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget.blockSignals(False)
         self.lblWareDestination.setVisible(False)
-        if isTransfer:
+        if self.isTransfer:
             self.gbLocation.setVisible(False)
             self.checkBox.setVisible(False)
             self.txtProductLocation.setVisible(False)
@@ -364,14 +366,18 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     def acceptPressed(self,event):
         if event.button() == QtCore.Qt.LeftButton:
-            if self.cmbOperacion.currentIndex() != -1:
-                self.operacion = "aceptar"
-                #este metodo close envia la operacion al metodo closeEvent
-                self.close() 
+            if not self.isTransfer:
+                if self.cmbOperacion.currentIndex() != -1:
+                    self.operacion = "aceptar"
+                    #este metodo close envia la operacion al metodo closeEvent
+                    self.close() 
+                else:
+                    ret = QMessageBox.information(self, 'Aviso', "Debe ingresar criterio de operación")
             else:
-                ret = QMessageBox.information(self, 'Aviso', "Debe ingresar criterio de operación")
+                self.operacion = "trasladar"
 
     def closeEvent(self, event):
+        #operacion = aceptar: variable para indicar que la operacion culmina en el boton
         if self.operacion == "aceptar":
             event.ignore()
             if self.New_tableWidget.rowCount() > 0 or self.Old_tableWidget.rowCount() > 0:
@@ -392,6 +398,10 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                 ret = QMessageBox.information(self, 'Aviso', "No hay items agregados en tabla")
                 event.ignore()
             self.operacion = None
+        
+        elif self.operacion = 'trasladar':
+            event.ignore()
+
         else:
             reply = QMessageBox.question(self, 'Window Close', 'al cerrar la ventana, se borraran los datos de la tabla', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
