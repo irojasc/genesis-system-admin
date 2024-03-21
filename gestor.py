@@ -485,6 +485,11 @@ class WareProduct:
 				self.disconnect_db()
 				return False
 			#>Termina la actualizacion de cantidades en DB
+			#>Empieza la actualizacion de cantidades de inner Ware list
+			if not self.update_quantity(listNew=listNew, listOld=listOld,operationType='salida', idWare=fromIdWare, isGestorRequest=True):
+				self.disconnect_db()
+				return False
+			#>Termina la actualizacion de cantidades de inner Ware List
 			self.mydb.commit()
 		
 		except mysql.connector.Error as error:

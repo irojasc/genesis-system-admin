@@ -54,7 +54,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         #self.cmbCriterio.setCurrentIndex(-1)
         #self.show()
 
-    def init_condition(self, isTransfer: bool = False, preSelectedItems: list = None, toWare: str = None):
+    def init_condition(self, isTransfer: bool = None, preSelectedItems: list = None, toWare: str = None):
+        #isTranfer| None: No hacer nada, False: ingreso/salida, True: transferencia
         self.isTransfer = isTransfer
         self.toWare = toWare
         # -----------  set item conditions  -----------
@@ -65,7 +66,6 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.newItems_table.clear()
         self.oldItems_table.clear()
         self.cantItems = 0
-        self.generalFlag = False
         item_all = ['cod','isbn','titulo','autor']
         items_operacion = ['ingreso', 'salida']
         self.cmbBusqueda.clear()
@@ -88,7 +88,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget.blockSignals(False)
         self.lblWareDestination.setVisible(False)
-        if self.isTransfer:
+        if self.isTransfer is not None and self.isTransfer:
             self.gbLocation.setVisible(False)
             self.checkBox.setVisible(False)
             self.txtProductLocation.setVisible(False)
@@ -390,7 +390,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                     if self.ware_in.update_quantity(self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), str(self.ownWares.id),
                                                     self.txtProductLocation.text()):
                         ret = QMessageBox.question(self, 'Alerta', "Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
-                        self.generalFlag = True
+                        self.isTransfer = False
                         self.accept()
                         event.accept()
                     else:
@@ -415,7 +415,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                                                     data=(self.newItems_table.copy(), self.oldItems_table.copy()),
                                                     fromIdWare=str(self.ownWares.getWareId())):
                         ret = QMessageBox.question(self, 'Alerta', 'Operación exitosa', QMessageBox.Ok, QMessageBox.Ok)
-                    #     self.generalFlag = True
+                        self.isTransfer = True
                         self.accept()
                         event.accept()
                     else:
@@ -423,7 +423,6 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                         event.ignore()
                 else:
                     event.ignore()
-
             else:
                 ret = QMessageBox.information(self, 'Aviso', "No hay items agregados en las tablas")
                 event.ignore()
@@ -436,7 +435,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                 self.New_tableWidget.setRowCount(0)
                 self.Old_tableWidget.clearContents()
                 self.Old_tableWidget.setRowCount(0)
-                self.generalFlag = False
+                self.isTransfer = None
                 event.accept()
             else:
                 event.ignore()
@@ -454,7 +453,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
     @property
     def returned_val(self):
         if not self.isTransfer:
-            return (self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), self.generalFlag)
+            return (self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), self.isTransfer)
         else:
             return (None, None, None, False)
 

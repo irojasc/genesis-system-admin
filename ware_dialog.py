@@ -405,14 +405,19 @@ class Ui_Dialog(QtWidgets.QDialog):
                     # separar solo items activos y enviar a in/out form
                     result_books = list(filter(lambda x: (self.currWare.cod in x.wareData) and (x.wareData[self.currWare.cod]["isEnabled"]), self.gestWareProduct.innerWareList.copy()))
                     ui_dialog.mainList = result_books.copy()
-                    ui_dialog.init_condition()
+                    ui_dialog.init_condition(isTransfer=False)
 
                 if ui_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     self.change_state("ware")
-                    #returned_val[3]: generalFlag -> True cuando se tiene la intencion de agregar o quitar cantidades
-                    if ui_dialog.returned_val[3]:
+                    #returned_val[3]: generalFlag -> False cuando la intencion es agregar/quitar, sin que sea None
+                    #>cuando es ingreso y salida
+                    if (ui_dialog.returned_val[3] is not None) and not(ui_dialog.returned_val[3]):
                         self.gestWareProduct.update_backtablequantity(newList=ui_dialog.returned_val[0], oldList=ui_dialog.returned_val[1], operationType=ui_dialog.returned_val[2], currentWare=self.currWare.cod)
                         self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
+                        del ui_dialog
+                    #>cuando es parte de operacion de trasferencia
+                    elif (ui_dialog.returned_val[3] is not None) and ui_dialog.returned_val[3]:
+                        print("Aqui viene cuando la intencion es actualizar tabla luego de transferencia")
                         del ui_dialog
                 else:
                     self.change_state("ware")
