@@ -408,23 +408,12 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             if self.New_tableWidget.rowCount() > 0 or self.Old_tableWidget.rowCount() > 0:
                 reply = QMessageBox.question(self, 'Closing Window...', 'Esta seguro de efectuar los cambios?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if reply == QMessageBox.Yes:
-                    NewListCopy = self.newItems_table.copy()
-                    #>esta parte es para ordenar las tablas NewItemTable y OldItemTable
-                    for i in self.oldItems_table:
-                        for j in self.newItems_table:
-                            if i['cod'] == j['cod']:
-                                j['qtyOld'] = i['qtyOld']
-                                variable = True
-                        if not variable:
-                            NewListCopy.append(i)
-                        variable = False
-                    list2DB = list(map(lambda x: (str(x['cod'].split('_')[1]),str(x['qtyNew']) if x['qtyNew'] else '0', str(x['qtyOld']) if x['qtyOld'] else '0' ), NewListCopy))
-                    #>esta parte es para ordenar las tablas NewItemTable y OldItemTable
-                    
+   
                     if self.ware_in.insertTransferToDB(fromWareCod=self.ownWares.getWareCode(),
                                                     toWareCod=self.toWare,
                                                     fromUserName=self.currentUser.getUserName(),
-                                                    data=list2DB):
+                                                    data=(self.newItems_table.copy(), self.oldItems_table.copy()),
+                                                    fromIdWare=str(self.ownWares.getWareId())):
                         ret = QMessageBox.question(self, 'Alerta', 'Operación exitosa', QMessageBox.Ok, QMessageBox.Ok)
                     #     self.generalFlag = True
                         self.accept()

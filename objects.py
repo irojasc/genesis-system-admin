@@ -310,3 +310,6 @@ class ware:
 
 	def getWareCode(self) -> str:
 		return self.cod
+	
+	def getWareId(self) -> int:
+		return self.id

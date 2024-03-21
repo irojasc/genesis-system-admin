@@ -255,12 +255,12 @@ class WareProduct:
 						j.wareData[currentWare]["qtyOld"] -= i["qtyOld"]
 
 	#actualiza cantidades de in/out directo a Data Base ware_product table
-	def update_quantity(self, listNew: list[int] = None, listOld: list[int] = None, operationType: str = "", idWare: str = "", location: str = ""):
+	def update_quantity(self, listNew: list[int] = None, listOld: list[int] = None, operationType: str = "", idWare: str = "", location: str = "", isGestorRequest=False):
 		oprDict = { "ingreso": "+",
 		"salida": "-"}
 		tmp_NewList = []
 		tmp_OldList = []
-		self.connect_db()
+		self.connect_db() if not isGestorRequest else None
 		try:
 			# for j in listNew:
 			# 	tmp_NewList.append((str(j["cantidad"]), j["cod"]))
@@ -278,8 +278,8 @@ class WareProduct:
 					operationType] + " %s, editDate = '" + str(date.today()) + "', loc = '" + location.upper() + "' where idProduct = %s and idWare = " + idWare)
 
 			self.cursor.executemany(query_, tmp_MainList)
-			self.mydb.commit()
-			self.disconnect_db()
+			self.mydb.commit() if not isGestorRequest else None
+			self.disconnect_db() if not isGestorRequest else None
 			return True
 
 		except mysql.connector.Error as err:
@@ -457,15 +457,34 @@ class WareProduct:
 		return (tmp_list, data_tranfer) if bool(tmp_list) and bool(data_tranfer) else (None, None)
 
 	#registra el traslado de productos entre dos wares
-	def insertTransferToDB(self, fromWareCod: str = None, toWareCod: str = None, fromUserName: str = None, data: list = None):
-
+	def insertTransferToDB(self, fromWareCod: str = None, toWareCod: str = None, fromUserName: str = None, data: tuple = None, fromIdWare: str = None):
+		
+		listNew, listOld = data
+		NewListCopy = listNew.copy()
+		#>esta parte es para ordenar las tablas NewItemTable y OldItemTable
+		for i in listOld:
+			for j in listNew:
+				if i['cod'] == j['cod']:
+					j['qtyOld'] = i['qtyOld']
+					variable = True
+			if not variable:
+				NewListCopy.append(i)
+			variable = False
+		list2DB = list(map(lambda x: (str(x['cod'].split('_')[1]),str(x['qtyNew']) if x['qtyNew'] else '0', str(x['qtyOld']) if x['qtyOld'] else '0' ), NewListCopy))
+		#>esta parte es para ordenar las tablas NewItemTable y OldItemTable
+		
 		try:
 			idTS = str(int(time.time()))
 			query = f"insert into genesisdb.transfer (codeTS, fromWareId, toWareId, fromUser, fromDate, state) values ('{idTS}', (select id from genesisdb.ware where code = '{fromWareCod}'), (select id from genesisdb.ware where code = '{toWareCod}'), '{fromUserName}', '{str(date.today())}', 3);"
 			stmt = f"insert into genesisdb.transfer_product (idTransfer, idProduct, qtyNew, qtyOld) values ('{idTS}', %s, %s, %s)"
 			self.connect_db()
 			self.cursor.execute(query)
-			self.cursor.executemany(stmt, data)
+			self.cursor.executemany(stmt, list2DB)
+			#>Empieza la actualizacion de cantidades en DB
+			if not self.update_quantity(listNew=listNew, listOld=listOld,operationType='salida', idWare=fromIdWare, isGestorRequest=True):
+				self.disconnect_db()
+				return False
+			#>Termina la actualizacion de cantidades en DB
 			self.mydb.commit()
 		
 		except mysql.connector.Error as error:
@@ -473,7 +492,7 @@ class WareProduct:
 			return False
 
 		except Exception as error:
-			print("An error occurred:", error) 
+			print("An error occurred:", error)
 			return False
 
 		finally:
