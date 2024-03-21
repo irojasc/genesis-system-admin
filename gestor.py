@@ -7,6 +7,7 @@ from objects import user, ware, ware_product, product
 from decouple import Config, RepositoryEnv
 from datetime import datetime, date
 import bcrypt
+import time
 
 
 # import traceback
@@ -235,6 +236,7 @@ class WareProduct:
 		self.cursor.close()
 		self.mydb.close()
 
+	#actualiza cantidades de in/out directo a Ware Inner List
 	def update_backtablequantity(self, newList: list = None, oldList: list = None, operationType: str = None, currentWare = None):
 		mainList = newList + oldList
 		for i in mainList:
@@ -252,6 +254,7 @@ class WareProduct:
 					elif operationType == "salida":
 						j.wareData[currentWare]["qtyOld"] -= i["qtyOld"]
 
+	#actualiza cantidades de in/out directo a Data Base ware_product table
 	def update_quantity(self, listNew: list[int] = None, listOld: list[int] = None, operationType: str = "", idWare: str = "", location: str = ""):
 		oprDict = { "ingreso": "+",
 		"salida": "-"}
@@ -284,19 +287,7 @@ class WareProduct:
 			self.disconnect_db()		
 			return False
 		
-	def None_Type(self, val):
-		myList = []
-		for i in range(len(val)):
-			if val[i] is None:
-				myList.append("")
-			else:
-				myList.append(val[i])
-		if len(val) > 1:
-			tup = tuple(myList)
-		else:
-			tup = ()
-		return tup
-	
+	#carga de cero toda la lista de productos a Ware Inner List desde Data Base
 	def loadInnerTable(self, updateDate: datetime.date = None):
 		
 		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id left join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem order by p.id asc;") if updateDate == None else ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id left join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem where p.creationDate >= '{0}' or p.editDate >= '{0}' or wp.editDate >= '{0}' or p.creationDate >= '{0}' order by p.id asc;".format(updateDate))
@@ -348,25 +339,7 @@ class WareProduct:
 				print("No se pudo conectar a DB en load_mainlist")
 				return False
 
-	def activateItem(self, codBook: str = "", condition: bool = True):
-		try:
-			if self.activateInnerItemState(codBook, condition):
-				self.connect_db()
-				if condition:
-					query = ("insert into genesisDB.ware_books (cod_book) values ('%s')" % (codBook))
-				else:
-					query = ("delete from genesisDB.ware_books where cod_book = '%s'" % (codBook))
-				self.cursor.execute(query)
-				self.mydb.commit()
-				self.disconnect_db()
-				return True
-			else:
-				return False
-		except Exception as error:
-			print("Location: Activating Item: ", error)
-			self.disconnect_db()
-			return False
-		
+	#Cambia la locacion de producto ubicado en ware_product table from Data Base
 	def changeItemLocation(self, iditem: str = "", location: str= "SIN UBICACION", currentWare: str="")->bool:
 		try:
 			self.connect_db()
@@ -380,14 +353,7 @@ class WareProduct:
 			self.disconnect_db()
 			return False
 		
-	def activateInnerItemState(self, codBook: str = "", condition: bool = True):
-		try:
-			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.innerWareList)))[0][0]
-			self.innerWareList[index].objBook.setActive(condition)
-			return True
-		except Exception as error:
-			return False
-		
+	#Cambia la locacion de producto ubicado en Ware Inner List
 	def changeInnerItemLocation(self, idItem: int = "", location: str= "SIN UBICACION", currentWare: str= ""):
 		try:
 			index = list(filter(lambda x: x[1].product.getId() == idItem, enumerate(self.innerWareList)))[0][0]
@@ -397,21 +363,6 @@ class WareProduct:
 			print("error as", error)
 			return False
 	
-	def isZeroQuantity(self, codBook: str = ""):
-		try:
-			sum = 0
-			index = list(filter(lambda x: x[1].objBook.cod == codBook, enumerate(self.innerWareList)))[0][0]
-			keys_ = list(self.innerWareList[index].almacen_data.keys())
-			keys_cant = list(filter(lambda x: x.split("_")[0] == "cant", keys_))
-			for x in keys_cant:
-				sum += abs((self.innerWareList[index].almacen_data[x]))
-			if sum == 0:
-				return True
-			else:
-				return False
-		except Exception as error:
-			return False
-
 	def updateInnerItem(self, data: ware_product = None):
 		try:
 			index = list(filter(lambda x: x[1].product.id == data.product.id, enumerate(self.innerWareList)))[0][0]
@@ -504,6 +455,34 @@ class WareProduct:
 		tmp_list = list(filter(lambda x: self.compareEvaluation(wareDataItem=x.getWareData(), fromWare=FromWare, toWare=ToWare), self.innerWareList))
 		data_tranfer = list(map(lambda x: {'loc': x.wareData[FromWare]['loc'], 'cod': x.product.getPrdCode(), 'isbn': x.product.getISBN(), 'title': x.product.getTitle(), 'qtyNew': 1, 'qtyOld': None}, tmp_list))
 		return (tmp_list, data_tranfer) if bool(tmp_list) and bool(data_tranfer) else (None, None)
+
+	#registra el traslado de productos entre dos wares
+	def insertTransferToDB(self, fromWareCod: str = None, toWareCod: str = None, fromUserName: str = None, data: list = None):
+
+		try:
+			idTS = str(int(time.time()))
+			query = f"insert into genesisdb.transfer (codeTS, fromWareId, toWareId, fromUser, fromDate, state) values ('{idTS}', (select id from genesisdb.ware where code = '{fromWareCod}'), (select id from genesisdb.ware where code = '{toWareCod}'), '{fromUserName}', '{str(date.today())}', 3);"
+			stmt = f"insert into genesisdb.transfer_product (idTransfer, idProduct, qtyNew, qtyOld) values ('{idTS}', %s, %s, %s)"
+			self.connect_db()
+			self.cursor.execute(query)
+			self.cursor.executemany(stmt, data)
+			self.mydb.commit()
+		
+		except mysql.connector.Error as error:
+			print("Error: {}".format(error))
+			return False
+
+		except Exception as error:
+			print("An error occurred:", error) 
+			return False
+
+		finally:
+			try:
+				if self.mydb.is_connected():
+					self.disconnect_db()
+					return True
+			except:
+				print("DB did not connect")
 
 class users_gestor:
 	_pswHashed = "Ivan Rojas"

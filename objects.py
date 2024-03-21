@@ -28,6 +28,9 @@ class user:
 		self.auth = auth
 		self.level = level
 
+	def getUserName(self):
+		return self.user
+
 class supplier:
 	def __init__(self, id, name, admin, phone, direction, mail):
 		self.id = id

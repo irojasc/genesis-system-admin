@@ -13,17 +13,18 @@ from PyQt5.QtGui import QFont, QBrush, QColor
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtCore import Qt, QThread, QObject, pyqtSignal
 from PyQt5.QtWidgets import *
-from gestor import WareProduct
+from gestor import WareProduct, user 
 from objects import ware
 
 from functools import reduce
 
 class Ui_inoutDialog(QtWidgets.QDialog):
-    def __init__(self, data_users = None, data_wares: ware = None, parent=None):
+    def __init__(self, data_users: user = None, data_wares: ware = None, parent=None):
         super(Ui_inoutDialog, self).__init__(parent)
-        self.ownUsers = data_users
+        self.currentUser = data_users
         self.ownWares = data_wares
         self.isTransfer = False
+        self.toWare = None
         #mainList es la lista de todos los items activos
         self.mainList = []
         self.newItems_table = []
@@ -53,8 +54,9 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         #self.cmbCriterio.setCurrentIndex(-1)
         #self.show()
 
-    def init_condition(self, isTransfer: bool = False, preSelectedItems: list = None, DestinationWare: str = None):
+    def init_condition(self, isTransfer: bool = False, preSelectedItems: list = None, toWare: str = None):
         self.isTransfer = isTransfer
+        self.toWare = toWare
         # -----------  set item conditions  -----------
         # ----------- condiciones inicales para ubicacion -----------
         self.txtProductLocation.setEnabled(False)
@@ -93,7 +95,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             self.lblLocationAdvice.setVisible(False)
             self.cmbOperacion.setVisible(False)
             self.lblWareDestination.setVisible(True)
-            self.lblWareDestination.setText("ALMACEN DESTINO:\n>%s"%(DestinationWare)) if DestinationWare else False
+            self.lblWareDestination.setText("ALMACEN DESTINO:\n>%s"%(toWare)) if toWare else False
             self.gbBottom.setFixedWidth(110)
             self.btnAceptar.setText("Trasladar")
             self.newItems_table = preSelectedItems if bool(preSelectedItems) else []
@@ -375,8 +377,10 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                     ret = QMessageBox.information(self, 'Aviso', "Debe ingresar criterio de operación")
             else:
                 self.operacion = "trasladar"
+                self.close()
 
     def closeEvent(self, event):
+        variable = False
         #operacion = aceptar: variable para indicar que la operacion culmina en el boton
         if self.operacion == "aceptar":
             event.ignore()
@@ -399,8 +403,42 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                 event.ignore()
             self.operacion = None
         
-        elif self.operacion = 'trasladar':
+        elif self.operacion == 'trasladar':
             event.ignore()
+            if self.New_tableWidget.rowCount() > 0 or self.Old_tableWidget.rowCount() > 0:
+                reply = QMessageBox.question(self, 'Closing Window...', 'Esta seguro de efectuar los cambios?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    NewListCopy = self.newItems_table.copy()
+                    #>esta parte es para ordenar las tablas NewItemTable y OldItemTable
+                    for i in self.oldItems_table:
+                        for j in self.newItems_table:
+                            if i['cod'] == j['cod']:
+                                j['qtyOld'] = i['qtyOld']
+                                variable = True
+                        if not variable:
+                            NewListCopy.append(i)
+                        variable = False
+                    list2DB = list(map(lambda x: (str(x['cod'].split('_')[1]),str(x['qtyNew']) if x['qtyNew'] else '0', str(x['qtyOld']) if x['qtyOld'] else '0' ), NewListCopy))
+                    #>esta parte es para ordenar las tablas NewItemTable y OldItemTable
+                    
+                    if self.ware_in.insertTransferToDB(fromWareCod=self.ownWares.getWareCode(),
+                                                    toWareCod=self.toWare,
+                                                    fromUserName=self.currentUser.getUserName(),
+                                                    data=list2DB):
+                        ret = QMessageBox.question(self, 'Alerta', 'Operación exitosa', QMessageBox.Ok, QMessageBox.Ok)
+                    #     self.generalFlag = True
+                        self.accept()
+                        event.accept()
+                    else:
+                        ret = QMessageBox.information(self, 'Aviso', "No se pudo conectar con la base de datos")
+                        event.ignore()
+                else:
+                    event.ignore()
+
+            else:
+                ret = QMessageBox.information(self, 'Aviso', "No hay items agregados en las tablas")
+                event.ignore()
+            self.operacion = None
 
         else:
             reply = QMessageBox.question(self, 'Window Close', 'al cerrar la ventana, se borraran los datos de la tabla', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -426,7 +464,10 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     @property
     def returned_val(self):
-        return (self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), self.generalFlag)
+        if not self.isTransfer:
+            return (self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), self.generalFlag)
+        else:
+            return (None, None, None, False)
 
     def setupUi(self):
         self.setObjectName("inoutDialog")

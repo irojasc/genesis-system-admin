@@ -380,6 +380,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.frame_2.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0.298507 rgba(22, 136, 126, 255), stop:1 rgba(56, 110, 142, 255));")
 
     def inout_operation(self, event): # funcion para abrir el dialog in/out
+        ##FIJARSE AQUI
         if self.ownUsers.auth["InOutProduct"]:
             self.change_state("in/out") # lo que hace esto es cambiar el color de waredialog cuando pasa a ingreso/salida
              
@@ -393,12 +394,13 @@ class Ui_Dialog(QtWidgets.QDialog):
                     (self.cmbWares.currentText() in x.wareData) and
                     (x.wareData[self.cmbWares.currentText()]["isEnabled"])
                     , self.gestWareProduct.innerWareList.copy()))
+                    
                     ui_dialog.mainList = result_books.copy()
                     
                     if QMessageBox.Ok == QMessageBox.question(self, 'Consulta',"¿Desea cargar items preseleccionados?", QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok):
-                        ui_dialog.init_condition(isTransfer=True, preSelectedItems=self.data_transfer, DestinationWare=self.cmbWares.currentText())
+                        ui_dialog.init_condition(isTransfer=True, preSelectedItems=self.data_transfer, toWare=self.cmbWares.currentText())
                     else:
-                        ui_dialog.init_condition(isTransfer=True, preSelectedItems=None, DestinationWare=self.cmbWares.currentText())
+                        ui_dialog.init_condition(isTransfer=True, preSelectedItems=None, toWare=self.cmbWares.currentText())
                 else:
                     # separar solo items activos y enviar a in/out form
                     result_books = list(filter(lambda x: (self.currWare.cod in x.wareData) and (x.wareData[self.currWare.cod]["isEnabled"]), self.gestWareProduct.innerWareList.copy()))
@@ -409,7 +411,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                     self.change_state("ware")
                     #returned_val[3]: generalFlag -> True cuando se tiene la intencion de agregar o quitar cantidades
                     if ui_dialog.returned_val[3]:
-                        self.gestWareProduct.update_backtablequantity(ui_dialog.returned_val[0], ui_dialog.returned_val[1], ui_dialog.returned_val[2], self.currWare.cod)
+                        self.gestWareProduct.update_backtablequantity(newList=ui_dialog.returned_val[0], oldList=ui_dialog.returned_val[1], operationType=ui_dialog.returned_val[2], currentWare=self.currWare.cod)
                         self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
                         del ui_dialog
                 else:
