@@ -18,6 +18,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         super(Ui_MainWindow, self).__init__(parent)
         self.enable_datetime = True
         self.WareProdDate = datetime.now().date()
+        self.notification_list = []
         # currentWare: ware , datos de almacen actual
         # restWare: list[ware], datos de los demas almacenes
         # currentUser: user, datos de usuario actual
@@ -38,6 +39,65 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.setEnabled(True)
         else:
             QMessageBox.about(self, "Alerta", "No tiene permisos para ingresar almacen")
+    
+    def loadNotificationTable(self):
+        
+        
+        
+        #flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
+        self.notification_table.setRowCount(len(self.notification_list))
+        
+        for row, ware_li in enumerate(self.notification_list):
+            item = QtWidgets.QTableWidgetItem(ware_li["cod"])
+            #item.setFlags(flag)
+            item.setTextAlignment(Qt.AlignCenter)
+            self.notification_table.setItem(row, 0, item)
+
+            item = QtWidgets.QTableWidgetItem(ware_li["operacion"])
+            #item.setFlags(flag)
+            item.setTextAlignment(Qt.AlignCenter)
+            self.notification_table.setItem(row, 1, item)
+            txt = "[" + ware_li["s_point"] + "]-->[" + ware_li["f_point"] + "]"
+            self.notification_table.item(row, 1).setToolTip(txt)
+
+            item = QtWidgets.QTableWidgetItem(str.upper(ware_li["receiver"]))
+            #item.setFlags(flag)
+            item.setTextAlignment(Qt.AlignCenter)
+            self.notification_table.setItem(row, 2, item)
+            txt = "I:" + str.upper(ware_li["emiter"]) + "\nD:" + str.upper(ware_li["receiver"])
+            self.notification_table.item(row, 2).setToolTip(txt)
+
+            item = QtWidgets.QTableWidgetItem(ware_li["detalles"].replace('\n', ""))
+            #item.setFlags(flag)
+            self.notification_table.setItem(row, 3, item)
+            self.notification_table.item(row, 3).setToolTip(ware_li["detalles"])
+
+            item = QtWidgets.QTableWidgetItem(str(ware_li["f_date"]))
+            #item.setFlags(flag)
+            item.setTextAlignment(Qt.AlignCenter)
+            self.notification_table.setItem(row, 4, item)
+            txt = "I:" + ware_li["s_date"] + "\nD:" + ware_li["f_date"]
+            self.notification_table.item(row, 4).setToolTip(txt)
+
+            item = QtWidgets.QTableWidgetItem(ware_li["estado"])
+            #item.setFlags(flag)
+            item.setTextAlignment(Qt.AlignCenter)
+            self.notification_table.setItem(row, 5, item)
+            if ware_li["estado"] == "ATENDIDO":
+                self.notification_table.item(row, 5).setBackground(
+                    QtGui.QColor(ware_li["colors"]["amarillo"][0], ware_li["colors"]["amarillo"][1],
+                                 ware_li["colors"]["amarillo"][2]))
+
+            elif ware_li["estado"] == "CERRADO":
+                self.notification_table.item(row, 5).setBackground(
+                    QtGui.QColor(ware_li["colors"]["verde"][0], ware_li["colors"]["verde"][1],
+                                 ware_li["colors"]["verde"][2]))
+
+            elif ware_li["estado"] == "OBSERVADO":
+                self.notification_table.item(row, 5).setBackground(
+                    QtGui.QColor(ware_li["colors"]["rojo"][0], ware_li["colors"]["rojo"][1],
+                                 ware_li["colors"]["rojo"][2]))
+    
     
     
     def setupUi(self):
@@ -102,14 +162,31 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.notification_table.setEnabled(False)
         self.notification_table.setGeometry(QtCore.QRect(0, 120, 1280, 617))
         self.notification_table.setObjectName("notification_table")
-        self.notification_table.setColumnCount(3)
-        self.notification_table.setRowCount(0)
-        item = QtWidgets.QTableWidgetItem()
-        self.notification_table.setHorizontalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.notification_table.setHorizontalHeaderItem(1, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.notification_table.setHorizontalHeaderItem(2, item)
+        self.notification_table.setColumnCount(6)
+
+        # self.notification_table.setRowCount(0)
+
+        
+        self.notification_table.setHorizontalHeaderItem(0, QtWidgets.QTableWidgetItem('Código'))
+        self.notification_table.setHorizontalHeaderItem(1, QtWidgets.QTableWidgetItem('Operación'))
+        self.notification_table.setHorizontalHeaderItem(2, QtWidgets.QTableWidgetItem('Responsable'))
+        self.notification_table.setHorizontalHeaderItem(3, QtWidgets.QTableWidgetItem('Detalles'))
+        self.notification_table.setHorizontalHeaderItem(4, QtWidgets.QTableWidgetItem('Fecha'))
+        self.notification_table.setHorizontalHeaderItem(5, QtWidgets.QTableWidgetItem('Estado'))
+        self.notification_table.setColumnWidth(0, 80)
+        self.notification_table.setColumnWidth(1, 120)
+        self.notification_table.setColumnWidth(2, 120)
+        self.notification_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
+        self.notification_table.setColumnWidth(4, 120)
+        self.notification_table.setColumnWidth(5, 120)
+
+        self.notification_table.horizontalHeader().setEnabled(False)
+        self.notification_table.setSelectionBehavior(1)
+        self.notification_table.setSelectionMode(1)
+        self.notification_table.verticalHeader().hide()
+        # self.notification_table.itemDoubleClicked.connect(self.doubleClickItem)
+        
+        # ------------------  frame_2 configuration
         self.frame_2 = QtWidgets.QFrame(self.centralwidget)
         self.frame_2.setGeometry(QtCore.QRect(0, 100, 1280, 20))
         self.frame_2.setStyleSheet("background-color: rgb(50, 50, 50);")
@@ -144,12 +221,23 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.wareName.setText(_translate("MainWindow", "ALMACEN: " + self.ware_name.upper()))
         self.wareName.adjustSize() #Ajusta el tamaño del label al tamaño de las letras
         self.wareName.move(1040 - self.wareName.width(),66) #cambia la posicion del label
-        item = self.notification_table.horizontalHeaderItem(0)
-        item.setText(_translate("MainWindow", "N°"))
-        item = self.notification_table.horizontalHeaderItem(1)
-        item.setText(_translate("MainWindow", "Notificación"))
-        item = self.notification_table.horizontalHeaderItem(2)
-        item.setText(_translate("MainWindow", "Estado"))
+
+        font = QtGui.QFont("Open Sans Semibold",10, 85)
+        font.setBold(True)
+
+        self.notification_table.horizontalHeaderItem(0).setFont(font)
+        self.notification_table.horizontalHeaderItem(0).setForeground(QBrush(QColor(0, 0, 0)))
+        self.notification_table.horizontalHeaderItem(1).setFont(font)
+        self.notification_table.horizontalHeaderItem(1).setForeground(QBrush(QColor(0, 0, 0)))
+        self.notification_table.horizontalHeaderItem(2).setFont(font)
+        self.notification_table.horizontalHeaderItem(2).setForeground(QBrush(QColor(0, 0, 0)))
+        self.notification_table.horizontalHeaderItem(3).setFont(font)
+        self.notification_table.horizontalHeaderItem(3).setForeground(QBrush(QColor(0, 0, 0)))
+        self.notification_table.horizontalHeaderItem(4).setFont(font)
+        self.notification_table.horizontalHeaderItem(4).setForeground(QBrush(QColor(0, 0, 0)))
+        self.notification_table.horizontalHeaderItem(5).setFont(font)
+        self.notification_table.horizontalHeaderItem(5).setForeground(QBrush(QColor(0, 0, 0)))
+        
 
 
 if __name__ == "__main__":

@@ -590,6 +590,23 @@ class users_gestor:
 			print("Error: %s" % e)
 			return False, None
 
+
+class notification:
+	def __init__(self):
+		self.innerNotificationList = []
+	
+	def connect_db(self):
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
+		self.cursor = self.mydb.cursor()
+
+	def disconnect_db(self):
+		self.cursor.close()
+		self.mydb.close()
+
+	def getTransferNotification2Inner():
+		pass
+
+
 class documents:
 	def __init__(self):
 		print("Hola Mundo")

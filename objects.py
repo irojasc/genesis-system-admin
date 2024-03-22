@@ -1,3 +1,5 @@
+from datetime import date
+
 
 class user:
 	def __repr__(self):
@@ -313,3 +315,34 @@ class ware:
 	
 	def getWareId(self) -> int:
 		return self.id
+	
+class notification:
+	def __repr__(self):
+		return "{{id: {0}, type: {1}, fromUserName: {2}, toUserName: {3}, fromWareCod: {4}, toWareCod: {5}, fromDate: {6}, toDate: {7}, state: {8}}}".format(
+				self.id, self.type, self.fromUserName, self.toUserName, self.fromWareCod, self.toWareCod, 
+				self.fromDate, self.toDate, self.state)
+	
+	def __str__(self):
+		return "{{id: {0}, type: {1}, fromUserName: {2}, toUserName: {3}, fromWareCod: {4}, toWareCod: {5}, fromDate: {6}, toDate: {7}, state: {8}}}".format(
+				self.id, self.type, self.fromUserName, self.toUserName, self.fromWareCod, self.toWareCod, 
+				self.fromDate, self.toDate, self.state)
+
+	def __init__(self, id: int = None, type: str = None, fromUserName: str = None,
+			toUserName: str = None, fromWareCod: str = None, toWareCod: str = None,
+			fromDate: date = None, toDate: date = None, state: int = None, notes: str = None):
+		self.id = id
+		self.type = type
+		self.fromUserName = fromUserName
+		self.toUserName = toUserName
+		self.fromWareCod = fromWareCod
+		self.toWareCod = toWareCod
+		self.fromDate = fromDate
+		self.toDate = toDate
+		self.state = 'ABIERTO' if state == 3 else 'ATENDIDO' if state == 2 else 'CERRADO' if state == 0 else None
+		self.notes = notes
+
+	def getState(self):
+		return self.state
+	
+	def getStateId(self):
+		return 3 if self.state == 'ABIERTO' else 2 if self.state == 'ATENDIDO' else 1 if self.state == 'CERRADO' else None
