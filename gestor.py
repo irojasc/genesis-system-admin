@@ -454,13 +454,14 @@ class WareProduct:
 	def compareTwoItemsWare(self, FromWare: str = None, ToWare: str = None) -> list:
 		tmp_list = list(filter(lambda x: self.compareEvaluation(wareDataItem=x.getWareData(), fromWare=FromWare, toWare=ToWare), self.innerWareList))
 		data_tranfer = list(map(lambda x: {'loc': x.wareData[FromWare]['loc'], 'cod': x.product.getPrdCode(), 'isbn': x.product.getISBN(), 'title': x.product.getTitle(), 'qtyNew': 1, 'qtyOld': None}, tmp_list))
-		return (tmp_list, data_tranfer) if bool(tmp_list) and bool(data_tranfer) else (None, None)
+		return (tmp_list, data_tranfer) if bool(tmp_list) and bool(data_tranfer) else ([], [])
 
 	#registra el traslado de productos entre dos wares
 	def insertTransferToDB(self, fromWareCod: str = None, toWareCod: str = None, fromUserName: str = None, data: tuple = None, fromIdWare: str = None):
 		
 		listNew, listOld = data
 		NewListCopy = listNew.copy()
+		variable = False
 		#>esta parte es para ordenar las tablas NewItemTable y OldItemTable
 		for i in listOld:
 			for j in listNew:
@@ -485,11 +486,6 @@ class WareProduct:
 				self.disconnect_db()
 				return False
 			#>Termina la actualizacion de cantidades en DB
-			#>Empieza la actualizacion de cantidades de inner Ware list
-			if not self.update_quantity(listNew=listNew, listOld=listOld,operationType='salida', idWare=fromIdWare, isGestorRequest=True):
-				self.disconnect_db()
-				return False
-			#>Termina la actualizacion de cantidades de inner Ware List
 			self.mydb.commit()
 		
 		except mysql.connector.Error as error:

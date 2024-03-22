@@ -397,10 +397,20 @@ class Ui_Dialog(QtWidgets.QDialog):
                     
                     ui_dialog.mainList = result_books.copy()
                     
-                    if QMessageBox.Ok == QMessageBox.question(self, 'Consulta',"¿Desea cargar items preseleccionados?", QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok):
-                        ui_dialog.init_condition(isTransfer=True, preSelectedItems=self.data_transfer, toWare=self.cmbWares.currentText())
+                    if len(self.data_transfer) > 0:
+                        
+                        answer_ = QMessageBox.question(self, 'Consulta',"¿Desea cargar items preseleccionados?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.No)
+                        if QMessageBox.Yes == answer_:
+                            ui_dialog.init_condition(isTransfer=True, preSelectedItems=self.data_transfer, toWare=self.cmbWares.currentText())
+                        elif QMessageBox.No == answer_:
+                            ui_dialog.init_condition(isTransfer=True, preSelectedItems=None, toWare=self.cmbWares.currentText())
+                        elif QMessageBox.Cancel == answer_:
+                            self.change_state('ware')
+                            del ui_dialog
+                            return None
                     else:
                         ui_dialog.init_condition(isTransfer=True, preSelectedItems=None, toWare=self.cmbWares.currentText())
+                
                 else:
                     # separar solo items activos y enviar a in/out form
                     result_books = list(filter(lambda x: (self.currWare.cod in x.wareData) and (x.wareData[self.currWare.cod]["isEnabled"]), self.gestWareProduct.innerWareList.copy()))
@@ -417,7 +427,8 @@ class Ui_Dialog(QtWidgets.QDialog):
                         del ui_dialog
                     #>cuando es parte de operacion de trasferencia
                     elif (ui_dialog.returned_val[3] is not None) and ui_dialog.returned_val[3]:
-                        print("Aqui viene cuando la intencion es actualizar tabla luego de transferencia")
+                        self.gestWareProduct.update_backtablequantity(newList=ui_dialog.returned_val[0], oldList=ui_dialog.returned_val[1], operationType=ui_dialog.returned_val[2], currentWare=self.currWare.cod)
+                        self.compareCheckBox.setChecked(False)
                         del ui_dialog
                 else:
                     self.change_state("ware")

@@ -452,10 +452,12 @@ class Ui_inoutDialog(QtWidgets.QDialog):
 
     @property
     def returned_val(self):
-        if not self.isTransfer:
-            return (self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), self.isTransfer)
+        if self.isTransfer is not None and not self.isTransfer:
+            return (self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), False)
+        elif self.isTransfer is not None and self.isTransfer:
+            return (self.newItems_table, self.oldItems_table, 'salida', True)
         else:
-            return (None, None, None, False)
+            return (None, None, None, None)
 
     def setupUi(self):
         self.setObjectName("inoutDialog")
