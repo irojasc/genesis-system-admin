@@ -32,9 +32,11 @@ class Ui_LoginWindow(QtWidgets.QMainWindow):
         event.accept()
     
     def openMainWindow(self):
+        
         # param1 es bool para existencia de usuario, param2 para ver usuario habilitado bool
         currentUser = self.user_gest.check_login(self.txtUser.text(),self.txtPwd.text())
         validator, objWares, currentWareName = self.ware_gest.exist_ware()
+
         # objWares = (curretWare: ware, restWares: list[ware])
         #aqui es donde el atributo de la clase se setea con el hash code
         users_gestor.pswHashed = currentUser.pwd

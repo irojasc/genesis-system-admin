@@ -3,7 +3,7 @@ import boto3
 import logging
 import os.path
 import os
-from objects import user, ware, ware_product, product
+from objects import user, ware, ware_product, product, product_transfer
 from decouple import Config, RepositoryEnv
 from datetime import datetime, date
 import bcrypt
@@ -591,9 +591,9 @@ class users_gestor:
 			return False, None
 
 
-class notification:
-	def __init__(self):
-		self.innerNotificationList = []
+class transfer_gestor:
+	def __init__(self, currentIdWare: int = None):
+		self.getTransferNotification2Inner(currentIdWare=currentIdWare)
 	
 	def connect_db(self):
 		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
@@ -603,9 +603,51 @@ class notification:
 		self.cursor.close()
 		self.mydb.close()
 
-	def getTransferNotification2Inner():
-		pass
+	def getTransferNotification2Inner(self, currentIdWare: int = None):
+		try:
+			query = f"select codeTS, wf.code as codeFrom, wt.code as codeTo, tr.fromUser, tr.toUser, tr.fromDate, tr.toDate, tr.state, tr.note, tp.idProduct, p.isbn, p.title, tp.qtyNew, tp.qtyOld from genesisdb.transfer as tr inner join genesisdb.transfer_product as tp on tr.codeTS = tp.idTransfer inner join genesisdb.product as p on tp.idProduct = p.id inner join genesisdb.ware as wf on wf.id = tr.fromWareId inner join genesisdb.ware as wt on wt.id = tr.toWareId where ((tr.state > 1) or (tr.toDate = '{str(date.today())}' )) and (tr.fromWareId = {str(currentIdWare)} or tr.toWareId = {str(currentIdWare)});"
+			self.connect_db()
+			self.cursor.execute(query)
+			WareProductsRows = self.cursor.fetchall()
+			self.disconnect_db()
+			self.transferDict = {}
+			for index, value in enumerate(WareProductsRows):
+				if not value[0] in self.transferDict:
+					self.transferDict.update({value[0]: product_transfer(idTransfer=value[0],
+									fromWareCod=value[1], 
+									toWareCod=value[2], 
+									fromUserName=value[3], 
+									toUserName=value[4], 
+									fromDate=value[5], 
+									toDate= value[6] if value[6] else None , 
+									state=value[7], 
+									notes=str(value[8]),
+									idProduct=value[9], 
+									isbn=str(value[10]), 
+									title=value[11], 
+									qtyNew=value[12], 
+									qtyOld=value[13])})
+				elif value[0] in self.transferDict:
+					self.transferDict[value[0]].addProduct(idProduct=value[9], isbn=str(value[10]), title=value[11], qtyNew=value[12], qtyOld=value[13])
 
+		except mysql.connector.Error as error:
+			print("Error: {}".format(error))
+			return None
+
+		except Exception as error:
+			print("An error occurred:", error)
+			return None
+
+		finally:
+			try:
+				if self.mydb.is_connected():
+					self.disconnect_db()
+					return True
+			except:
+				print("DB did not connect")
+
+	def getTranferDict(self):
+		return self.transferDict.copy()
 
 class documents:
 	def __init__(self):

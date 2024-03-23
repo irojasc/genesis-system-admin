@@ -6,6 +6,7 @@ from datetime import datetime # estos es para mostrar la hora en el main
 # from gestor import users_gestor
 from decouple import Config, RepositoryEnv
 from objects import user, ware
+from gestor import transfer_gestor, users_gestor
 from datetime import datetime
 from uiConfigurations import *
 import time
@@ -18,6 +19,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         super(Ui_MainWindow, self).__init__(parent)
         self.enable_datetime = True
         self.WareProdDate = datetime.now().date()
+        self.user_gest = users_gestor()  
+        self.transferGestor = transfer_gestor(currentIdWare=currentWare.getWareId())
         self.notification_list = []
         # currentWare: ware , datos de almacen actual
         # restWare: list[ware], datos de los demas almacenes
@@ -29,6 +32,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.dialog = QDialog()
         self.uiWareProduct = Ui_Dialog(currentUser, currentWare, restWare, self.WareProdDate, self.dialog)
         self.setupUi()
+        self.loadNotificationTable()
 
     def openWareDialog(self, event):
         if self.currentUser.auth["productSrch"]:
@@ -40,65 +44,61 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         else:
             QMessageBox.about(self, "Alerta", "No tiene permisos para ingresar almacen")
     
+    
+    def doubleClickItemTable(self, QTableItem):
+        #verifica 
+        if QTableItem.column() == 2 and self.notification_table.item(QTableItem.row(), 5).text() == 'ABIERTO':
+            
+            print("validado")
+            # print(QTableItem.row(), QTableItem.column(), QTableItem.text())
+
+
     def loadNotificationTable(self):
         
+        self.realTable = self.transferGestor.getTranferDict()
         
+        flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
+        self.notification_table.setRowCount(len(self.realTable))
         
-        #flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
-        self.notification_table.setRowCount(len(self.notification_list))
-        
-        for row, ware_li in enumerate(self.notification_list):
-            item = QtWidgets.QTableWidgetItem(ware_li["cod"])
-            #item.setFlags(flag)
+        for row, key in enumerate(self.realTable):
+
+            item = QtWidgets.QTableWidgetItem(self.realTable[key].getIdTransfer())
+            item.setFlags(flag)
             item.setTextAlignment(Qt.AlignCenter)
             self.notification_table.setItem(row, 0, item)
 
-            item = QtWidgets.QTableWidgetItem(ware_li["operacion"])
-            #item.setFlags(flag)
+            item = QtWidgets.QTableWidgetItem(self.realTable[key].getOwnType())
+            item.setFlags(flag)
             item.setTextAlignment(Qt.AlignCenter)
+            txt = "[" + self.realTable[key].getFromWareCod() + "]-->[" + self.realTable[key].getToWareCod() + "]"
+            item.setToolTip(txt)
             self.notification_table.setItem(row, 1, item)
-            txt = "[" + ware_li["s_point"] + "]-->[" + ware_li["f_point"] + "]"
-            self.notification_table.item(row, 1).setToolTip(txt)
 
-            item = QtWidgets.QTableWidgetItem(str.upper(ware_li["receiver"]))
-            #item.setFlags(flag)
+            item = QtWidgets.QTableWidgetItem(self.realTable[key].getToUserName() if self.realTable[key].getToUserName() else '' )
+            item.setFlags(flag)
             item.setTextAlignment(Qt.AlignCenter)
+            txt = "F: " + str.upper(self.realTable[key].getFromUserName()) + "\nT: " + str.upper(self.realTable[key].getToUserName() if self.realTable[key].getToUserName() else '')
+            item.setToolTip(txt)
             self.notification_table.setItem(row, 2, item)
-            txt = "I:" + str.upper(ware_li["emiter"]) + "\nD:" + str.upper(ware_li["receiver"])
-            self.notification_table.item(row, 2).setToolTip(txt)
 
-            item = QtWidgets.QTableWidgetItem(ware_li["detalles"].replace('\n', ""))
-            #item.setFlags(flag)
+            txtProducts = '|'.join(list(map(lambda x: f"Id:{x[0]},Isbn:{x[1]},Titulo:{x[2]},Nuevo:[{x[3]}],Segunda:[{x[4]}]",self.realTable[key].getProducts())))
+            item = QtWidgets.QTableWidgetItem(txtProducts)
+            item.setFlags(flag)
+            item.setToolTip(txtProducts.replace('|', '\n'))
             self.notification_table.setItem(row, 3, item)
-            self.notification_table.item(row, 3).setToolTip(ware_li["detalles"])
 
-            item = QtWidgets.QTableWidgetItem(str(ware_li["f_date"]))
-            #item.setFlags(flag)
+            item = QtWidgets.QTableWidgetItem(self.realTable[key].getToDate())
+            item.setFlags(flag)
             item.setTextAlignment(Qt.AlignCenter)
+            txt = "F:" + self.realTable[key].getFromDate() + "\nT:" + self.realTable[key].getToDate()
+            item.setToolTip(txt)
             self.notification_table.setItem(row, 4, item)
-            txt = "I:" + ware_li["s_date"] + "\nD:" + ware_li["f_date"]
-            self.notification_table.item(row, 4).setToolTip(txt)
 
-            item = QtWidgets.QTableWidgetItem(ware_li["estado"])
-            #item.setFlags(flag)
+            item = QtWidgets.QTableWidgetItem(self.realTable[key].getState())
+            item.setFlags(flag)
             item.setTextAlignment(Qt.AlignCenter)
+            item.setBackground(QtGui.QColor(16,158,89) if self.realTable[key].getStateId() == 3 else QtGui.QColor(225,229,0) if self.realTable[key].getStateId() == 2 else QtGui.QColor(211,31,33) if self.realTable[key].getStateId() == 1 else QtGui.QColor(0,0,0))
             self.notification_table.setItem(row, 5, item)
-            if ware_li["estado"] == "ATENDIDO":
-                self.notification_table.item(row, 5).setBackground(
-                    QtGui.QColor(ware_li["colors"]["amarillo"][0], ware_li["colors"]["amarillo"][1],
-                                 ware_li["colors"]["amarillo"][2]))
-
-            elif ware_li["estado"] == "CERRADO":
-                self.notification_table.item(row, 5).setBackground(
-                    QtGui.QColor(ware_li["colors"]["verde"][0], ware_li["colors"]["verde"][1],
-                                 ware_li["colors"]["verde"][2]))
-
-            elif ware_li["estado"] == "OBSERVADO":
-                self.notification_table.item(row, 5).setBackground(
-                    QtGui.QColor(ware_li["colors"]["rojo"][0], ware_li["colors"]["rojo"][1],
-                                 ware_li["colors"]["rojo"][2]))
-    
-    
     
     def setupUi(self):
         self.setObjectName("MainWindow")
@@ -159,7 +159,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.label_3.setObjectName("label_3")
         
         self.notification_table = QtWidgets.QTableWidget(self.centralwidget)
-        self.notification_table.setEnabled(False)
+        self.notification_table.setEnabled(True)
         self.notification_table.setGeometry(QtCore.QRect(0, 120, 1280, 617))
         self.notification_table.setObjectName("notification_table")
         self.notification_table.setColumnCount(6)
@@ -184,7 +184,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.notification_table.setSelectionBehavior(1)
         self.notification_table.setSelectionMode(1)
         self.notification_table.verticalHeader().hide()
-        # self.notification_table.itemDoubleClicked.connect(self.doubleClickItem)
+        self.notification_table.itemDoubleClicked.connect(self.doubleClickItemTable)
         
         # ------------------  frame_2 configuration
         self.frame_2 = QtWidgets.QFrame(self.centralwidget)

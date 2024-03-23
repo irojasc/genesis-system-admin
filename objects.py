@@ -316,22 +316,22 @@ class ware:
 	def getWareId(self) -> int:
 		return self.id
 	
-class notification:
+class product_transfer():
 	def __repr__(self):
-		return "{{id: {0}, type: {1}, fromUserName: {2}, toUserName: {3}, fromWareCod: {4}, toWareCod: {5}, fromDate: {6}, toDate: {7}, state: {8}}}".format(
-				self.id, self.type, self.fromUserName, self.toUserName, self.fromWareCod, self.toWareCod, 
-				self.fromDate, self.toDate, self.state)
+		return "{{id: {0}, type: {1}, fromUserName: {2}, toUserName: {3}, fromWareCod: {4}, toWareCod: {5}, fromDate: {6}, toDate: {7}, state: {8}, products: {9}}}".format(
+				self.idTransfer, self.type, self.fromUserName, self.toUserName, self.fromWareCod, self.toWareCod, 
+				self.fromDate, self.toDate, self.state, self.products)
 	
 	def __str__(self):
-		return "{{id: {0}, type: {1}, fromUserName: {2}, toUserName: {3}, fromWareCod: {4}, toWareCod: {5}, fromDate: {6}, toDate: {7}, state: {8}}}".format(
-				self.id, self.type, self.fromUserName, self.toUserName, self.fromWareCod, self.toWareCod, 
-				self.fromDate, self.toDate, self.state)
+		return "{{id: {0}, type: {1}, fromUserName: {2}, toUserName: {3}, fromWareCod: {4}, toWareCod: {5}, fromDate: {6}, toDate: {7}, state: {8}, products: {9}}}".format(
+				self.idTransfer, self.type, self.fromUserName, self.toUserName, self.fromWareCod, self.toWareCod, 
+				self.fromDate, self.toDate, self.state, self.products)
 
-	def __init__(self, id: int = None, type: str = None, fromUserName: str = None,
-			toUserName: str = None, fromWareCod: str = None, toWareCod: str = None,
-			fromDate: date = None, toDate: date = None, state: int = None, notes: str = None):
-		self.id = id
-		self.type = type
+	def __init__(self, idTransfer: str = None, fromUserName: str = None, toUserName: str = None, fromWareCod: str = None,
+				toWareCod: str = None, fromDate: date = None, toDate: date = None, state: int = None, notes: str = None,
+				idProduct: int = None, isbn: str = None, title: str = None, qtyNew: int = None, qtyOld: int = None):
+		self.idTransfer = idTransfer
+		self.type = 'TRASLADO'
 		self.fromUserName = fromUserName
 		self.toUserName = toUserName
 		self.fromWareCod = fromWareCod
@@ -340,9 +340,45 @@ class notification:
 		self.toDate = toDate
 		self.state = 'ABIERTO' if state == 3 else 'ATENDIDO' if state == 2 else 'CERRADO' if state == 0 else None
 		self.notes = notes
+		self.products = []
+		self.products.append((idProduct, isbn, title, qtyNew, qtyOld))
 
+	def setState(self, state: str = None ):
+		self.state = state
+	
 	def getState(self):
 		return self.state
 	
 	def getStateId(self):
 		return 3 if self.state == 'ABIERTO' else 2 if self.state == 'ATENDIDO' else 1 if self.state == 'CERRADO' else None
+	 
+	def getIdTransfer(self):
+		return self.idTransfer
+	
+	def getOwnType(self):
+		return self.type
+
+	def getFromWareCod(self):
+		return self.fromWareCod
+	
+	def getToWareCod(self):
+		return self.toWareCod
+	
+	def getFromUserName(self):
+		return self.fromUserName
+	
+	def getToUserName(self):
+		return self.toUserName
+
+	def addProduct(self, idProduct: int = None, isbn: str = None, title: str = None, qtyNew: int = None, qtyOld: int = None):
+		self.products.append((idProduct, isbn, title, qtyNew, qtyOld))
+		return True
+
+	def getProducts(self):
+		return self.products
+	
+	def getFromDate(self) -> str:
+		return self.fromDate.strftime("%Y-%m-%d") if self.fromDate else ''
+	
+	def getToDate(self) -> str:
+		return self.toDate.strftime("%Y-%m-%d") if self.toDate else ''
