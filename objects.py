@@ -315,6 +315,9 @@ class ware:
 	
 	def getWareId(self) -> int:
 		return self.id
+
+	def getWareCod(self) -> str:
+		return self.cod
 	
 class product_transfer():
 	def __repr__(self):
@@ -345,6 +348,12 @@ class product_transfer():
 
 	def setState(self, state: str = None ):
 		self.state = state
+	
+	def setStateById(self, id: int = None ):
+		self.state = 'ABIERTO' if id == 3 else 'ATENDIDO' if id == 2 else 'CERRADO' if id == 0 else None
+	
+	def setToUserName(self, userName: str = None):
+		self.toUserName = userName
 	
 	def getState(self):
 		return self.state
@@ -382,3 +391,7 @@ class product_transfer():
 	
 	def getToDate(self) -> str:
 		return self.toDate.strftime("%Y-%m-%d") if self.toDate else ''
+	
+	def downGradeIdStateByOne(self):
+		self.state = 'ATENDIDO' if self.state == 'ABIERTO' else 'CERRADO' if self.state == 'ATENDIDO' else None
+		

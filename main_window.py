@@ -6,7 +6,7 @@ from datetime import datetime # estos es para mostrar la hora en el main
 # from gestor import users_gestor
 from decouple import Config, RepositoryEnv
 from objects import user, ware
-from gestor import transfer_gestor, users_gestor
+from gestor import transfer_gestor, users_gestor, transfer_gestor
 from datetime import datetime
 from uiConfigurations import *
 import time
@@ -21,6 +21,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.enable_datetime = True
         self.WareProdDate = datetime.now().date()
         self.user_gest = users_gestor()
+        self.currentWare = currentWare
         self.transferGestor = transfer_gestor(currentIdWare=currentWare.getWareId())
         self.notification_list = []
         # currentWare: ware , datos de almacen actual
@@ -45,12 +46,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         else:
             QMessageBox.about(self, "Alerta", "No tiene permisos para ingresar almacen")
     
-    
     def doubleClickItemTable(self, QTableItem):
-        #verifica 
+        #Para pasar de state = 3 a state = 2
         if QTableItem.column() == 2 and self.notification_table.item(QTableItem.row(), 5).text() == 'ABIERTO':
-            if self.user_gest.checkCurrentUserByPwd(self)[0]:
-                print("validado")
+            idTransfer_ = self.notification_table.item(QTableItem.row(), 0).text()
+            if (self.currentWare.getWareCod() == self.transferGestor.getToWareCodByIdTransfer(idTransfer=idTransfer_)) and (self.transferGestor.getIdStateByIdTransfer(idTransfer=idTransfer_) > 2) and self.user_gest.checkCurrentUserByPwd(self)[0]:
+                if self.transferGestor.upgStateInnerAndDB(idTransfer=idTransfer_, currentUserName=self.currentUser.getUserName()):
+                    self.loadNotificationTable()
+                
 
     def loadNotificationTable(self):
         
@@ -73,7 +76,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             item.setToolTip(txt)
             self.notification_table.setItem(row, 1, item)
 
-            item = QtWidgets.QTableWidgetItem(self.realTable[key].getToUserName() if self.realTable[key].getToUserName() else '' )
+            item = QtWidgets.QTableWidgetItem(self.realTable[key].getToUserName().upper() if self.realTable[key].getToUserName() else '' )
             item.setFlags(flag)
             item.setTextAlignment(Qt.AlignCenter)
             txt = "F: " + str.upper(self.realTable[key].getFromUserName()) + "\nT: " + str.upper(self.realTable[key].getToUserName() if self.realTable[key].getToUserName() else '')
@@ -236,7 +239,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.notification_table.horizontalHeaderItem(4).setForeground(QBrush(QColor(0, 0, 0)))
         self.notification_table.horizontalHeaderItem(5).setFont(font)
         self.notification_table.horizontalHeaderItem(5).setForeground(QBrush(QColor(0, 0, 0)))
-        
 
 
 if __name__ == "__main__":

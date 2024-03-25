@@ -229,6 +229,15 @@ class WareProduct:
 	def __init__(self):
 		self.innerWareList = []
 		self.temp_list = []
+
+	def __del__(self):
+		del self
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self,ext_type,exc_value,traceback):
+		del self
 	
 	def connect_db(self):
 		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
@@ -605,10 +614,18 @@ class users_gestor:
 			print("Error: %s" % e)
 			return False, None
 
-
 class transfer_gestor:
 	def __init__(self, currentIdWare: int = None):
 		self.getTransferNotification2Inner(currentIdWare=currentIdWare)
+
+	def __del__(self):
+		del self
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self,ext_type,exc_value,traceback):
+		del self
 	
 	def connect_db(self):
 		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
@@ -618,6 +635,7 @@ class transfer_gestor:
 		self.cursor.close()
 		self.mydb.close()
 
+	#obtiene todos los transfers hace inner self.transferDict
 	def getTransferNotification2Inner(self, currentIdWare: int = None):
 		try:
 			query = f"select codeTS, wf.code as codeFrom, wt.code as codeTo, tr.fromUser, tr.toUser, tr.fromDate, tr.toDate, tr.state, tr.note, tp.idProduct, p.isbn, p.title, tp.qtyNew, tp.qtyOld from genesisdb.transfer as tr inner join genesisdb.transfer_product as tp on tr.codeTS = tp.idTransfer inner join genesisdb.product as p on tp.idProduct = p.id inner join genesisdb.ware as wf on wf.id = tr.fromWareId inner join genesisdb.ware as wt on wt.id = tr.toWareId where ((tr.state > 1) or (tr.toDate = '{str(date.today())}' )) and (tr.fromWareId = {str(currentIdWare)} or tr.toWareId = {str(currentIdWare)});"
@@ -645,6 +663,7 @@ class transfer_gestor:
 				elif value[0] in self.transferDict:
 					self.transferDict[value[0]].addProduct(idProduct=value[9], isbn=str(value[10]), title=value[11], qtyNew=value[12], qtyOld=value[13])
 
+		
 		except mysql.connector.Error as error:
 			print("Error: {}".format(error))
 			return None
@@ -663,6 +682,40 @@ class transfer_gestor:
 
 	def getTranferDict(self):
 		return self.transferDict.copy()
+	
+	#upgState: Upgrade State 3->2->1
+	def upgStateInnerAndDB(self, currentUserName: str = None, idTransfer: str = None):
+
+		query = f"update genesisdb.transfer set toUser='{currentUserName}', state = state - 1 where codeTS = '{idTransfer}';"
+		try:
+			self.connect_db()
+			self.cursor.execute(query)
+			self.mydb.commit()
+			self.transferDict[idTransfer].downGradeIdStateByOne()
+			self.transferDict[idTransfer].setToUserName(currentUserName)
+		
+		except mysql.connector.Error as err:
+			print("Something went wrong: {}".format(err))
+			self.disconnect_db()		
+			return False
+		
+		except Exception as error:
+			print("An error occurred:", error)
+			return False
+
+		finally:
+			try:
+				if self.mydb.is_connected():
+					self.disconnect_db()
+					return True
+			except:
+				print("DB did not connect")
+			
+	def getToWareCodByIdTransfer(self, idTransfer: str = None) -> str:
+		return self.transferDict[idTransfer].getToWareCod()
+	
+	def getIdStateByIdTransfer(self, idTransfer: str = None) -> str:
+		return self.transferDict[idTransfer].getStateId()
 
 class documents:
 	def __init__(self):
