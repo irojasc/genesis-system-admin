@@ -15,11 +15,12 @@ import threading
 env_config = Config(RepositoryEnv('C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'))
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, currentUser: user = None, currentWare: ware = None, restWare: list = None, wareName:str = None, parent=None):
+    # def __init__(self, parent = None, currentUser: user = None, currentWare: ware = None, restWare: list = None, wareName:str = None, userGest: users_gestor = None):
+    def __init__(self, parent = None, currentUser: user = None, currentWare: ware = None, restWare: list = None, wareName:str = None):
         super(Ui_MainWindow, self).__init__(parent)
         self.enable_datetime = True
         self.WareProdDate = datetime.now().date()
-        self.user_gest = users_gestor()  
+        self.user_gest = users_gestor()
         self.transferGestor = transfer_gestor(currentIdWare=currentWare.getWareId())
         self.notification_list = []
         # currentWare: ware , datos de almacen actual
@@ -48,10 +49,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def doubleClickItemTable(self, QTableItem):
         #verifica 
         if QTableItem.column() == 2 and self.notification_table.item(QTableItem.row(), 5).text() == 'ABIERTO':
-            
-            print("validado")
-            # print(QTableItem.row(), QTableItem.column(), QTableItem.text())
-
+            if self.user_gest.checkCurrentUserByPwd(self)[0]:
+                print("validado")
 
     def loadNotificationTable(self):
         

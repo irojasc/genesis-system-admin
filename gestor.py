@@ -8,6 +8,8 @@ from decouple import Config, RepositoryEnv
 from datetime import datetime, date
 import bcrypt
 import time
+from PyQt5.QtWidgets import QInputDialog, QLineEdit
+from PyQt5 import QtWidgets
 
 
 # import traceback
@@ -518,6 +520,19 @@ class users_gestor:
 		else:
 			print("Something wrong happened")
 
+	@pswHashed.getter
+	def pswHashed(self) -> None:
+		return self._pswHashed 
+
+	def checkCurrentUserByPwd(self, parent=None):
+		text, isPressedOk = QInputDialog.getText(parent, 'Validar usuario', 'Ingrese contraseña', QtWidgets.QLineEdit.Password)
+		if(isPressedOk) and bool(text) and len(text) > 0:
+			checkAnswer = bcrypt.checkpw(bytes(text, "utf-8"), bytes(self.pswHashed, "utf-8"))
+			if checkAnswer: return (True, 'acepted')
+			if not checkAnswer: return (False, 'denied')
+		else:
+			return (False, "aborted")
+	
 	def __init__(self):
 		self.userList = []
 		self.fill_users()

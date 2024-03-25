@@ -43,7 +43,8 @@ class Ui_LoginWindow(QtWidgets.QMainWindow):
 
         if bool(currentUser) and validator:
             # QMessageBox.information(self, 'Mensaje', "Log In Correcto", QMessageBox.Ok, QMessageBox.Ok)
-            self.ui = Ui_MainWindow(currentUser, objWares[0], objWares[1], currentWareName)
+            # self.ui = Ui_MainWindow(currentUser=currentUser, currentWare=objWares[0], restWare=objWares[1], wareName=currentWareName, userGest = users_gestor)
+            self.ui = Ui_MainWindow(currentUser=currentUser, currentWare=objWares[0], restWare=objWares[1], wareName=currentWareName)
             LoginWindow.close()
             self.ui.show()
 
