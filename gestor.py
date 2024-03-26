@@ -683,16 +683,25 @@ class transfer_gestor:
 	def getTranferDict(self):
 		return self.transferDict.copy()
 	
-	#upgState: Upgrade State 3->2->1
-	def upgStateInnerAndDB(self, currentUserName: str = None, idTransfer: str = None):
+	
+	def getProductsList2Statement(self, idTranfer: str = None):
+		#pattern: (qtyNew, qtyOld, iProduct)
+		stmtList = list(map(lambda x: (str(x[3]), str(x[4]), str(x[0])), self.transferDict[idTranfer].getProducts()))
+		return None if not len(stmtList) else stmtList
 
-		query = f"update genesisdb.transfer set toUser='{currentUserName}', state = state - 1 where codeTS = '{idTransfer}';"
+	
+	#upgState: Upgrade State 3->2->1
+	def upgStateInnerAndDB(self, currentUserName: str = None, idTransfer: str = None, currentWareId: id = None, isFinalStep: bool = None):
+		stmtAnswer = self.getProductsList2Statement(idTransfer) if isFinalStep else None
+		query = f"update genesisdb.transfer set toUser='{currentUserName}', state = state - 1 where codeTS = '{idTransfer}';" if not isFinalStep else f"update genesisdb.transfer set state = state - 1, toDate = '{str(date.today())}' where codeTS = '{idTransfer}';"
+		stmt = None if not isFinalStep else "update genesisdb.ware_product set qtyNew = qtyNew + %s, qtyOld = qtyOld + %s, editDate = '" + str(date.today()) + "'  where idWare = " + str(currentWareId) + " and idProduct = %s"
 		try:
 			self.connect_db()
 			self.cursor.execute(query)
+			None if not(isFinalStep) and not(stmtAnswer) else self.cursor.executemany(stmt, stmtAnswer)
 			self.mydb.commit()
 			self.transferDict[idTransfer].downGradeIdStateByOne()
-			self.transferDict[idTransfer].setToUserName(currentUserName)
+			self.transferDict[idTransfer].setToUserName(currentUserName) if not isFinalStep else self.transferDict[idTransfer].setToDate(date.today())
 		
 		except mysql.connector.Error as err:
 			print("Something went wrong: {}".format(err))

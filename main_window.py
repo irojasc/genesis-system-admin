@@ -47,13 +47,21 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             QMessageBox.about(self, "Alerta", "No tiene permisos para ingresar almacen")
     
     def doubleClickItemTable(self, QTableItem):
-        #Para pasar de state = 3 a state = 2
-        if QTableItem.column() == 2 and self.notification_table.item(QTableItem.row(), 5).text() == 'ABIERTO':
-            idTransfer_ = self.notification_table.item(QTableItem.row(), 0).text()
-            if (self.currentWare.getWareCod() == self.transferGestor.getToWareCodByIdTransfer(idTransfer=idTransfer_)) and (self.transferGestor.getIdStateByIdTransfer(idTransfer=idTransfer_) > 2) and self.user_gest.checkCurrentUserByPwd(self)[0]:
-                if self.transferGestor.upgStateInnerAndDB(idTransfer=idTransfer_, currentUserName=self.currentUser.getUserName()):
-                    self.loadNotificationTable()
-                
+        idTransfer_ = self.notification_table.item(QTableItem.row(), 0).text()
+        if (self.currentWare.getWareCode() == self.transferGestor.getToWareCodByIdTransfer(idTransfer=idTransfer_)):
+            #Para pasar de state = 3 a state = 2
+            if QTableItem.column() == 2 and self.notification_table.item(QTableItem.row(), 5).text() == 'ABIERTO':
+                if (self.transferGestor.getIdStateByIdTransfer(idTransfer=idTransfer_) > 2) and self.user_gest.checkCurrentUserByPwd(self)[0]:
+                    if self.transferGestor.upgStateInnerAndDB(idTransfer=idTransfer_, currentUserName=self.currentUser.getUserName()):
+                        self.loadNotificationTable()
+            
+            elif QTableItem.column() == 3 and self.notification_table.item(QTableItem.row(), 5).text() == 'ATENDIDO':
+                    # from[User] -> to[User] <userTo
+                    userTo = self.notification_table.item(QTableItem.row(), 2).toolTip().split('T:')[1].strip()
+                    if (userTo.lower() == self.currentUser.getUserName()) and (self.transferGestor.getIdStateByIdTransfer(idTransfer=idTransfer_) == 2) and self.user_gest.checkCurrentUserByPwd(self)[0]:
+                        if self.transferGestor.upgStateInnerAndDB(idTransfer=idTransfer_, currentUserName=self.currentUser.getUserName(), currentWareId = self.currentWare.getWareId(), isFinalStep=True):
+                            self.loadNotificationTable()
+                        
 
     def loadNotificationTable(self):
         

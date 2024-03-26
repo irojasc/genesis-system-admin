@@ -315,9 +315,6 @@ class ware:
 	
 	def getWareId(self) -> int:
 		return self.id
-
-	def getWareCod(self) -> str:
-		return self.cod
 	
 class product_transfer():
 	def __repr__(self):
@@ -354,6 +351,9 @@ class product_transfer():
 	
 	def setToUserName(self, userName: str = None):
 		self.toUserName = userName
+	
+	def setToDate(self, toDate: date = None):
+		self.toDate = toDate
 	
 	def getState(self):
 		return self.state
