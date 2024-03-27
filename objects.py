@@ -338,7 +338,7 @@ class product_transfer():
 		self.toWareCod = toWareCod
 		self.fromDate = fromDate
 		self.toDate = toDate
-		self.state = 'ABIERTO' if state == 3 else 'ATENDIDO' if state == 2 else 'CERRADO' if state == 0 else None
+		self.state = 'ABIERTO' if state == 3 else 'ATENDIDO' if state == 2 else 'CERRADO' if state == 1 else None
 		self.notes = notes
 		self.products = []
 		self.products.append((idProduct, isbn, title, qtyNew, qtyOld))
@@ -347,7 +347,7 @@ class product_transfer():
 		self.state = state
 	
 	def setStateById(self, id: int = None ):
-		self.state = 'ABIERTO' if id == 3 else 'ATENDIDO' if id == 2 else 'CERRADO' if id == 0 else None
+		self.state = 'ABIERTO' if id == 3 else 'ATENDIDO' if id == 2 else 'CERRADO' if id == 1 else None
 	
 	def setToUserName(self, userName: str = None):
 		self.toUserName = userName

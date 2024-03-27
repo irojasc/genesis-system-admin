@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal, QObject
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ware_dialog import Ui_Dialog
 from datetime import datetime # estos es para mostrar la hora en el main
@@ -14,6 +14,8 @@ import threading
 
 env_config = Config(RepositoryEnv('C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'))
 
+NotiThresholdinMinutes = 3
+
 class Ui_MainWindow(QtWidgets.QMainWindow):
     # def __init__(self, parent = None, currentUser: user = None, currentWare: ware = None, restWare: list = None, wareName:str = None, userGest: users_gestor = None):
     def __init__(self, parent = None, currentUser: user = None, currentWare: ware = None, restWare: list = None, wareName:str = None):
@@ -23,7 +25,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.user_gest = users_gestor()
         self.currentWare = currentWare
         self.transferGestor = transfer_gestor(currentIdWare=currentWare.getWareId())
-        self.notification_list = []
+        self.accumulator = 0
+        self.signal_emitter = MySignalEmitter()
+        self.signal_emitter.custom_signal.connect(self.custom_slot)
+        self.isNotiTableUpdated = False
         # currentWare: ware , datos de almacen actual
         # restWare: list[ware], datos de los demas almacenes
         # currentUser: user, datos de usuario actual
@@ -35,6 +40,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.uiWareProduct = Ui_Dialog(currentUser, currentWare, restWare, self.WareProdDate, self.dialog)
         self.setupUi()
         self.loadNotificationTable()
+
+    def custom_slot(self, value):
+        self.setEnabled(False)
+        if self.transferGestor.getTransferNotification2Inner(currentIdWare=self.currentWare.getWareId()):
+            self.isNotiTableUpdated = True
+            self.loadNotificationTable()
+        self.setEnabled(True)      
 
     def openWareDialog(self, event):
         if self.currentUser.auth["productSrch"]:
@@ -51,20 +63,35 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if (self.currentWare.getWareCode() == self.transferGestor.getToWareCodByIdTransfer(idTransfer=idTransfer_)):
             #Para pasar de state = 3 a state = 2
             if QTableItem.column() == 2 and self.notification_table.item(QTableItem.row(), 5).text() == 'ABIERTO':
-                if (self.transferGestor.getIdStateByIdTransfer(idTransfer=idTransfer_) > 2) and self.user_gest.checkCurrentUserByPwd(self)[0]:
-                    if self.transferGestor.upgStateInnerAndDB(idTransfer=idTransfer_, currentUserName=self.currentUser.getUserName()):
-                        self.loadNotificationTable()
+                if (self.transferGestor.getIdStateByIdTransfer(idTransfer=idTransfer_) > 2):
+                    boolead , answer = self.user_gest.checkCurrentUserByPwd(self)
+                    if answer == 'acepted' and not self.isNotiTableUpdated:
+                        if self.transferGestor.upgStateInnerAndDB(idTransfer=idTransfer_, currentUserName=self.currentUser.getUserName()):
+                            self.loadNotificationTable()
+                    elif answer == 'acepted' and self.isNotiTableUpdated:
+                        QMessageBox.information(self, 'Mensaje', "Vuelvalo a Intentar", QMessageBox.Ok, QMessageBox.Ok)
+                        self.isNotiTableUpdated = False
+                    elif (answer == 'denied' or answer == 'aborted') and self.isNotiTableUpdated:
+                        self.isNotiTableUpdated = False
+                
             
             elif QTableItem.column() == 3 and self.notification_table.item(QTableItem.row(), 5).text() == 'ATENDIDO':
                     # from[User] -> to[User] <userTo
                     userTo = self.notification_table.item(QTableItem.row(), 2).toolTip().split('T:')[1].strip()
-                    if (userTo.lower() == self.currentUser.getUserName()) and (self.transferGestor.getIdStateByIdTransfer(idTransfer=idTransfer_) == 2) and self.user_gest.checkCurrentUserByPwd(self)[0]:
-                        if self.transferGestor.upgStateInnerAndDB(idTransfer=idTransfer_, currentUserName=self.currentUser.getUserName(), currentWareId = self.currentWare.getWareId(), isFinalStep=True):
-                            self.loadNotificationTable()
-                        
+                    if (userTo.lower() == self.currentUser.getUserName()) and (self.transferGestor.getIdStateByIdTransfer(idTransfer=idTransfer_) == 2):
+                        booled, answer = self.user_gest.checkCurrentUserByPwd(self)
+                        if answer == 'acepted' and not self.isNotiTableUpdated:
+                            if self.transferGestor.upgStateInnerAndDB(idTransfer=idTransfer_, currentUserName=self.currentUser.getUserName(), currentWareId = self.currentWare.getWareId(), isFinalStep=True):
+                                #Aqui actualiza la tabla de wareDialog
+                                self.uiWareProduct.updateWareTable()
+                                self.loadNotificationTable()
+                        elif answer == 'acepted' and self.isNotiTableUpdated:
+                            QMessageBox.information(self, 'Mensaje', "Vuelvalo a Intentar", QMessageBox.Ok, QMessageBox.Ok)
+                            self.isNotiTableUpdated = False
+                        elif (answer == 'denied' or answer == 'aborted') and self.isNotiTableUpdated:
+                            self.isNotiTableUpdated = False
 
     def loadNotificationTable(self):
-        
         self.realTable = self.transferGestor.getTranferDict()
         
         flag = QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
@@ -72,7 +99,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         
         for row, key in enumerate(self.realTable):
 
-            item = QtWidgets.QTableWidgetItem(self.realTable[key].getIdTransfer())
+            item = QTableWidgetItem(self.realTable[key].getIdTransfer())
             item.setFlags(flag)
             item.setTextAlignment(Qt.AlignCenter)
             self.notification_table.setItem(row, 0, item)
@@ -213,10 +240,19 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         self.enable_datetime = False
         event.accept()
-
+    
     def update_datetime(self):
+        self.initTS = int(datetime.now().timestamp())
+        x = lambda: self.loadNotificationTable()
         while(self.enable_datetime):
             self.dateText.setText(datetime.now().strftime("%H:%M %d/%m/%Y"))
+            
+            if self.accumulator < 3:
+                self.accumulator += 1
+            else:
+                if (int(datetime.now().timestamp()) - self.initTS) > NotiThresholdinMinutes * 60:
+                    self.signal_emitter.custom_signal.emit("Ivan")
+                    self.initTS = int(datetime.now().timestamp())
             time.sleep(0.5)
 
     def run_threads(self):
@@ -247,6 +283,22 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.notification_table.horizontalHeaderItem(4).setForeground(QBrush(QColor(0, 0, 0)))
         self.notification_table.horizontalHeaderItem(5).setFont(font)
         self.notification_table.horizontalHeaderItem(5).setForeground(QBrush(QColor(0, 0, 0)))
+
+class MySignalEmitter(QObject):
+    # Define a custom signal with a value
+    custom_signal = pyqtSignal(str)
+
+class myInputWidget(QInputDialog):
+    def __init__(self, parent: QtWidgets.QWidget | None = ..., flags: Qt.WindowFlags | Qt.WindowType = ...) -> None:
+        super().__init__(parent, flags)
+    
+    
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        print("esta cerrando el myInputWidget")
+        return super().closeEvent(a0)
+    
+    def showEvent(self, a0: QtGui.QShowEvent) -> None:
+        return super().showEvent(a0)
 
 
 if __name__ == "__main__":

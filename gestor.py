@@ -642,9 +642,9 @@ class transfer_gestor:
 			self.connect_db()
 			self.cursor.execute(query)
 			WareProductsRows = self.cursor.fetchall()
-			self.disconnect_db()
 			self.transferDict = {}
 			for index, value in enumerate(WareProductsRows):
+				
 				if not value[0] in self.transferDict:
 					self.transferDict.update({value[0]: product_transfer(idTransfer=value[0],
 									fromWareCod=value[1], 
@@ -663,7 +663,6 @@ class transfer_gestor:
 				elif value[0] in self.transferDict:
 					self.transferDict[value[0]].addProduct(idProduct=value[9], isbn=str(value[10]), title=value[11], qtyNew=value[12], qtyOld=value[13])
 
-		
 		except mysql.connector.Error as error:
 			print("Error: {}".format(error))
 			return None
@@ -677,18 +676,18 @@ class transfer_gestor:
 				if self.mydb.is_connected():
 					self.disconnect_db()
 					return True
+				else:
+					return False
 			except:
 				print("DB did not connect")
 
 	def getTranferDict(self):
 		return self.transferDict.copy()
 	
-	
 	def getProductsList2Statement(self, idTranfer: str = None):
 		#pattern: (qtyNew, qtyOld, iProduct)
 		stmtList = list(map(lambda x: (str(x[3]), str(x[4]), str(x[0])), self.transferDict[idTranfer].getProducts()))
 		return None if not len(stmtList) else stmtList
-
 	
 	#upgState: Upgrade State 3->2->1
 	def upgStateInnerAndDB(self, currentUserName: str = None, idTransfer: str = None, currentWareId: id = None, isFinalStep: bool = None):

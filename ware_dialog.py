@@ -47,10 +47,6 @@ class Ui_Dialog(QtWidgets.QDialog):
             # -----------  cargar datos en tabla  -----------
             self.gestWareProduct.loadInnerTable() ##para cargar la tabla principal del gestor
             self.txtBusChanged()
-            # -----------  QDialog para ventana in/out  -----------
-            self.dialog = QDialog()
-            # self.ui_dialog = Ui_inoutDialog(self.ownUsers, self.currWare, self.dialog)
-            self.init = 0
             # print(self.currWare, self.restWares)
             # print(currentUser)
         else:
@@ -59,7 +55,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.restWares = None
             self.WareProdDate = None
             self.setupUi()
-            self.init = 0
+        self.init = 0
 
     # -----------  condiciones iniciales al abrir ventana  -----------
     def init_condition(self):
@@ -384,7 +380,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         if self.ownUsers.auth["InOutProduct"]:
             self.change_state("in/out") # lo que hace esto es cambiar el color de waredialog cuando pasa a ingreso/salida
              
-            with Ui_inoutDialog(self.ownUsers, self.currWare, self.dialog) as ui_dialog:
+            with Ui_inoutDialog(self.ownUsers, self.currWare, self) as ui_dialog:
       
                 #Si es en modo traspaso
                 if self.transferMode:
@@ -605,7 +601,6 @@ class Ui_Dialog(QtWidgets.QDialog):
     
     #esta funcion se utiliza para contrastar dos almacenes segun stock minimos
     def compareItemWares(self):
-        
         if self.compareCheckBox.isChecked():
             boolValidation, textAnswer = self.userValidation()
 
@@ -665,15 +660,9 @@ class Ui_Dialog(QtWidgets.QDialog):
         #si retorna true debe actualizar la fecha con la ultima actualizada
         if self.gestWareProduct.loadInnerTable(self.WareProdDate):
             self.WareProdDate = datetime.now().date()
+            #updateWareTableAfterInner es cuando no se quiere actualizar qtableWidget despues de inner desde db
             if updWareTableAfterInner:
                 self.txtBusChanged(method=1)
-
-        # guarda el active index antiguo
-        # row = self.ware_table.currentIndex().row()
-        # self.txtBusChanged(method=1, keepCurrentIndex=row)
-        # setea el index antiguo a la tabla actualizada
-        # self.ware_table.setCurrentCell(row, 0)
-        # self.actualizar_img(row)
 
     def setupUi(self):
         self.setObjectName("Dialog")
