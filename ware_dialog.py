@@ -347,7 +347,6 @@ class Ui_Dialog(QtWidgets.QDialog):
                     elif isUpdate and isCancel == 'cancelar':
                         if self.gestWareProduct.updateInnerItem(data):
                             self.txtBusChanged(method=1)
-                            print("¡inner dataProduct updated!")
 
     # -----------  user validation  -----------
     def userValidation(self):
@@ -418,12 +417,19 @@ class Ui_Dialog(QtWidgets.QDialog):
                     #returned_val[3]: generalFlag -> False cuando la intencion es agregar/quitar, sin que sea None
                     #>cuando es ingreso y salida
                     if (ui_dialog.returned_val[3] is not None) and not(ui_dialog.returned_val[3]):
-                        self.gestWareProduct.update_backtablequantity(newList=ui_dialog.returned_val[0], oldList=ui_dialog.returned_val[1], operationType=ui_dialog.returned_val[2], currentWare=self.currWare.cod)
+                        self.gestWareProduct.update_backtablequantity(newList=ui_dialog.returned_val[0],
+                                                                    oldList=ui_dialog.returned_val[1],
+                                                                    operationType=ui_dialog.returned_val[2],
+                                                                    currentWare=self.currWare.cod,
+                                                                    location=ui_dialog.returned_val[4])
                         self.txtBusChanged(method=1, keepCurrentIndex=self.ware_table.selectedIndexes()[0].row())
                         del ui_dialog
                     #>cuando es parte de operacion de trasferencia
                     elif (ui_dialog.returned_val[3] is not None) and ui_dialog.returned_val[3]:
-                        self.gestWareProduct.update_backtablequantity(newList=ui_dialog.returned_val[0], oldList=ui_dialog.returned_val[1], operationType=ui_dialog.returned_val[2], currentWare=self.currWare.cod)
+                        self.gestWareProduct.update_backtablequantity(newList=ui_dialog.returned_val[0],
+                                                                    oldList=ui_dialog.returned_val[1],
+                                                                    operationType=ui_dialog.returned_val[2],
+                                                                    currentWare=self.currWare.cod)
                         self.compareCheckBox.setChecked(False)
                         del ui_dialog
                 else:

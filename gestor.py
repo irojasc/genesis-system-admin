@@ -248,22 +248,26 @@ class WareProduct:
 		self.mydb.close()
 
 	#actualiza cantidades de in/out directo a Ware Inner List
-	def update_backtablequantity(self, newList: list = None, oldList: list = None, operationType: str = None, currentWare = None):
+	def update_backtablequantity(self, newList: list = None, oldList: list = None, operationType: str = None, currentWare = None, location: str = None):
 		mainList = newList + oldList
 		for i in mainList:
 			# formato de i: {'loc': 'ubic', 'cod': 'gn_x', 'isbn': '13dgs..', 'title': 'title', 'qtyNew': x, 'qtyOld': y}
 			for j in self.innerWareList:
 				if j.product.prdCode == i["cod"] and i["qtyOld"] == None:
+					if location is not None: j.wareData[currentWare]["loc"] = location
 					if operationType == "ingreso":
 						j.wareData[currentWare]["qtyNew"] += i["qtyNew"]
 					elif operationType == "salida":
 						j.wareData[currentWare]["qtyNew"] -= i["qtyNew"]
 
 				elif j.product.prdCode == i["cod"] and i["qtyNew"] == None:
+					if location is not None: j.wareData[currentWare]["loc"] = location
 					if operationType == "ingreso":
 						j.wareData[currentWare]["qtyOld"] += i["qtyOld"]
 					elif operationType == "salida":
 						j.wareData[currentWare]["qtyOld"] -= i["qtyOld"]
+
+
 
 	#actualiza cantidades de in/out directo a Data Base ware_product table
 	def update_quantity(self, listNew: list[int] = None, listOld: list[int] = None, operationType: str = "", idWare: str = "", location: str = "", isGestorRequest=False):
@@ -468,9 +472,15 @@ class WareProduct:
 		return (tmp_list, data_tranfer) if bool(tmp_list) and bool(data_tranfer) else ([], [])
 
 	#registra el traslado de productos entre dos wares
-	def insertTransferToDB(self, fromWareCod: str = None, toWareCod: str = None, fromUserName: str = None, data: tuple = None, fromIdWare: str = None):
+	def insertTransferToDB(self, fromWareCod: str = None, 
+						toWareCod: str = None, 
+						fromUserName: str = None, 
+						tmpNewList: list = None,
+						tmpOldList: list = None,
+						data: tuple = None, fromIdWare: str = None):
 		
-		listNew, listOld = data
+		listNew = tmpNewList
+		listOld = tmpOldList
 		NewListCopy = listNew.copy()
 		variable = False
 		#>esta parte es para ordenar las tablas NewItemTable y OldItemTable

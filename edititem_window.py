@@ -3,6 +3,7 @@ from PyQt5.QtGui import QFont, QColor, QMouseEvent, QKeyEvent, QWheelEvent
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import pyqtSignal, QDate, Qt
 from gestor import users_gestor
+from objects import product, ware_product
 import copy
 import math
 
@@ -19,7 +20,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
         self.setupUi()
 
     def __del__(self):
-        print("getting out from edit/new form ")
+        pass
     
     def __enter__(self):
         return self

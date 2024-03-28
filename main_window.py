@@ -14,7 +14,7 @@ import threading
 
 env_config = Config(RepositoryEnv('C:/Users/IROJAS/Desktop/Genesis/genesis-system-admin/.env'))
 
-NotiThresholdinMinutes = 3
+NotiThresholdinMinutes = 4
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
     # def __init__(self, parent = None, currentUser: user = None, currentWare: ware = None, restWare: list = None, wareName:str = None, userGest: users_gestor = None):
@@ -69,7 +69,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                         if self.transferGestor.upgStateInnerAndDB(idTransfer=idTransfer_, currentUserName=self.currentUser.getUserName()):
                             self.loadNotificationTable()
                     elif answer == 'acepted' and self.isNotiTableUpdated:
-                        QMessageBox.information(self, 'Mensaje', "Vuelvalo a Intentar", QMessageBox.Ok, QMessageBox.Ok)
+                        QMessageBox.information(self, 'Mensaje', "¡Vuelva a Intentar!", QMessageBox.Ok, QMessageBox.Ok)
                         self.isNotiTableUpdated = False
                     elif (answer == 'denied' or answer == 'aborted') and self.isNotiTableUpdated:
                         self.isNotiTableUpdated = False

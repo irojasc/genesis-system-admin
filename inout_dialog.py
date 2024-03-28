@@ -15,6 +15,7 @@ from PyQt5.QtCore import Qt, QThread, QObject, pyqtSignal
 from PyQt5.QtWidgets import *
 from gestor import WareProduct, user 
 from objects import ware
+import copy
 
 from functools import reduce
 
@@ -30,11 +31,11 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.newItems_table = []
         self.oldItems_table = []
         self.cantItems = 0
-        self.valCell = ""
         self.operacion = None #define estado neutro para el closeevent
         self.ware_in = WareProduct() #esto es para realizar el update
         self.setupUi()
         self.init_condition()
+        self.isTxtLocationOk = True
 
     def __del__(self):
         del self
@@ -369,12 +370,16 @@ class Ui_inoutDialog(QtWidgets.QDialog):
     def acceptPressed(self,event):
         if event.button() == QtCore.Qt.LeftButton:
             if not self.isTransfer:
-                if self.cmbOperacion.currentIndex() != -1:
-                    self.operacion = "aceptar"
-                    #este metodo close envia la operacion al metodo closeEvent
-                    self.close() 
+                if self.isTxtLocationOk:
+                    if self.cmbOperacion.currentIndex() != -1:
+                        self.operacion = "aceptar"
+                        #este metodo close envia la operacion al metodo closeEvent
+                        self.close() 
+                    else:
+                        ret = QMessageBox.information(self, 'Aviso', "Debe ingresar criterio de operación")
                 else:
-                    ret = QMessageBox.information(self, 'Aviso', "Debe ingresar criterio de operación")
+                    self.isTxtLocationOk = True
+
             else:
                 self.operacion = "trasladar"
                 self.close()
@@ -387,8 +392,8 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             if self.New_tableWidget.rowCount() > 0 or self.Old_tableWidget.rowCount() > 0:
                 reply = QMessageBox.question(self, 'Window Close', 'Esta seguro de efectuar los cambios?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if reply == QMessageBox.Yes:
-                    if self.ware_in.update_quantity(self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), str(self.ownWares.id),
-                                                    self.txtProductLocation.text()):
+                    if self.ware_in.update_quantity(listNew=self.newItems_table, listOld=self.oldItems_table, operationType=self.cmbOperacion.currentText(), idWare=str(self.ownWares.id),
+                                                    location=self.txtProductLocation.text()):
                         ret = QMessageBox.question(self, 'Alerta', "Operación exitosa", QMessageBox.Ok, QMessageBox.Ok)
                         self.isTransfer = False
                         self.accept()
@@ -408,12 +413,14 @@ class Ui_inoutDialog(QtWidgets.QDialog):
             if self.New_tableWidget.rowCount() > 0 or self.Old_tableWidget.rowCount() > 0:
                 reply = QMessageBox.question(self, 'Closing Window...', 'Esta seguro de efectuar los cambios?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if reply == QMessageBox.Yes:
-   
+                    
                     if self.ware_in.insertTransferToDB(fromWareCod=self.ownWares.getWareCode(),
                                                     toWareCod=self.toWare,
                                                     fromUserName=self.currentUser.getUserName(),
-                                                    data=(self.newItems_table.copy(), self.oldItems_table.copy()),
+                                                    tmpNewList = copy.deepcopy(self.newItems_table),
+                                                    tmpOldList = copy.deepcopy(self.oldItems_table),
                                                     fromIdWare=str(self.ownWares.getWareId())):
+                        
                         ret = QMessageBox.question(self, 'Alerta', 'Operación exitosa', QMessageBox.Ok, QMessageBox.Ok)
                         self.isTransfer = True
                         self.accept()
@@ -439,25 +446,56 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                 event.accept()
             else:
                 event.ignore()
-
+    
+    #Revisa el evento de checkBox
     def checkBoxChangedAction(self):
+        #>Desactivar Signals de txtLocationProduct
+        self.txtProductLocation.blockSignals(True)
         if self.checkBox.isChecked():
             self.txtProductLocation.setEnabled(True)
         else:
             self.txtProductLocation.setEnabled(False)
             self.txtProductLocation.clear()
+        self.txtProductLocation.blockSignals(False)
+        #>Activar Signals de txtLocationProducts
 
     def onTabChanged(self, index):
         self.updateTotalItems()
-
+    
+    def isTxtLocationValid(self):
+        txtLocation = self.txtProductLocation.text().upper()
+        if txtLocation != "":
+            splitted = txtLocation.split(",")
+            if len(splitted) == 2:
+                stripSplitted = list(map(lambda x: x.strip(), splitted))
+                mueble = stripSplitted[0].split(" ")
+                fila = stripSplitted[1].split(" ")
+                if mueble[0] == "MUEBLE" and fila[0] == "FILA" and len(mueble) > 1 and len(fila) > 1:
+                    self.isTxtLocationOk = True
+                else:
+                    self.isTxtLocationOk = False
+                    QMessageBox.information(self, "Alerta", "¡Seguir el formato correcto!\n>MUEBLE (A->Z), FILA (1->100)", buttons= QMessageBox.Ok)
+                    self.txtProductLocation.blockSignals(True)
+                    self.txtProductLocation.setText("")
+                    self.txtProductLocation.blockSignals(False)
+            else:
+                self.isTxtLocationOk = False
+                QMessageBox.information(self, "Alerta", "¡Seguir el formato correcto!\n>MUEBLE (A->Z), FILA (1->100)", buttons= QMessageBox.Ok)
+                self.txtProductLocation.blockSignals(True)
+                self.txtProductLocation.setText("")
+                self.txtProductLocation.blockSignals(False)
+    
     @property
     def returned_val(self):
+        #Primer caso para in/out
         if self.isTransfer is not None and not self.isTransfer:
-            return (self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), False)
+            txtLocation = None if self.txtProductLocation.text() == '' else self.txtProductLocation.text().upper()
+            return (self.newItems_table, self.oldItems_table, self.cmbOperacion.currentText(), False, txtLocation)
+        #Segundo caso para transfer
         elif self.isTransfer is not None and self.isTransfer:
-            return (self.newItems_table, self.oldItems_table, 'salida', True)
+            return (self.newItems_table, self.oldItems_table, 'salida', True, None)
         else:
-            return (None, None, None, None)
+            return (None, None, None, None, None)
 
     def setupUi(self):
         self.setObjectName("inoutDialog")
@@ -694,6 +732,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
         self.txtProductLocation.setClearButtonEnabled(True)
         self.txtProductLocation.setPlaceholderText("Nueva Ubicación de Todo")
         self.txtProductLocation.setObjectName("txtProductLocation")
+        self.txtProductLocation.editingFinished.connect(self.isTxtLocationValid)
 
         # -----------  Destination Ware Name  -----------
         font = QFont("Calibri")
