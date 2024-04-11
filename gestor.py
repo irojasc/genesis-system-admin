@@ -26,7 +26,7 @@ class wares_gestor:
 			self.load_wares()
 
 	def connectDB(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 		self.cursor = self.mydb.cursor()
 
 	def disconnectDB(self):
@@ -240,7 +240,7 @@ class WareProduct:
 		del self
 	
 	def connect_db(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 		self.cursor = self.mydb.cursor()
 
 	def disconnect_db(self):
@@ -497,7 +497,7 @@ class WareProduct:
 		
 		try:
 			idTS = str(int(time.time()))
-			query = f"insert into genesisdb.transfer (codeTS, fromWareId, toWareId, fromUser, fromDate, state) values ('{idTS}', (select id from genesisdb.ware where code = '{fromWareCod}'), (select id from genesisdb.ware where code = '{toWareCod}'), '{fromUserName}', '{str(date.today())}', 3);"
+			query = f"insert into genesisdb.transfer_ (codeTS, fromWareId, toWareId, fromUser, fromDate, state) values ('{idTS}', (select id from genesisdb.ware where code = '{fromWareCod}'), (select id from genesisdb.ware where code = '{toWareCod}'), '{fromUserName}', '{str(date.today())}', 3);"
 			stmt = f"insert into genesisdb.transfer_product (idTransfer, idProduct, qtyNew, qtyOld) values ('{idTS}', %s, %s, %s)"
 			self.connect_db()
 			self.cursor.execute(query)
@@ -563,7 +563,7 @@ class users_gestor:
 		pass
 
 	def connectDB(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 		# print("MySQL connection is open")
 		self.cursor = self.mydb.cursor()
 
@@ -638,7 +638,7 @@ class transfer_gestor:
 		del self
 	
 	def connect_db(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 		self.cursor = self.mydb.cursor()
 
 	def disconnect_db(self):
@@ -648,7 +648,7 @@ class transfer_gestor:
 	#obtiene todos los transfers hace inner self.transferDict
 	def getTransferNotification2Inner(self, currentIdWare: int = None):
 		try:
-			query = f"select codeTS, wf.code as codeFrom, wt.code as codeTo, tr.fromUser, tr.toUser, tr.fromDate, tr.toDate, tr.state, tr.note, tp.idProduct, p.isbn, p.title, tp.qtyNew, tp.qtyOld from genesisdb.transfer as tr inner join genesisdb.transfer_product as tp on tr.codeTS = tp.idTransfer inner join genesisdb.product as p on tp.idProduct = p.id inner join genesisdb.ware as wf on wf.id = tr.fromWareId inner join genesisdb.ware as wt on wt.id = tr.toWareId where ((tr.state > 1) or (tr.toDate = '{str(date.today())}' )) and (tr.fromWareId = {str(currentIdWare)} or tr.toWareId = {str(currentIdWare)});"
+			query = f"select codeTS, wf.code as codeFrom, wt.code as codeTo, tr.fromUser, tr.toUser, tr.fromDate, tr.toDate, tr.state, tr.note, tp.idProduct, p.isbn, p.title, tp.qtyNew, tp.qtyOld from genesisdb.transfer_ as tr inner join genesisdb.transfer_product as tp on tr.codeTS = tp.idTransfer inner join genesisdb.product as p on tp.idProduct = p.id inner join genesisdb.ware as wf on wf.id = tr.fromWareId inner join genesisdb.ware as wt on wt.id = tr.toWareId where ((tr.state > 1) or (tr.toDate = '{str(date.today())}' )) and (tr.fromWareId = {str(currentIdWare)} or tr.toWareId = {str(currentIdWare)});"
 			self.connect_db()
 			self.cursor.execute(query)
 			WareProductsRows = self.cursor.fetchall()
@@ -702,7 +702,7 @@ class transfer_gestor:
 	#upgState: Upgrade State 3->2->1
 	def upgStateInnerAndDB(self, currentUserName: str = None, idTransfer: str = None, currentWareId: id = None, isFinalStep: bool = None):
 		stmtAnswer = self.getProductsList2Statement(idTransfer) if isFinalStep else None
-		query = f"update genesisdb.transfer set toUser='{currentUserName}', state = state - 1 where codeTS = '{idTransfer}';" if not isFinalStep else f"update genesisdb.transfer set state = state - 1, toDate = '{str(date.today())}' where codeTS = '{idTransfer}';"
+		query = f"update genesisdb.transfer_ set toUser='{currentUserName}', state = state - 1 where codeTS = '{idTransfer}';" if not isFinalStep else f"update genesisdb.transfer_ set state = state - 1, toDate = '{str(date.today())}' where codeTS = '{idTransfer}';"
 		stmt = None if not isFinalStep else "update genesisdb.ware_product set qtyNew = qtyNew + %s, qtyOld = qtyOld + %s, editDate = '" + str(date.today()) + "'  where idWare = " + str(currentWareId) + " and idProduct = %s"
 		try:
 			self.connect_db()
