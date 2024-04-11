@@ -385,7 +385,7 @@ class Ui_Dialog(QtWidgets.QDialog):
                 if self.transferMode:
                     result_books = list(filter(lambda x: 
                     (self.currWare.cod in x.wareData) and 
-                    (x.wareData[self.currWare.cod]["isEnabled"]) and 
+                    (x.wareData[self.currWare.cod]["isEnabled"]) and
                     (self.cmbWares.currentText() in x.wareData) and
                     (x.wareData[self.cmbWares.currentText()]["isEnabled"])
                     , self.gestWareProduct.innerWareList.copy()))
@@ -487,7 +487,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             return len(self.real_table)
 
         elif criterio == "isbn":
-            self.real_table = list(filter(lambda x: x.product.isbn.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
+            self.real_table = list(filter(lambda x: False if x.product.isbn is None else x.product.isbn.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
 
         elif criterio == "titulo":
