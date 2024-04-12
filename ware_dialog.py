@@ -487,7 +487,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             return len(self.real_table)
 
         elif criterio == "isbn":
-            self.real_table = list(filter(lambda x: x.product.isbn.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
+            self.real_table = list(filter(lambda x: False if x.product.isbn is None else x.product.isbn.find(str.upper(patron)) >= 0 ,self.gestWareProduct.innerWareList)).copy()
             return len(self.real_table)
 
         elif criterio == "titulo":

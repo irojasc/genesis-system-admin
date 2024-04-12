@@ -297,7 +297,7 @@ class Ui_inoutDialog(QtWidgets.QDialog):
                     self.searchList.insertItem(0, itemsFound[0].product.prdCode + " | " + itemsFound[0].product.isbn + " | " +
                                                 itemsFound[0].product.title[:28] + " | " + itemsFound[0].product.autor[:12] + " | " + itemsFound[0].product.publisher[:12])
         else:
-            itemsFound = list(filter(lambda x: getattr(x.product, criterio).find(str.upper(patron)) >= 0, self.mainList))
+            itemsFound = list(filter(lambda x: False if getattr(x.product, criterio) is None else getattr(x.product, criterio).find(str.upper(patron)) >= 0, self.mainList))
             listLabels = list(map(lambda i: i.product.prdCode + " | " + i.product.isbn + " | " +
                                                    i.product.title[:27] + " | " + i.product.autor[:15] + " | " + i.product.publisher[:8]
                                                    if bool(i.product.isbn) else i.product.prdCode + " | " + "" + " | " +
