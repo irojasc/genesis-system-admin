@@ -461,7 +461,7 @@ class WareProduct:
 		#falta el tema del habilitado y desabilitado
 		#la comparacion solo se realiza con lo items nuevos, ¡NO APLICA PARA ANTIGUOS!
 		if (fromWare in wareDataItem) and (toWare in wareDataItem) and ('isEnabled' in wareDataItem[fromWare]) and ('isEnabled' in wareDataItem[toWare]):
-			if (wareDataItem[fromWare]["qtyNew"] > wareDataItem[fromWare]["qtyMinimun"]) and ((wareDataItem[toWare]["qtyNew"] < wareDataItem[toWare]["qtyMinimun"]) or (wareDataItem[toWare]["qtyNew"] == 0)) and bool(wareDataItem[fromWare]['isEnabled']) and bool(wareDataItem[toWare]['isEnabled']):
+			if (wareDataItem[fromWare]["qtyNew"] > wareDataItem[fromWare]["qtyMinimun"]) and (wareDataItem[toWare]["qtyNew"] < wareDataItem[toWare]["qtyMinimun"]) and bool(wareDataItem[fromWare]['isEnabled']) and bool(wareDataItem[toWare]['isEnabled']):
 				return True
 		else:
 			return False
