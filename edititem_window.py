@@ -276,7 +276,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                     item.setChecked(False)
                 item.stateChanged.connect(self.first_callback(index, bool(self.prevData.wareData[i]['isVirtual'])))
                 #cambio
-                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
+                #None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index, 0, item)
                 #>
                 #Segundo Widget
@@ -285,7 +285,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setChecked(self.prevData.wareData[i]['isEnabled']) if 'isEnabled' in self.prevData.wareData[i] else None
                 item.toggled.connect(self.second_callback(row=index, wareCode=i, qtyNewOld=(self.prevData.wareData[i]["qtyNew"], self.prevData.wareData[i]["qtyOld"])))
                 #cambio
-                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
+                #None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,1,item)
 
                 #virtual = 1, not Vitirual = 0
@@ -297,7 +297,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 (item.setText(self.prevData.wareData[i]['loc']) if not(self.prevData.wareData[i]['loc'] == 'SIN UBICACION') else None) if 'loc' in self.prevData.wareData[i] else None
                 item.editingFinished.connect(self.locationLineEditCallBack(index))
                 #cambio
-                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
+                #None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,2,item)
 
                 item = MySpinBox(enabled = False) if (bool(self.prevData.wareData[i]['isVirtual']) or not(self.wareTableItemData.cellWidget(index, 0).isChecked())) else MySpinBox(enabled = True) 
@@ -306,7 +306,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setStyleSheet("QSpinBox{background-color: black; Border: 0px;}" if bool(self.prevData.wareData[i]['isVirtual']) else "QSpinBox{Border: 0px;}")
                 item.setValue(self.prevData.wareData[i]['qtyMinimun']) if 'qtyMinimun' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['qtyMinimun'])  else None
                 #cambio
-                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
+                #None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,3,item)
 
                 #bloqueo cuando agregamos items
@@ -318,13 +318,13 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item = QtWidgets.QTableWidgetItem(str(self.prevData.wareData[i]['pvNew']) if 'pvNew' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['pvNew']) else '0.0')
                 item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
                 #cambio
-                None if isCurrentWare == '_' else item.setFlags(flagNotChecked) if not(isCurrentWare) else None
+                #None if isCurrentWare == '_' else item.setFlags(flagNotChecked) if not(isCurrentWare) else None
                 self.wareTableItemData.setItem(index,4,item)
                 
                 item = QtWidgets.QTableWidgetItem(str(self.prevData.wareData[i]['pvOld']) if 'pvOld' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['pvOld']) else '0.0')
                 item.setFlags(flagNotChecked) if not(self.wareTableItemData.cellWidget(index, 0).isChecked()) else item.setFlags(flagChecked)
                 #cambio
-                None if isCurrentWare == '_' else item.setFlags(flagNotChecked) if not(isCurrentWare) else None
+                #None if isCurrentWare == '_' else item.setFlags(flagNotChecked) if not(isCurrentWare) else None
                 self.wareTableItemData.setItem(index,5,item)
                 self.wareTableItemData.blockSignals(False)
                 #>
@@ -336,7 +336,7 @@ class ui_EditNewItemDialog(QtWidgets.QDialog):
                 item.setStyleSheet("Border: 0px")
                 item.setValue(self.prevData.wareData[i]['dsct'] if ('dsct' in self.prevData.wareData[i] and bool(self.prevData.wareData[i]['dsct'])) else 0)
                 #cambio
-                None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
+                #None if isCurrentWare == '_' else item.setEnabled(False) if not(isCurrentWare) else None
                 self.wareTableItemData.setCellWidget(index,6,item)
       
             self.returnedVal = (True, self.saveDataFieldsAt(), 'cancelar')
