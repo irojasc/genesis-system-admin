@@ -9,15 +9,11 @@
 import sys
 import unicodedata
 from PyQt5.QtWidgets import *
-# from PyQt5.QtGui import QFont, QBrush, QColor, QKeyEvent, QMouseEvent, QTextCursor, QWheelEvent, QPen
 from PyQt5.QtGui import QFont, QBrush, QColor, QPen
 from PyQt5 import QtCore, QtGui, QtWidgets
-# from PyQt5.QtCore import pyqtSignal, Qt, QDate, QStringListModel, QRect
-from PyQt5.QtCore import Qt, QRect
-# from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import Qt, pyqtSignal
 from gestor import WareProduct, wares_gestor, aws_s3, users_gestor
 from edititem_window import ui_EditNewItemDialog
-# from objects import ware, user, product, ware_product
 from objects import ware, user, ware_product
 from inout_dialog import Ui_inoutDialog
 from uiConfigurations import *
@@ -528,9 +524,11 @@ class Ui_Dialog(QtWidgets.QDialog):
 
     # -----------  eventFilter para MouseEvent  -----------
     def eventFilter(self, source, event):
-        if self.ware_table.selectedIndexes() != []:
-            if event.type() == QtCore.QEvent.MouseButtonRelease:
-                if event.button() == QtCore.Qt.LeftButton:
+        if event.type() == QtCore.QEvent.MouseButtonRelease:
+            if event.button() == Qt.LeftButton and source.objectName() == "btnLoadImage":
+                self.loadImage()
+            if event.button() == Qt.LeftButton and source.objectName() == "qt_scrollarea_viewport":
+                if self.ware_table.selectedIndexes() != []:
                     temp = self.ware_table.currentRow()
                     self.actualizar_img(temp)
         return QtCore.QObject.event(source, event)
@@ -695,7 +693,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.search_box.setObjectName("search_box")
 
         # -----------  txtSearch configuration  -----------
-        self.txtSearch = QtWidgets.QLineEdit(self.search_box)
+        self.txtSearch = QLineEdit(self.search_box)
         self.txtSearch.setGeometry(QtCore.QRect(130, 35, 351, 31))
         font = QtGui.QFont()
         font.setFamily("Open Sans Semibold")
@@ -707,7 +705,7 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.txtSearch.setClearButtonEnabled(True)
         self.txtSearch.setObjectName("txtSearch")
         self.txtSearch.textChanged.connect(self.txtBusChanged)
-
+        
         # -----------  cmbSearch Configuration  -----------
         self.cmbSearch = QtWidgets.QComboBox(self.search_box)
         #self.cmbSearch.setGeometry(QtCore.QRect(20, 35, 101, 31))lblLoadTable
@@ -940,7 +938,9 @@ class Ui_Dialog(QtWidgets.QDialog):
         self.btnLoadImage.setFont(font)
         self.btnLoadImage.setStyleSheet("background-color: rgb(240, 240, 240);")
         self.btnLoadImage.setObjectName("btnLoadImage")
-        self.btnLoadImage.clicked.connect(self.loadImage)
+        self.btnLoadImage.setDefault(False)
+        self.btnLoadImage.installEventFilter(self)
+        # self.btnLoadImage.pressed.connect(self.loadImage)
         self.btnLoadImage.setCursor(Qt.PointingHandCursor)
 
         self.retranslateUi()
@@ -1000,6 +1000,7 @@ class Ui_Dialog(QtWidgets.QDialog):
             self.ware_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Stretch)
             self.boxPV.setTitle(_translate("Dialog", "Cuadro de información"))
             self.btnLoadImage.setText(_translate("Dialog", "Cargar imagen"))
+
 
 class ui_CustomChangeLocation(QtWidgets.QDialog):
     def __init__(self, parent=None):

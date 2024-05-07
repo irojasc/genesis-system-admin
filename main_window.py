@@ -46,7 +46,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if self.transferGestor.getTransferNotification2Inner(currentIdWare=self.currentWare.getWareId()):
             self.isNotiTableUpdated = True
             self.loadNotificationTable()
-        self.setEnabled(True)      
+        self.setEnabled(True) if not self.uiWareProduct.isVisible() else  None
 
     def openWareDialog(self, event):
         if self.currentUser.auth["productSrch"]:

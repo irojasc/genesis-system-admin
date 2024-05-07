@@ -26,7 +26,7 @@ class wares_gestor:
 			self.load_wares()
 
 	def connectDB(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 		self.cursor = self.mydb.cursor()
 
 	def disconnectDB(self):
@@ -46,7 +46,7 @@ class wares_gestor:
 		return ware(value[0], value[1], perDict)
 	
 	def load_wares(self):
-		query = "select id, code, enabled, isVirtual, ws.* from genesisdb.ware w inner join genesisdb.wareset ws on w.warelvl = ws.lvl where enabled = true order by id asc;"
+		query = "select id, code, enabled, isVirtual, ws.* from genesisDB.ware w inner join genesisDB.wareset ws on w.warelvl = ws.lvl where enabled = true order by id asc;"
 		query2 = ("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'wareset' order by ordinal_position;")
 		try:
 			self.connectDB()
@@ -105,7 +105,7 @@ class wares_gestor:
 			self.disconnectDB()
 
 	def updateDBItem(self, data: ware_product = None):
-		query_product = "update genesisdb.product set"
+		query_product = "update genesisDB.product set"
 		query_parameters = []
 		query_parameters.append(" isbn = NULL ") if not(data.product.getISBN()) else query_parameters.append(" isbn = '" + data.product.getISBN() + "'")
 		None if not(data.product.getTitle()) else query_parameters.append(" title = '" + data.product.getTitle() + "'")
@@ -114,7 +114,7 @@ class wares_gestor:
 		query_parameters.append(" dateOut = NULL ") if not(data.product.getDateOut()) else query_parameters.append(" dateOut = '" + data.product.getDateOut() + "'")
 		query_parameters.append(" edition = NULL ") if not(data.product.getEdition()) else query_parameters.append(" edition = " + str(data.product.getEdition()))
 		query_parameters.append(" pages = NULL ") if not(data.product.getPages()) else query_parameters.append(" pages = " + str(data.product.getPages()))
-		query_parameters.append(" idLanguage = NULL ") if not(data.product.getLang()) else query_parameters.append(" idLanguage = (select l.id from genesisdb.language as l where l.language = '" + data.product.getLang() + "')")
+		query_parameters.append(" idLanguage = NULL ") if not(data.product.getLang()) else query_parameters.append(" idLanguage = (select l.id from genesisDB.language as l where l.language = '" + data.product.getLang() + "')")
 		query_parameters.append(" cover = NULL ") if data.product.getCover() < 0 else query_parameters.append(" cover = " + str(data.product.getCover()))
 		query_parameters.append(" width = NULL ") if not(data.product.getWidth()) else query_parameters.append(" width = " + str(data.product.getWidth()))
 		query_parameters.append(" height = NULL ") if not(data.product.getHeight()) else query_parameters.append(" height = " + str(data.product.getHeight()))
@@ -130,7 +130,7 @@ class wares_gestor:
 				Data2Update = list(map(lambda x: (x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"], x["loc"],
 									x["dsct"], x["qtyMinimun"], x["isEnabled"], x["idWare"],
 									data.product.getId(), x["idWare"], data.product.getId()), existsData))
-				stmt_update = "update genesisdb.ware_product wp set qtyNew = %s, qtyOld = %s, pvNew = %s, " + \
+				stmt_update = "update genesisDB.ware_product wp set qtyNew = %s, qtyOld = %s, pvNew = %s, " + \
 					"pvOld = %s, loc = %s, dsct = %s, qtyMinimun = %s, isEnabled = %s, editDate = '" + str(date.today()) + "' " + \
 					"where wp.idWare = %s and wp.idProduct = %s and (select exists(select wp.qtyNew where wp.idWare = %s and wp.idProduct = %s))"
 				self.cursor.executemany(stmt_update, Data2Update)
@@ -139,9 +139,9 @@ class wares_gestor:
 				Data2Insert = list(map(lambda x: (x["idWare"], data.product.getId(), x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"],
 									x["loc"], x["dsct"], x["qtyMinimun"], x["isEnabled"], x["idWare"], data.product.getId()), existsData))
 				
-				stmt_insert = "insert into genesisdb.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, " + \
+				stmt_insert = "insert into genesisDB.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, " + \
 							"qtyMinimun, isEnabled) (select %s, %s, %s, %s, %s, %s, %s, %s, %s, %s where not (select exists(select " + \
-							"genesisdb.ware_product.qtyNew from genesisdb.ware_product where idWare = %s and idProduct = %s)))"
+							"genesisDB.ware_product.qtyNew from genesisDB.ware_product where idWare = %s and idProduct = %s)))"
 				self.cursor.executemany(stmt_insert, Data2Insert)
 
 			self.mydb.commit()
@@ -165,11 +165,11 @@ class wares_gestor:
 		#anteriormente se lee el spinbox stock para ver si te tiene que agregar cantidad a nuevo producto
 		if bool(data) and bool(currentWare):
 			#esta parte es para hacer las subconsultas
-			idItemSubQuery = "(select id from genesisdb.item where item = '" + data.product.getItemCategory() + "')" if bool(data.product.getItemCategory()) else None
-			idLanguageSubQuery = "(select id from genesisdb.language where language = '" + data.product.getLang() + "')" if bool(data.product.getLang()) else None
+			idItemSubQuery = "(select id from genesisDB.item where item = '" + data.product.getItemCategory() + "')" if bool(data.product.getItemCategory()) else None
+			idLanguageSubQuery = "(select id from genesisDB.language where language = '" + data.product.getLang() + "')" if bool(data.product.getLang()) else None
 			
 			# query_1 para hacer el insert principal de product
-			query_1 = "insert into genesisdb.product (id, idItem, isbn, title, autor, publisher, content, " + \
+			query_1 = "insert into genesisDB.product (id, idItem, isbn, title, autor, publisher, content, " + \
 			"dateOut, idLanguage, pages, edition, cover, width, height) values (%s, %s, %s, '%s', '%s', '%s', %s, %s, %s, %s, %s, %s, %s, %s);" % (str(data.product.getId()), idItemSubQuery, 
 			"'" + data.product.getISBN() + "'" if data.product.getISBN() else "NULL",
 			data.product.getTitle(), data.product.getAutor(), data.product.getPublisher(),
@@ -190,7 +190,7 @@ class wares_gestor:
 				if existsData:
 					# Data2Tuple = list(map(lambda x: (x["idWare"], str(data.product.getId()), str(x["qtyNew"]), str(x["qtyOld"]), str(x["pvNew"]), str(x["pvOld"]), x["loc"], str(x["dsct"]), str(x["qtyMinimun"]), x["isEnabled"]), existsData))
 					Data2Tuple = list(map(lambda x: (x["idWare"], data.product.getId(), x["qtyNew"], x["qtyOld"], x["pvNew"], x["pvOld"], x["loc"], x["dsct"], x["qtyMinimun"], x["isEnabled"]), existsData))
-					stmt = "insert into genesisdb.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, qtyMinimun, isEnabled) " + \
+					stmt = "insert into genesisDB.ware_product (idWare, idProduct, qtyNew, qtyOld, pvNew, pvOld, loc, dsct, qtyMinimun, isEnabled) " + \
 					"values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
 					self.cursor.executemany(stmt, Data2Tuple)
 				self.mydb.commit()
@@ -203,7 +203,7 @@ class wares_gestor:
 				return False
 			
 	def getNextCodDB(self):
-		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null, null FROM genesisdb.product p UNION SELECT 'item', i.id, i.item, i.code, null FROM genesisdb.item i UNION SELECT 'lang', l.id, l.language, null, null FROM genesisdb.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl, null FROM genesisdb.category c UNION SELECT 'ware', `code`, `name`, cast(`isVirtual` as UNSIGNED), w.id FROM genesisdb.ware w where w.enabled = 1;"
+		query = "SELECT 'next', max(cast(p.id as signed)) + 1 as next, null, null, null FROM genesisDB.product p UNION SELECT 'item', i.id, i.item, i.code, null FROM genesisDB.item i UNION SELECT 'lang', l.id, l.language, null, null FROM genesisDB.language l UNION SELECT 'ctgy',c.id, c.ctgy, c.lvl, null FROM genesisDB.category c UNION SELECT 'ware', `code`, `name`, cast(`isVirtual` as UNSIGNED), w.id FROM genesisDB.ware w where w.enabled = 1;"
 		try:
 			self.connectDB()
 			self.cursor.execute(query)
@@ -240,7 +240,7 @@ class WareProduct:
 		del self
 	
 	def connect_db(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 		self.cursor = self.mydb.cursor()
 
 	def disconnect_db(self):
@@ -284,11 +284,11 @@ class WareProduct:
 			tmp_MainList = tmp_NewList + tmp_OldList
 
 			if location == "":
-				query_ = ("update genesisdb.ware_product set qtyNew = qtyNew " + oprDict[
+				query_ = ("update genesisDB.ware_product set qtyNew = qtyNew " + oprDict[
 					operationType] + " %s, qtyOld = qtyOld " + oprDict[
 					operationType] + " %s, editDate = '" + str(date.today()) + "' where idProduct = %s and idWare = " + idWare)
 			else:
-				query_ = ("update genesisdb.ware_product set qtyNew = qtyNew " + oprDict[
+				query_ = ("update genesisDB.ware_product set qtyNew = qtyNew " + oprDict[
 					operationType] + " %s, qtyOld = qtyOld " + oprDict[
 					operationType] + " %s, editDate = '" + str(date.today()) + "', loc = '" + location.upper() + "' where idProduct = %s and idWare = " + idWare)
 
@@ -305,7 +305,7 @@ class WareProduct:
 	#carga de cero toda la lista de productos a Ware Inner List desde Data Base
 	def loadInnerTable(self, updateDate: datetime.date = None):
 		
-		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id left join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem order by p.id asc;") if updateDate == None else ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisdb.product p left join genesisdb.ware_product wp on wp.idProduct = p.id left join genesisdb.language l on l.id = p.idLanguage left join genesisdb.ware w on w.id = wp.idWare inner join genesisdb.item i on i.id = p.idItem where p.creationDate >= '{0}' or p.editDate >= '{0}' or wp.editDate >= '{0}' or p.creationDate >= '{0}' order by p.id asc;".format(updateDate))
+		query = ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisDB.product p left join genesisDB.ware_product wp on wp.idProduct = p.id left join genesisDB.language l on l.id = p.idLanguage left join genesisDB.ware w on w.id = wp.idWare inner join genesisDB.item i on i.id = p.idItem order by p.id asc;") if updateDate == None else ("select w.code, i.code, p.id, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled from genesisDB.product p left join genesisDB.ware_product wp on wp.idProduct = p.id left join genesisDB.language l on l.id = p.idLanguage left join genesisDB.ware w on w.id = wp.idWare inner join genesisDB.item i on i.id = p.idItem where p.creationDate >= '{0}' or p.editDate >= '{0}' or wp.editDate >= '{0}' or p.creationDate >= '{0}' order by p.id asc;".format(updateDate))
 
 		try:
 			self.connect_db()
@@ -358,7 +358,7 @@ class WareProduct:
 	def changeItemLocation(self, iditem: str = "", location: str= "SIN UBICACION", currentWare: str="")->bool:
 		try:
 			self.connect_db()
-			query = ("update genesisdb.ware_product set loc = '" + location + "', editDate = '" + str(date.today()) + "' where idProduct=" + iditem + " and idWare=(select id from genesisdb.ware where code = '" + currentWare + "');")
+			query = ("update genesisDB.ware_product set loc = '" + location + "', editDate = '" + str(date.today()) + "' where idProduct=" + iditem + " and idWare=(select id from genesisDB.ware where code = '" + currentWare + "');")
 			self.cursor.execute(query)
 			self.mydb.commit()
 			self.disconnect_db()
@@ -396,22 +396,22 @@ class WareProduct:
 	def getItemDataFromDB(self, idProduct: int = None)-> bool:
 		query = ("select w.code, w.id, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled, 'item' from " + \
 				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
-				"from genesisdb.product p " + \
-				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
-				"left join genesisdb.language l on l.id = p.idLanguage " + \
-				"inner join genesisdb.item i on i.id = p.idItem " + \
+				"from genesisDB.product p " + \
+				"left join genesisDB.ware_product wp on wp.idProduct = p.id " + \
+				"left join genesisDB.language l on l.id = p.idLanguage " + \
+				"inner join genesisDB.item i on i.id = p.idItem " + \
 				"where p.id = " + str(idProduct) + ") as s " + \
-				"left join genesisdb.ware w on w.id = s.idWare " + \
+				"left join genesisDB.ware w on w.id = s.idWare " + \
 				"union " + \
 				"select w.code, w.id, w.isVirtual, idItem, idProduct, isbn, title, autor, publisher, dateOut, language,pages, edition, cover, width, height, content, category, qtyNew, qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled, 'item' from " + \
 				"(select wp.idWare as idWare, i.code as idItem, p.id as idProduct, isbn, title, autor, publisher, dateOut, language, pages, edition, cover, width, height, content, i.item as category, qtyNew,  qtyOld, qtyMinimun, pvNew, pvOld, dsct, loc, isEnabled " + \
-				"from genesisdb.product p " + \
-				"left join genesisdb.ware_product wp on wp.idProduct = p.id " + \
-				"left join genesisdb.language l on l.id = p.idLanguage " + \
-				"inner join genesisdb.item i on i.id = p.idItem " + \
+				"from genesisDB.product p " + \
+				"left join genesisDB.ware_product wp on wp.idProduct = p.id " + \
+				"left join genesisDB.language l on l.id = p.idLanguage " + \
+				"inner join genesisDB.item i on i.id = p.idItem " + \
 				"where p.id = " + str(idProduct) + ") as s " + \
-				"right join genesisdb.ware w on w.id = s.idWare " + \
-				"union select l.id, l.language, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 'lang' from genesisdb.language l;") if idProduct else False
+				"right join genesisDB.ware w on w.id = s.idWare " + \
+				"union select l.id, l.language, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 'lang' from genesisDB.language l;") if idProduct else False
 		try:
 			self.connect_db()
 			self.cursor.execute(query)
@@ -461,7 +461,7 @@ class WareProduct:
 		#falta el tema del habilitado y desabilitado
 		#la comparacion solo se realiza con lo items nuevos, ¡NO APLICA PARA ANTIGUOS!
 		if (fromWare in wareDataItem) and (toWare in wareDataItem) and ('isEnabled' in wareDataItem[fromWare]) and ('isEnabled' in wareDataItem[toWare]):
-			if (wareDataItem[fromWare]["qtyNew"] > wareDataItem[fromWare]["qtyMinimun"]) and (wareDataItem[toWare]["qtyNew"] <= wareDataItem[toWare]["qtyMinimun"]) and bool(wareDataItem[fromWare]['isEnabled']) and bool(wareDataItem[toWare]['isEnabled']):
+			if (wareDataItem[fromWare]["qtyNew"] > wareDataItem[fromWare]["qtyMinimun"]) and (wareDataItem[toWare]["qtyNew"] < wareDataItem[toWare]["qtyMinimun"]) and bool(wareDataItem[fromWare]['isEnabled']) and bool(wareDataItem[toWare]['isEnabled']):
 				return True
 		else:
 			return False
@@ -497,8 +497,8 @@ class WareProduct:
 		
 		try:
 			idTS = str(int(time.time()))
-			query = f"insert into genesisdb.transfer (codeTS, fromWareId, toWareId, fromUser, fromDate, state) values ('{idTS}', (select id from genesisdb.ware where code = '{fromWareCod}'), (select id from genesisdb.ware where code = '{toWareCod}'), '{fromUserName}', '{str(date.today())}', 3);"
-			stmt = f"insert into genesisdb.transfer_product (idTransfer, idProduct, qtyNew, qtyOld) values ('{idTS}', %s, %s, %s)"
+			query = f"insert into genesisDB.transfer_ (codeTS, fromWareId, toWareId, fromUser, fromDate, state) values ('{idTS}', (select id from genesisDB.ware where code = '{fromWareCod}'), (select id from genesisDB.ware where code = '{toWareCod}'), '{fromUserName}', '{str(date.today())}', 3);"
+			stmt = f"insert into genesisDB.transfer_product (idTransfer, idProduct, qtyNew, qtyOld) values ('{idTS}', %s, %s, %s)"
 			self.connect_db()
 			self.cursor.execute(query)
 			self.cursor.executemany(stmt, list2DB)
@@ -563,7 +563,7 @@ class users_gestor:
 		pass
 
 	def connectDB(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 		# print("MySQL connection is open")
 		self.cursor = self.mydb.cursor()
 
@@ -583,7 +583,7 @@ class users_gestor:
 		return user(value[1], value[2], None, value[0], None, perDict, value[4])
 	
 	def fill_users(self):
-		query = ("select idDoc, user, pw, enabled, us.* from genesisdb.user u inner join genesisdb.userset us on u.userSet = us.lvl;")
+		query = ("select idDoc, user, pw, enabled, us.* from genesisDB.user u inner join genesisDB.userset us on u.userSet = us.lvl;")
 		query2 = ("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'userset' ORDER BY ordinal_position;")
 		try:
 			self.connectDB()
@@ -638,7 +638,7 @@ class transfer_gestor:
 		del self
 	
 	def connect_db(self):
-		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST_LOCAL'), user= env_config.get('MYSQL_USER_LOCAL'), passwd= env_config.get('MYSQL_PASSWORD_LOCAL'), port=env_config.get('MYSQL_PORT_LOCAL'))
+		self.mydb = mysql.connector.connect(host = env_config.get('MYSQL_HOST'), user= env_config.get('MYSQL_USER'), passwd= env_config.get('MYSQL_PASSWORD'), port=env_config.get('MYSQL_PORT'))
 		self.cursor = self.mydb.cursor()
 
 	def disconnect_db(self):
@@ -648,7 +648,7 @@ class transfer_gestor:
 	#obtiene todos los transfers hace inner self.transferDict
 	def getTransferNotification2Inner(self, currentIdWare: int = None):
 		try:
-			query = f"select codeTS, wf.code as codeFrom, wt.code as codeTo, tr.fromUser, tr.toUser, tr.fromDate, tr.toDate, tr.state, tr.note, tp.idProduct, p.isbn, p.title, tp.qtyNew, tp.qtyOld from genesisdb.transfer as tr inner join genesisdb.transfer_product as tp on tr.codeTS = tp.idTransfer inner join genesisdb.product as p on tp.idProduct = p.id inner join genesisdb.ware as wf on wf.id = tr.fromWareId inner join genesisdb.ware as wt on wt.id = tr.toWareId where ((tr.state > 1) or (tr.toDate = '{str(date.today())}' )) and (tr.fromWareId = {str(currentIdWare)} or tr.toWareId = {str(currentIdWare)});"
+			query = f"select codeTS, wf.code as codeFrom, wt.code as codeTo, tr.fromUser, tr.toUser, tr.fromDate, tr.toDate, tr.state, tr.note, tp.idProduct, p.isbn, p.title, tp.qtyNew, tp.qtyOld from genesisDB.transfer_ as tr inner join genesisDB.transfer_product as tp on tr.codeTS = tp.idTransfer inner join genesisDB.product as p on tp.idProduct = p.id inner join genesisDB.ware as wf on wf.id = tr.fromWareId inner join genesisDB.ware as wt on wt.id = tr.toWareId where ((tr.state > 1) or (tr.toDate = '{str(date.today())}' )) and (tr.fromWareId = {str(currentIdWare)} or tr.toWareId = {str(currentIdWare)});"
 			self.connect_db()
 			self.cursor.execute(query)
 			WareProductsRows = self.cursor.fetchall()
@@ -702,8 +702,8 @@ class transfer_gestor:
 	#upgState: Upgrade State 3->2->1
 	def upgStateInnerAndDB(self, currentUserName: str = None, idTransfer: str = None, currentWareId: id = None, isFinalStep: bool = None):
 		stmtAnswer = self.getProductsList2Statement(idTransfer) if isFinalStep else None
-		query = f"update genesisdb.transfer set toUser='{currentUserName}', state = state - 1 where codeTS = '{idTransfer}';" if not isFinalStep else f"update genesisdb.transfer set state = state - 1, toDate = '{str(date.today())}' where codeTS = '{idTransfer}';"
-		stmt = None if not isFinalStep else "update genesisdb.ware_product set qtyNew = qtyNew + %s, qtyOld = qtyOld + %s, editDate = '" + str(date.today()) + "'  where idWare = " + str(currentWareId) + " and idProduct = %s"
+		query = f"update genesisDB.transfer_ set toUser='{currentUserName}', state = state - 1 where codeTS = '{idTransfer}';" if not isFinalStep else f"update genesisDB.transfer_ set state = state - 1, toDate = '{str(date.today())}' where codeTS = '{idTransfer}';"
+		stmt = None if not isFinalStep else "update genesisDB.ware_product set qtyNew = qtyNew + %s, qtyOld = qtyOld + %s, editDate = '" + str(date.today()) + "'  where idWare = " + str(currentWareId) + " and idProduct = %s"
 		try:
 			self.connect_db()
 			self.cursor.execute(query)
